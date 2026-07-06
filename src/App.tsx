@@ -14,10 +14,17 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
-const APP_NAME = '港伴记';
-const APP_VERSION = 'v1.09';
+const APP_NAME = 'Otter';
+const APP_VERSION = 'v1.10';
+const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
+const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
 const ADMIN_PASSWORD_HASH = 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
+const DEFAULT_ADMIN_ACCOUNTS = [
+  { username: 'otter-admin', passwordHash: 'aee6f0ecf531724f671db225e30f91d3cf21e89bb0ab639431ad237e9174caa3', role: 'owner' },
+  { username: 'content-reviewer', passwordHash: '389ebe877a1ed402f4cf8e6efd08d8f0dae2a3153ef2e57136f5ac1a591dcf42', role: 'editor' },
+  { username: 'support-desk', passwordHash: '2639c55742f526036b0ecc605e00b6fad2df03b81cdfbd72cdf3ec3f0c6aaba8', role: 'support' }
+];
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
@@ -129,8 +136,9 @@ type SupportTicket = {
   type: string;
   contact: string;
   message: string;
-  status: 'new' | 'reviewing' | 'resolved' | 'closed' | string;
+  status: 'pending' | 'reviewing' | 'resolved' | 'closed' | string;
   adminNote?: string;
+  adminReply?: string;
   createdAt: string;
   updatedAt?: string;
 };
@@ -237,11 +245,31 @@ async function apiRequest<T>(path: string, options: RequestInit = {}) {
   return data as T;
 }
 
-async function registerUser(input: { email: string; username: string; schoolId: SchoolId }) {
+function isValidEmailShape(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && !email.includes('..');
+}
+
+function isStrongEnoughPassword(password: string) {
+  return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+}
+
+function statusLabel(status: string) {
+  return {
+    pending: '待处理',
+    reviewing: '处理中',
+    resolved: '已处理',
+    closed: '已关闭',
+    new: '待处理'
+  }[status] || status;
+}
+
+async function registerUser(input: { email: string; username: string; password: string; schoolId: SchoolId }) {
   if (!API_BASE_URL) {
     return {
       id: `local-user-${Date.now()}`,
-      ...input,
+      email: input.email,
+      username: input.username,
+      schoolId: input.schoolId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -251,6 +279,18 @@ async function registerUser(input: { email: string; username: string; schoolId: 
     body: JSON.stringify(input)
   });
   return data.user;
+}
+
+async function fetchMailbox(user: RegisteredUser) {
+  if (!API_BASE_URL) {
+    return readSupportTickets()
+      .filter((ticket) => ticket.userId === user.id || ticket.contact.toLowerCase() === user.email.toLowerCase())
+      .slice()
+      .reverse();
+  }
+  const params = new URLSearchParams({ userId: user.id, email: user.email });
+  const data = await apiRequest<{ tickets: SupportTicket[] }>(`/api/mailbox?${params.toString()}`);
+  return data.tickets || [];
 }
 
 function sendAnalyticsEvent(event: AnalyticsEvent) {
@@ -587,10 +627,10 @@ function Header({
   return (
     <header className="site-header">
       <button className="brand-button" onClick={() => go('/')}>
-        <span className="brand-mark">{APP_VERSION}</span>
+        <span className="brand-avatar"><img src={APP_LOGO_SRC} alt="Otter" /></span>
         <span>
           <strong>{APP_NAME}</strong>
-          <small>{schoolAbbreviation(activeSchool)} · {activeSchool.name}</small>
+          <small>{APP_VERSION} · {schoolAbbreviation(activeSchool)} · {activeSchool.name}</small>
         </span>
       </button>
       <nav className="top-nav">
@@ -782,23 +822,28 @@ function RegistrationPage({
 }) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [schoolId, setSchoolId] = useState<SchoolId>(activeSchoolId);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
     setError('');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('请填写有效邮箱');
+    if (!isValidEmailShape(email.trim())) {
+      setError('请填写真实邮箱格式；后端会检查邮箱域名是否可用');
       return;
     }
     if (username.trim().length < 2) {
       setError('用户名至少 2 个字符');
       return;
     }
+    if (!isStrongEnoughPassword(password)) {
+      setError('密码至少 8 位，并包含字母和数字');
+      return;
+    }
     setSaving(true);
     try {
-      const user = await registerUser({ email: email.trim(), username: username.trim(), schoolId });
+      const user = await registerUser({ email: email.trim(), username: username.trim(), password, schoolId });
       onRegistered(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
@@ -811,8 +856,13 @@ function RegistrationPage({
     <main className="registration-shell">
       <section className="registration-panel">
         <span className="eyebrow">{APP_NAME} {APP_VERSION}</span>
-        <h1>创建你的浏览身份</h1>
-        <p>注册只用于保存学校选择、统计真实访问和接收建议投稿；不发送验证码。</p>
+        <div className="registration-brand">
+          <img src={APP_LOGO_SRC} alt="Otter logo" />
+          <div>
+            <h1>创建你的 Otter 账号</h1>
+            <p>使用真实邮箱、用户名和自设密码登录；不发送验证码。</p>
+          </div>
+        </div>
         <div className="registration-form">
           <label>
             <span>邮箱</span>
@@ -820,7 +870,11 @@ function RegistrationPage({
           </label>
           <label>
             <span>用户名</span>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="例如：港伴用户" autoComplete="nickname" />
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="例如：Otter 用户" autoComplete="nickname" />
+          </label>
+          <label>
+            <span>密码</span>
+            <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 8 位，包含字母和数字" type="password" autoComplete="current-password" />
           </label>
           <label>
             <span>学校</span>
@@ -830,9 +884,9 @@ function RegistrationPage({
               ))}
             </select>
           </label>
-          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '进入港伴记'}</button>
+          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '进入 Otter'}</button>
           {error && <p className="form-error">{error}</p>}
-          <p className="login-note">当前版本不做邮箱验证码；管理端可看到注册用户、学校选择和访问统计。</p>
+          <p className="login-note">邮箱不会发送验证码；后端会检查邮箱域名是否真实可用。已有邮箱再次进入时需要密码正确。</p>
         </div>
       </section>
     </main>
@@ -1519,6 +1573,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>(() => readAnalyticsEvents());
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(() => readSupportTickets().slice().reverse());
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
+  const [ticketReplies, setTicketReplies] = useState<Record<string, string>>({});
   const [adminNotice, setAdminNotice] = useState('');
   const schoolCounts = platformData.schools.map((school) => ({
     school,
@@ -1581,7 +1636,10 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
         return;
       }
       const passwordHash = await hashText(password);
-      if (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
+      if (
+        (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) ||
+        DEFAULT_ADMIN_ACCOUNTS.some((account) => account.username === username.trim() && account.passwordHash === passwordHash)
+      ) {
         setEntered(true);
         setLoginError('');
         setPassword('');
@@ -1592,17 +1650,17 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
       setLoginError(err instanceof Error ? err.message : '账号或密码不正确');
     }
   };
-  const updateTicket = async (ticketId: string, status: string) => {
+  const updateTicket = async (ticketId: string, status: string, adminReply?: string) => {
     if (API_BASE_URL && adminToken) {
       const data = await apiRequest<{ ticket: SupportTicket }>(`/api/admin/tickets/${encodeURIComponent(ticketId)}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${adminToken}` },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, adminReply })
       });
       setSupportTickets((tickets) => tickets.map((ticket) => ticket.id === ticketId ? data.ticket : ticket));
       return;
     }
-    const next = readSupportTickets().map((ticket) => ticket.id === ticketId ? { ...ticket, status, updatedAt: new Date().toISOString() } : ticket);
+    const next = readSupportTickets().map((ticket) => ticket.id === ticketId ? { ...ticket, status, adminReply: adminReply ?? ticket.adminReply, updatedAt: new Date().toISOString() } : ticket);
     writeSupportTickets(next);
     setSupportTickets(next.slice().reverse());
   };
@@ -1610,6 +1668,12 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   useEffect(() => {
     if (entered) void refreshAnalytics();
   }, [entered, adminToken]);
+
+  useEffect(() => {
+    if (!adminReady) return;
+    const timer = window.setInterval(() => void refreshAnalytics(), 8000);
+    return () => window.clearInterval(timer);
+  }, [adminReady, adminToken]);
 
   return (
     <section className="page-panel">
@@ -1634,7 +1698,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
           </label>
           <button onClick={login}>进入管理端</button>
           {loginError && <p className="form-error">{loginError}</p>}
-          <p className="login-note">{API_BASE_URL ? '登录后可查看真实服务端统计和用户提交内容。' : '配置 VITE_API_BASE_URL 后可启用服务端真实统计。'}</p>
+          <p className="login-note">{API_BASE_URL ? '默认测试管理员：otter-admin / content-reviewer / support-desk。正式部署请用 ADMIN_ACCOUNTS_JSON 覆盖。' : '配置 VITE_API_BASE_URL 后可启用服务端真实统计。'}</p>
         </div>
       )}
 
@@ -1717,15 +1781,23 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               {supportTickets.map((ticket) => (
                 <article className="ticket-card" key={ticket.id}>
                   <div>
-                    <strong>{ticket.type} · {ticket.status}</strong>
+                    <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
                     <span>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</span>
                   </div>
                   <p>{ticket.message}</p>
                   <small>联系方式：{ticket.contact}</small>
+                  {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
+                  <textarea
+                    value={ticketReplies[ticket.id] ?? ticket.adminReply ?? ''}
+                    onChange={(event) => setTicketReplies((drafts) => ({ ...drafts, [ticket.id]: event.target.value }))}
+                    placeholder="写给用户的站内回复"
+                    rows={3}
+                  ></textarea>
                   <div className="inline-actions">
-                    <button onClick={() => void updateTicket(ticket.id, 'reviewing')}>处理中</button>
-                    <button onClick={() => void updateTicket(ticket.id, 'resolved')}>已处理</button>
-                    <button onClick={() => void updateTicket(ticket.id, 'closed')}>关闭</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'pending', ticketReplies[ticket.id])}>待处理</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'reviewing', ticketReplies[ticket.id])}>处理中</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'resolved', ticketReplies[ticket.id])}>已处理并回复</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'closed', ticketReplies[ticket.id])}>关闭</button>
                   </div>
                 </article>
               ))}
@@ -1799,9 +1871,24 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
   const [type, setType] = useState('建议');
   const [contact, setContact] = useState(user.email || '');
   const [message, setMessage] = useState('');
+  const [mailboxTickets, setMailboxTickets] = useState<SupportTicket[]>([]);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const refreshMailbox = async () => {
+    try {
+      setMailboxTickets(await fetchMailbox(user));
+    } catch {
+      setMailboxTickets([]);
+    }
+  };
+
+  useEffect(() => {
+    void refreshMailbox();
+    const timer = window.setInterval(() => void refreshMailbox(), 12000);
+    return () => window.clearInterval(timer);
+  }, [user.id, user.email]);
 
   const submit = async () => {
     setError('');
@@ -1826,6 +1913,7 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
       });
       setMessage('');
       setStatus(API_BASE_URL ? '已发送到管理端' : '已保存到本机管理端备用数据');
+      await refreshMailbox();
     } catch (err) {
       setError(err instanceof Error ? err.message : '发送失败');
     } finally {
@@ -1841,31 +1929,48 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
         <p>发现信息需要更新，或想补充路线、课程经验、生活建议，可以在这里发送给管理端处理。</p>
       </div>
       <button className="secondary-action" onClick={() => setOpen((value) => !value)}>
-        {open ? '收起窗口' : '发送投稿 / 建议'}
+        {open ? '收起窗口' : `站内信箱 ${mailboxTickets.length ? `(${mailboxTickets.length})` : ''}`}
       </button>
       {open && (
-        <div className="support-form">
-          <label>
-            <span>类型</span>
-            <select value={type} onChange={(event) => setType(event.target.value)}>
-              <option>投稿</option>
-              <option>建议</option>
-              <option>纠错</option>
-              <option>合作</option>
-              <option>其他</option>
-            </select>
-          </label>
-          <label>
-            <span>联系方式</span>
-            <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，也可以填写微信 / 电话 / 其他" />
-          </label>
-          <label className="wide">
-            <span>内容</span>
-            <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写下投稿内容、建议、纠错位置或想补充的信息" rows={5}></textarea>
-          </label>
-          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '发送中' : '发送给管理端'}</button>
-          {error && <p className="form-error">{error}</p>}
-          {status && <p className="form-success">{status}</p>}
+        <div className="support-workspace">
+          <div className="support-form">
+            <label>
+              <span>类型</span>
+              <select value={type} onChange={(event) => setType(event.target.value)}>
+                <option>投稿</option>
+                <option>建议</option>
+                <option>纠错</option>
+                <option>合作</option>
+                <option>其他</option>
+              </select>
+            </label>
+            <label>
+              <span>联系方式</span>
+              <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，也可以填写微信 / 电话 / 其他" />
+            </label>
+            <label className="wide">
+              <span>内容</span>
+              <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写下投稿内容、建议、纠错位置或想补充的信息" rows={5}></textarea>
+            </label>
+            <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '发送中' : '发送给管理端'}</button>
+            {error && <p className="form-error">{error}</p>}
+            {status && <p className="form-success">{status}</p>}
+          </div>
+          <div className="mailbox-panel">
+            <div className="section-head compact">
+              <h3>站内信箱</h3>
+              <button className="secondary-action" onClick={() => void refreshMailbox()}>刷新</button>
+            </div>
+            {mailboxTickets.length === 0 && <p className="login-note">还没有提交记录。管理端回复后会显示在这里。</p>}
+            {mailboxTickets.map((ticket) => (
+              <article className="mailbox-card" key={ticket.id}>
+                <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
+                <span>{new Date(ticket.createdAt).toLocaleString()}</span>
+                <p>{ticket.message}</p>
+                {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
+              </article>
+            ))}
+          </div>
         </div>
       )}
     </section>

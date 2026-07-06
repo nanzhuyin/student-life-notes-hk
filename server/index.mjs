@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { resolveMx } from 'node:dns/promises';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
@@ -6,11 +7,15 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'nanzhuyin-admin';
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const adminTokens = new Map();
+const defaultAdminAccounts = [
+  { username: 'otter-admin', passwordHash: 'aee6f0ecf531724f671db225e30f91d3cf21e89bb0ab639431ad237e9174caa3', role: 'owner' },
+  { username: 'content-reviewer', passwordHash: '389ebe877a1ed402f4cf8e6efd08d8f0dae2a3153ef2e57136f5ac1a591dcf42', role: 'editor' },
+  { username: 'support-desk', passwordHash: '2639c55742f526036b0ecc605e00b6fad2df03b81cdfbd72cdf3ec3f0c6aaba8', role: 'support' }
+];
+const adminAccounts = process.env.ADMIN_ACCOUNTS_JSON ? JSON.parse(process.env.ADMIN_ACCOUNTS_JSON) : defaultAdminAccounts;
 
 const defaultDb = {
   users: [],
@@ -34,6 +39,24 @@ function nowIso() {
 
 function createId(prefix) {
   return `${prefix}_${Date.now()}_${randomBytes(6).toString('hex')}`;
+}
+
+function isValidEmailShape(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && !email.includes('..');
+}
+
+async function assertReachableEmailDomain(email) {
+  const domain = email.split('@')[1];
+  try {
+    const records = await resolveMx(domain);
+    if (!records.length) throw new Error('missing mx');
+  } catch {
+    throw new Error('邮箱域名不可用，请填写真实可用邮箱');
+  }
+}
+
+function isStrongEnoughPassword(password) {
+  return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
 async function readDb() {
@@ -127,7 +150,7 @@ async function route(req, res) {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(req, res, 200, { ok: true, name: '港伴记 API', time: nowIso() });
+    sendJson(req, res, 200, { ok: true, name: 'Otter API', time: nowIso() });
     return;
   }
 
@@ -135,22 +158,28 @@ async function route(req, res) {
     const body = await readJson(req);
     const email = String(body.email || '').trim().toLowerCase();
     const username = String(body.username || '').trim();
+    const password = String(body.password || '');
     const schoolId = String(body.schoolId || '').trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('请填写有效邮箱');
+    if (!isValidEmailShape(email)) throw new Error('请填写有效邮箱');
+    await assertReachableEmailDomain(email);
     if (username.length < 2) throw new Error('用户名至少 2 个字符');
+    if (!isStrongEnoughPassword(password)) throw new Error('密码至少 8 位，并包含字母和数字');
     if (!['eduhk', 'lingnan'].includes(schoolId)) throw new Error('请选择学校');
     const db = await readDb();
+    const passwordHash = hashText(password);
     let user = db.users.find((item) => item.email === email);
     if (user) {
+      if (!safeCompare(user.passwordHash || '', passwordHash)) throw new Error('邮箱或密码不正确');
       user.username = username;
       user.schoolId = schoolId;
       user.updatedAt = nowIso();
     } else {
-      user = { id: createId('user'), email, username, schoolId, createdAt: nowIso(), updatedAt: nowIso() };
+      user = { id: createId('user'), email, username, schoolId, passwordHash, createdAt: nowIso(), updatedAt: nowIso() };
       db.users.push(user);
     }
     await writeDb(db);
-    sendJson(req, res, 200, { user });
+    const { passwordHash: _, ...publicUser } = user;
+    sendJson(req, res, 200, { user: publicUser });
     return;
   }
 
@@ -185,8 +214,9 @@ async function route(req, res) {
       type: body.type || '建议',
       contact,
       message,
-      status: 'new',
+      status: 'pending',
       adminNote: '',
+      adminReply: '',
       createdAt: nowIso(),
       updatedAt: nowIso()
     };
@@ -196,12 +226,28 @@ async function route(req, res) {
     return;
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/mailbox') {
+    const userId = String(url.searchParams.get('userId') || '');
+    const email = String(url.searchParams.get('email') || '').trim().toLowerCase();
+    if (!userId && !email) throw new Error('缺少用户信息');
+    const db = await readDb();
+    const tickets = db.supportTickets
+      .filter((ticket) => (userId && ticket.userId === userId) || (email && ticket.contact.toLowerCase() === email))
+      .slice()
+      .reverse();
+    sendJson(req, res, 200, { tickets });
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/admin/login') {
     const body = await readJson(req);
-    if (String(body.username || '').trim() === ADMIN_USERNAME && safeCompare(hashText(String(body.password || '')), ADMIN_PASSWORD_HASH)) {
+    const inputUsername = String(body.username || '').trim();
+    const inputHash = hashText(String(body.password || ''));
+    const account = adminAccounts.find((item) => item.username === inputUsername && safeCompare(item.passwordHash, inputHash));
+    if (account) {
       const token = randomBytes(24).toString('hex');
-      adminTokens.set(token, { createdAt: Date.now() });
-      sendJson(req, res, 200, { token });
+      adminTokens.set(token, { createdAt: Date.now(), username: account.username, role: account.role || 'admin' });
+      sendJson(req, res, 200, { token, admin: { username: account.username, role: account.role || 'admin' } });
       return;
     }
     sendJson(req, res, 401, { error: '账号或密码不正确' });
@@ -215,7 +261,7 @@ async function route(req, res) {
     }
     const db = await readDb();
     sendJson(req, res, 200, {
-      users: db.users.slice(-100).reverse(),
+      users: db.users.slice(-100).reverse().map(({ passwordHash, ...user }) => user),
       analyticsEvents: db.analyticsEvents,
       analytics: buildAnalyticsSummary(db.analyticsEvents),
       supportTickets: db.supportTickets.slice().reverse()
@@ -238,6 +284,7 @@ async function route(req, res) {
     }
     ticket.status = body.status || ticket.status;
     ticket.adminNote = typeof body.adminNote === 'string' ? body.adminNote : ticket.adminNote;
+    ticket.adminReply = typeof body.adminReply === 'string' ? body.adminReply : ticket.adminReply;
     ticket.updatedAt = nowIso();
     await writeDb(db);
     sendJson(req, res, 200, { ticket });
@@ -254,5 +301,5 @@ createServer(async (req, res) => {
     sendJson(req, res, 400, { error: error instanceof Error ? error.message : 'Bad request' });
   }
 }).listen(PORT, () => {
-  console.log(`港伴记 API listening on http://127.0.0.1:${PORT}`);
+  console.log(`Otter API listening on http://127.0.0.1:${PORT}`);
 });

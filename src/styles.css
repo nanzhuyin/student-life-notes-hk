@@ -650,6 +650,24 @@ button {
   box-shadow: 0 12px 28px rgba(143, 29, 44, 0.2);
 }
 
+.brand-avatar {
+  display: grid;
+  width: 3.1rem;
+  height: 3.1rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(47, 111, 84, 0.16);
+}
+
+.brand-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .brand-button strong,
 .brand-button small {
   display: block;
@@ -1590,6 +1608,21 @@ p {
   line-height: 1.7;
 }
 
+.registration-brand {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.registration-brand img {
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 1rem;
+  object-fit: cover;
+  box-shadow: 0 16px 36px rgba(47, 111, 84, 0.18);
+}
+
 .registration-form,
 .support-form {
   display: grid;
@@ -1863,6 +1896,21 @@ p {
   line-height: 1.7;
 }
 
+.ticket-card textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.ticket-card blockquote,
+.mailbox-card blockquote {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 4px solid #2f6f54;
+  border-radius: 0.45rem;
+  color: #2f5d4c;
+  background: #f1faf5;
+}
+
 .support-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1889,6 +1937,59 @@ p {
 
 .support-panel .support-form {
   grid-column: 1 / -1;
+}
+
+.support-workspace {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.85fr);
+  gap: 1rem;
+}
+
+.mailbox-panel {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.7rem;
+  background: #fbfaf8;
+}
+
+.section-head.compact {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-head.compact h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.mailbox-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.mailbox-card strong {
+  color: #312d2b;
+}
+
+.mailbox-card span {
+  color: #746b64;
+  font-size: 0.88rem;
+}
+
+.mailbox-card p {
+  margin: 0;
+  color: #504944;
+  line-height: 1.6;
 }
 
 .empty-state {
@@ -1964,7 +2065,9 @@ footer {
   .admin-login-panel,
   .registration-form,
   .support-form,
-  .support-panel {
+  .support-panel,
+  .support-workspace,
+  .registration-brand {
     grid-template-columns: 1fr;
   }
 
