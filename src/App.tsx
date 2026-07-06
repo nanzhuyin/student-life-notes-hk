@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.17';
+const APP_VERSION = 'v1.18';
 const BETA_NOTICE = '内测版本：站内信箱、在线投稿处理、用户注册和服务端统计暂未开放；如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -966,8 +966,8 @@ function HomePage({ activeSchool, onChooseSchool }: { activeSchool: School; onCh
       <section className={`hero school-hero ${activeSchool.id}`}>
         <div className="hero-copy">
           <span className="eyebrow">{APP_VERSION} · {schoolAbbreviation(activeSchool)} · {activeSchool.name}</span>
-          <h1>{activeSchool.id === 'eduhk' ? '教大课程按官方单位归类' : '岭南课程加入中文参考名'}</h1>
-          <p>{activeSchool.description} 课程、收藏和生活内容都跟随当前学校切换，减少误看别校信息。</p>
+          <h1>{activeSchool.id === 'eduhk' ? '香港教育大学课程与生活指南' : '岭南大学课程与生活指南'}</h1>
+          <p>{activeSchool.description}</p>
           <SearchBox />
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
@@ -1015,7 +1015,7 @@ function HomePage({ activeSchool, onChooseSchool }: { activeSchool: School; onCh
               <strong>{programme.schoolId === 'eduhk' ? `${programme.medium} · ${getProgrammeTitle(programme)}` : getProgrammeTitle(programme)}</strong>
               {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
               <span>{programme.totalCredits ? `${programme.totalCredits} 学分` : `${programme.courseCount || 0} 门课程`}</span>
-              <small>{programme.schoolId === 'eduhk' ? getUnitText(programme) : `${formatFacultyName(programme.faculty)} · 中文参考译名`}</small>
+              <small>{programme.schoolId === 'eduhk' ? getUnitText(programme) : `${formatFacultyName(programme.faculty)} · 课程资料`}</small>
             </button>
           ))}
         </div>
