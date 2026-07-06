@@ -1546,8 +1546,47 @@ p {
   margin: 1rem 0;
 }
 
+.admin-login-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  padding: 1rem;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.admin-login-panel label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.admin-login-panel label span {
+  color: #5f5650;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
 .login-panel input {
   flex: 1;
+}
+
+.form-error,
+.login-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.form-error {
+  color: #a51f2f;
+  font-weight: 900;
+}
+
+.login-note {
+  color: #746b64;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .stats-grid {
@@ -1565,6 +1604,137 @@ p {
   display: block;
   margin-top: 0.3rem;
   color: #746b64;
+}
+
+.analytics-panel {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  padding: clamp(1rem, 2.6vw, 1.4rem);
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.8rem;
+  background: #fbfaf8;
+}
+
+.analytics-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.analytics-head h2,
+.analytics-card h3 {
+  margin: 0;
+  color: #312d2b;
+  letter-spacing: 0;
+}
+
+.analytics-head p {
+  margin: 0.35rem 0 0;
+  color: #746b64;
+  line-height: 1.6;
+}
+
+.analytics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.secondary-action.danger {
+  border-color: rgba(165, 31, 47, 0.25);
+  color: #a51f2f;
+}
+
+.secondary-action.danger:hover {
+  border-color: #a51f2f;
+  color: #fff;
+  background: #a51f2f;
+}
+
+.analytics-stats div {
+  background: #fff;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.85rem;
+}
+
+.analytics-card {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.7rem;
+  background: #fff;
+}
+
+.school-analytics-row {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(49, 45, 43, 0.08);
+}
+
+.school-analytics-row:last-child {
+  border-bottom: 0;
+}
+
+.school-analytics-row strong,
+.feature-bar-row strong {
+  color: #312d2b;
+}
+
+.school-analytics-row span,
+.feature-bar-row span {
+  color: #746b64;
+  font-size: 0.9rem;
+}
+
+.feature-bar-row {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.feature-bar-row > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.feature-bar-row i {
+  display: block;
+  height: 0.48rem;
+  min-width: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8f1d2c, #2f6f54);
+}
+
+.event-table {
+  overflow-x: auto;
+}
+
+.event-table > div {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1.2fr) minmax(6.5rem, 0.7fr) minmax(4.5rem, 0.45fr) minmax(10rem, 1fr) minmax(5.5rem, 0.55fr);
+  gap: 0.65rem;
+  min-width: 46rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(49, 45, 43, 0.08);
+}
+
+.event-table > div:first-child {
+  color: #312d2b;
+}
+
+.event-table span {
+  color: #5f5650;
+  overflow-wrap: anywhere;
 }
 
 .empty-state {
@@ -1634,8 +1804,15 @@ footer {
   .category-grid,
   .course-list,
   .post-grid,
-  .stats-grid {
+  .stats-grid,
+  .analytics-grid,
+  .analytics-head,
+  .admin-login-panel {
     grid-template-columns: 1fr;
+  }
+
+  .analytics-actions {
+    justify-content: flex-start;
   }
 }
 

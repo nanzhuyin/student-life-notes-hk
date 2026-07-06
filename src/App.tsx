@@ -14,10 +14,13 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
-const APP_VERSION = 'v1.06';
-const ADMIN_CODE = 'EDU-AIEP-2026';
+const APP_VERSION = 'v1.07';
+const ADMIN_USERNAME = 'nanzhuyin-admin';
+const ADMIN_PASSWORD_HASH = 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
+const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
+const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -90,6 +93,18 @@ type RouteState = {
   scrollMode: ScrollMode;
 };
 
+type AnalyticsEvent = {
+  id: string;
+  timestamp: string;
+  type: 'page_view' | 'page_leave' | 'school_switch' | 'favorite_toggle' | 'export';
+  schoolId: SchoolId;
+  routeName: string;
+  feature: string;
+  path: string;
+  targetId?: string;
+  durationSeconds?: number;
+};
+
 let pendingScrollMode: ScrollMode | null = null;
 let appNavigationDepth = 0;
 
@@ -130,6 +145,82 @@ function routeKeyFromUrl(url?: string) {
   } catch {
     return normalizeRouteKey();
   }
+}
+
+function getSessionId() {
+  try {
+    const existing = sessionStorage.getItem(ANALYTICS_SESSION_KEY);
+    if (existing) return existing;
+    const next = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem(ANALYTICS_SESSION_KEY, next);
+    return next;
+  } catch {
+    return 'session-unavailable';
+  }
+}
+
+function readAnalyticsEvents(): AnalyticsEvent[] {
+  try {
+    const raw = localStorage.getItem(ANALYTICS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as AnalyticsEvent[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAnalyticsEvents(events: AnalyticsEvent[]) {
+  try {
+    localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(events.slice(-3000)));
+  } catch {
+    // Ignore storage quota and private-mode failures.
+  }
+}
+
+function routeFeature(route: Route) {
+  if (route.name === 'home') return '首页';
+  if (route.name === 'courses') return '课程库';
+  if (route.name === 'course') return '课程详情';
+  if (route.name === 'section') return '生活分区';
+  if (route.name === 'post') return '生活内容详情';
+  if (route.name === 'search') return '搜索';
+  if (route.name === 'favorites') return '我的收藏';
+  if (route.name === 'admin') return '管理端';
+  if (route.name === 'policy') return '隐私与诚信';
+  return '关于';
+}
+
+function routeTarget(route: Route) {
+  if ('id' in route) return route.id;
+  if (route.name === 'search') return route.keyword;
+  return undefined;
+}
+
+function recordAnalyticsEvent(input: Omit<AnalyticsEvent, 'id' | 'timestamp' | 'path'> & { path?: string }) {
+  const event: AnalyticsEvent = {
+    ...input,
+    id: `${getSessionId()}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    path: input.path || normalizeRouteKey()
+  };
+  writeAnalyticsEvents(readAnalyticsEvents().concat(event));
+}
+
+async function hashText(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function saveScrollPosition(key = routeKeyFromUrl()) {
@@ -1180,30 +1271,130 @@ function FavoritesPage({
   );
 }
 
+function formatDuration(seconds: number) {
+  const safe = Math.max(0, Math.round(seconds || 0));
+  const minutes = Math.floor(safe / 60);
+  const rest = safe % 60;
+  return minutes ? `${minutes} 分 ${rest} 秒` : `${rest} 秒`;
+}
+
+function buildAnalyticsSummary(events: AnalyticsEvent[]) {
+  const pageViews = events.filter((event) => event.type === 'page_view');
+  const leaves = events.filter((event) => event.type === 'page_leave');
+  const totalDuration = leaves.reduce((sum, event) => sum + (event.durationSeconds || 0), 0);
+  const bySchool = platformData.schools.map((school) => {
+    const schoolViews = pageViews.filter((event) => event.schoolId === school.id);
+    const schoolDuration = leaves
+      .filter((event) => event.schoolId === school.id)
+      .reduce((sum, event) => sum + (event.durationSeconds || 0), 0);
+    return {
+      school,
+      views: schoolViews.length,
+      duration: schoolDuration,
+      average: schoolViews.length ? schoolDuration / schoolViews.length : 0
+    };
+  });
+  const featureMap = new Map<string, { feature: string; views: number; duration: number }>();
+  for (const view of pageViews) {
+    const item = featureMap.get(view.feature) || { feature: view.feature, views: 0, duration: 0 };
+    item.views += 1;
+    featureMap.set(view.feature, item);
+  }
+  for (const leave of leaves) {
+    const item = featureMap.get(leave.feature) || { feature: leave.feature, views: 0, duration: 0 };
+    item.duration += leave.durationSeconds || 0;
+    featureMap.set(leave.feature, item);
+  }
+  const features = Array.from(featureMap.values()).sort((a, b) => b.views - a.views || b.duration - a.duration);
+  return {
+    totalViews: pageViews.length,
+    totalDuration,
+    averageDuration: pageViews.length ? totalDuration / pageViews.length : 0,
+    bySchool,
+    features,
+    recent: events.slice(-12).reverse()
+  };
+}
+
+function analyticsToCsv(events: AnalyticsEvent[]) {
+  const header = ['id', 'timestamp', 'type', 'schoolId', 'routeName', 'feature', 'targetId', 'durationSeconds', 'path'];
+  const rows = events.map((event) => header.map((key) => {
+    const value = String((event as unknown as Record<string, unknown>)[key] ?? '');
+    return `"${value.replace(/"/g, '""')}"`;
+  }).join(','));
+  return [header.join(','), ...rows].join('\n');
+}
+
 function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void }) {
-  const [code, setCode] = useState('');
-  const [entered, setEntered] = useStoredState('student-life-notes:admin', false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [entered, setEntered] = useStoredState('student-life-notes:admin-session', false);
+  const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>(() => readAnalyticsEvents());
   const schoolCounts = platformData.schools.map((school) => ({
     school,
     programmes: getProgrammes(school.id).length,
     courses: getCourses(school.id).length
   }));
+  const analytics = useMemo(() => buildAnalyticsSummary(analyticsEvents), [analyticsEvents]);
+  const maxFeatureViews = Math.max(1, ...analytics.features.map((item) => item.views));
+  const refreshAnalytics = () => setAnalyticsEvents(readAnalyticsEvents());
+  const exportAnalytics = (format: 'json' | 'csv') => {
+    recordAnalyticsEvent({
+      type: 'export',
+      schoolId: activeSchool.id,
+      routeName: 'admin',
+      feature: `导出统计 ${format.toUpperCase()}`
+    });
+    const events = readAnalyticsEvents();
+    if (format === 'json') {
+      downloadTextFile(`student-life-analytics-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(events, null, 2), 'application/json;charset=utf-8');
+    } else {
+      downloadTextFile(`student-life-analytics-${new Date().toISOString().slice(0, 10)}.csv`, analyticsToCsv(events), 'text/csv;charset=utf-8');
+    }
+    refreshAnalytics();
+  };
+  const clearAnalytics = () => {
+    if (!confirm('确认清空当前浏览器里的统计事件？这个操作不会影响真实线上数据库，因为当前版本还没有后端。')) return;
+    writeAnalyticsEvents([]);
+    setAnalyticsEvents([]);
+  };
+  const login = async () => {
+    const passwordHash = await hashText(password);
+    if (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
+      setEntered(true);
+      setLoginError('');
+      setPassword('');
+      refreshAnalytics();
+      return;
+    }
+    setLoginError('账号或密码不正确');
+  };
 
   return (
     <section className="page-panel">
       <div className="page-title-block centered">
         <span className="eyebrow">管理视角</span>
-        <h1>{APP_VERSION} 内容工作台</h1>
-        <p>网页版先提供数据检查和视角切换；正式 CMS 后续再接入。</p>
+        <h1>{APP_VERSION} 内容与统计工作台</h1>
+        <p>当前静态版统计保存在本机浏览器。要查看所有用户的真实浏览量和停留时间，需要接入后端统计 API。</p>
       </div>
       <div className="page-toolbar-actions">
         <button className="secondary-action" onClick={() => go('/')}>用户视角</button>
       </div>
 
       {!entered && (
-        <div className="login-panel">
-          <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="输入演示邀请码" />
-          <button onClick={() => code.trim() === ADMIN_CODE ? setEntered(true) : alert('邀请码不正确')}>进入管理视角</button>
+        <div className="login-panel admin-login-panel">
+          <label>
+            <span>管理员账号</span>
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="输入管理员账号" autoComplete="username" />
+          </label>
+          <label>
+            <span>管理员密码</span>
+            <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="输入强密码" type="password" autoComplete="current-password" onKeyDown={(event) => { if (event.key === 'Enter') login(); }} />
+          </label>
+          <button onClick={login}>进入管理端</button>
+          {loginError && <p className="form-error">{loginError}</p>}
+          <p className="login-note">静态页面无法提供真正的权限安全；正式上线请改为后端登录、权限校验和服务端统计。</p>
         </div>
       )}
 
@@ -1215,6 +1406,62 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div><strong>{platformData.courses.length}</strong><span>课程</span></div>
             <div><strong>{platformData.sharedPosts.length}</strong><span>生活内容</span></div>
           </div>
+          <section className="analytics-panel">
+            <div className="analytics-head">
+              <div>
+                <span className="eyebrow">浏览统计</span>
+                <h2>本机访问数据</h2>
+                <p>记录页面浏览、学校切换、收藏和导出操作。当前事件数：{analyticsEvents.length}</p>
+              </div>
+              <div className="analytics-actions">
+                <button className="secondary-action" onClick={refreshAnalytics}>刷新</button>
+                <button className="secondary-action" onClick={() => exportAnalytics('json')}>导出 JSON</button>
+                <button className="secondary-action" onClick={() => exportAnalytics('csv')}>导出 CSV</button>
+                <button className="secondary-action danger" onClick={clearAnalytics}>清空本机统计</button>
+              </div>
+            </div>
+            <div className="stats-grid analytics-stats">
+              <div><strong>{analytics.totalViews}</strong><span>总浏览量</span></div>
+              <div><strong>{formatDuration(analytics.totalDuration)}</strong><span>总停留时间</span></div>
+              <div><strong>{formatDuration(analytics.averageDuration)}</strong><span>平均停留</span></div>
+              <div><strong>{analytics.features.length}</strong><span>打开过的功能</span></div>
+            </div>
+            <div className="analytics-grid">
+              <div className="analytics-card">
+                <h3>学校浏览量与停留</h3>
+                {analytics.bySchool.map((item) => (
+                  <div className="school-analytics-row" key={item.school.id}>
+                    <strong>{item.school.name}</strong>
+                    <span>{item.views} 次浏览 · {formatDuration(item.duration)} · 平均 {formatDuration(item.average)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="analytics-card">
+                <h3>功能打开排行</h3>
+                {analytics.features.slice(0, 8).map((item) => (
+                  <div className="feature-bar-row" key={item.feature}>
+                    <div><strong>{item.feature}</strong><span>{item.views} 次 · {formatDuration(item.duration)}</span></div>
+                    <i style={{ width: `${Math.max(8, Math.round((item.views / maxFeatureViews) * 100))}%` }}></i>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="analytics-card">
+              <h3>最近事件</h3>
+              <div className="event-table">
+                <div><strong>时间</strong><strong>类型</strong><strong>学校</strong><strong>功能</strong><strong>停留</strong></div>
+                {analytics.recent.map((event) => (
+                  <div key={event.id}>
+                    <span>{new Date(event.timestamp).toLocaleString()}</span>
+                    <span>{event.type}</span>
+                    <span>{event.schoolId.toUpperCase()}</span>
+                    <span>{event.feature}</span>
+                    <span>{event.durationSeconds ? formatDuration(event.durationSeconds) : '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
           <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
           <div className="programme-grid">
             {schoolCounts.map((item) => (
@@ -1313,13 +1560,54 @@ export default function App() {
     if (route.name === 'home') clearTransientFilters();
   }, [route.name]);
 
+  useEffect(() => {
+    if (!hasAcceptedAgreement) return;
+    const startedAt = Date.now();
+    const feature = routeFeature(route);
+    const targetId = routeTarget(route);
+    recordAnalyticsEvent({
+      type: 'page_view',
+      schoolId: activeSchoolId,
+      routeName: route.name,
+      feature,
+      targetId,
+      path: routeKey
+    });
+    return () => {
+      const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+      recordAnalyticsEvent({
+        type: 'page_leave',
+        schoolId: activeSchoolId,
+        routeName: route.name,
+        feature,
+        targetId,
+        durationSeconds,
+        path: routeKey
+      });
+    };
+  }, [activeSchoolId, hasAcceptedAgreement, route, routeKey]);
+
   const chooseSchool = (schoolId: SchoolId) => {
+    recordAnalyticsEvent({
+      type: 'school_switch',
+      schoolId,
+      routeName: route.name,
+      feature: '学校切换',
+      targetId: schoolId
+    });
     setActiveSchoolId(schoolId);
     if (route.name === 'course') go('/courses');
   };
 
   const toggleFavoriteCourse = (id: string) => {
     const next = favoriteCourseIds.includes(id) ? favoriteCourseIds.filter((item) => item !== id) : favoriteCourseIds.concat(id);
+    recordAnalyticsEvent({
+      type: 'favorite_toggle',
+      schoolId: activeSchoolId,
+      routeName: route.name,
+      feature: favoriteCourseIds.includes(id) ? '取消收藏' : '收藏课程',
+      targetId: id
+    });
     setFavoriteCourseIds(next);
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
   };
