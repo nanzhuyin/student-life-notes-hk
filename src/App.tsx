@@ -60,6 +60,7 @@ type Route =
   | { name: 'section'; id: string }
   | { name: 'post'; id: string }
   | { name: 'search'; keyword: string }
+  | { name: 'favorites' }
   | { name: 'admin' }
   | { name: 'about' };
 
@@ -90,7 +91,7 @@ function getRoute(): Route {
   if (path === 'category' && rest[0]) return { name: 'section', id: sectionIdByCategory[rest[0] as CategoryKey] || rest[0] };
   if (path === 'post' && rest[0]) return { name: 'post', id: decodeURIComponent(rest[0]) };
   if (path === 'search') return { name: 'search', keyword: new URLSearchParams(queryPart).get('q') || '' };
-  if (path === 'plan' || path === 'favorites') return { name: 'courses' };
+  if (path === 'plan' || path === 'favorites') return { name: 'favorites' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
   return { name: 'home' };
@@ -251,13 +252,14 @@ function Header({
       <button className="brand-button" onClick={() => go('/')}>
         <span className="brand-mark">v1</span>
         <span>
-          <strong>香港选课生活助手</strong>
+          <strong>香港生活信息汇总</strong>
           <small>{activeSchool.name} · Student Life Notes</small>
         </span>
       </button>
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
+        <button onClick={() => go('/favorites')}>我的收藏</button>
         <button onClick={() => go('/admin')}>管理视角</button>
       </nav>
       <div className="school-switcher">
@@ -312,16 +314,42 @@ function LandingPage({
   return (
     <main className="landing-shell">
       <section className="landing-page">
-        <div className="landing-bg-layer eduhk-bg" aria-hidden="true"></div>
-        <div className="landing-bg-layer lingnan-bg" aria-hidden="true"></div>
+        <div className="hk-sketch" aria-hidden="true">
+          <div className="sketch-sun"></div>
+          <div className="sketch-cloud cloud-a"></div>
+          <div className="sketch-cloud cloud-b"></div>
+          <div className="sketch-hills"></div>
+          <div className="sketch-skyline">
+            <span className="tower tall"></span>
+            <span className="tower slim"></span>
+            <span className="tower block"></span>
+            <span className="tower round"></span>
+            <span className="tower short"></span>
+          </div>
+          <div className="sketch-sign sign-food">茶餐厅</div>
+          <div className="sketch-sign sign-bus">巴士站</div>
+          <div className="sketch-tram">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div className="sketch-harbor">
+            <span className="wave wave-a"></span>
+            <span className="wave wave-b"></span>
+            <span className="wave wave-c"></span>
+          </div>
+          <div className="sketch-ferry">
+            <span></span>
+          </div>
+        </div>
         <div className="landing-shade" aria-hidden="true"></div>
 
         <div className="landing-copy">
           <div className="landing-overlay intro-panel">
-            <span className="landing-kicker">香港选课生活助手 v1</span>
-            <h1>把选课资料和香港生活经验放到同一个入口</h1>
+            <span className="landing-kicker">香港生活信息汇总 v1</span>
+            <h1>把香港生活信息和课程清单放到同一个入口</h1>
             <p>
-              当前支持香港教育大学和岭南大学。课程库和收藏按学校独立保存；
+              当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
               香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
             </p>
             <div className="landing-feature-grid">
@@ -345,7 +373,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私说明</strong>
-              <p>v1 不要求注册账号。课程收藏、是否确认协议等信息只保存在你当前浏览器的 localStorage 中。</p>
+              <p>v1 不要求注册账号。课程收藏保存在你当前浏览器；本次确认只在当前页面有效，刷新后会重新显示。</p>
             </div>
             <div>
               <strong>学术诚信</strong>
@@ -374,12 +402,6 @@ function LandingPage({
             确认进入
           </button>
 
-          <div className="photo-credit">
-            背景图来源：
-            <a href="https://commons.wikimedia.org/wiki/File:EdUHK_Campus_View.jpg" target="_blank" rel="noreferrer">EdUHK Campus View</a>
-            <span> / </span>
-            <a href="https://commons.wikimedia.org/wiki/File:Lingnan_University_Campus_Overview_201410.jpg" target="_blank" rel="noreferrer">Lingnan University Campus Overview</a>
-          </div>
         </div>
 
         {confirmOpen && (
@@ -450,8 +472,8 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">v1 · 双学校平台 / 网页版</span>
-          <h1>选课和香港生活信息，放到同一个入口</h1>
-          <p>先选学校，课程库和收藏独立保存；租房、通勤、美食、出行等生活内容共享给两个学校一起用。</p>
+          <h1>香港生活信息汇总，放到同一个入口</h1>
+          <p>先选学校查看课程清单，也可以收藏课程；租房、通勤、美食、出行等生活内容共享给两个学校一起用。</p>
           <SearchBox />
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
@@ -968,6 +990,51 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
   );
 }
 
+function FavoritesPage({
+  activeSchool,
+  favoriteCourseIds,
+  onToggleFavoriteCourse
+}: {
+  activeSchool: School;
+  favoriteCourseIds: string[];
+  onToggleFavoriteCourse: (id: string) => void;
+}) {
+  const schoolCourses = getCourses(activeSchool.id);
+  const favoriteCourses = schoolCourses.filter((course) => favoriteCourseIds.includes(course.id));
+
+  return (
+    <section className="page-panel">
+      <div className="page-title-block centered">
+        <span className="eyebrow">本机保存</span>
+        <h1>{activeSchool.shortName}我的收藏</h1>
+        <p>收藏只保存在当前浏览器，并按学校独立保存。</p>
+      </div>
+      <div className="page-toolbar-actions">
+        <button className="secondary-action" onClick={() => go('/courses')}>继续看课程</button>
+      </div>
+
+      {!favoriteCourses.length && (
+        <div className="empty-state">
+          <strong>暂无收藏课程</strong>
+          <span>去课程库里收藏几门，之后可以在这里快速打开。</span>
+        </div>
+      )}
+
+      <div className="course-list compact">
+        {favoriteCourses.map((course) => (
+          <article key={course.id} className="course-result with-action">
+            <button onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
+              <strong>{course.titleZh}</strong>
+              <span>{course.programmeTitle} · {formatCreditsText(course)}</span>
+            </button>
+            <button onClick={() => onToggleFavoriteCourse(course.id)}>取消收藏</button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void }) {
   const [code, setCode] = useState('');
   const [entered, setEntered] = useStoredState('student-life-notes:admin', false);
@@ -1025,7 +1092,7 @@ function AboutPage() {
       <button className="back-button" onClick={() => go('/')}>返回首页</button>
       <div className="page-title-block centered">
         <span className="eyebrow">v1 总结</span>
-        <h1>香港选课生活助手网页版</h1>
+        <h1>香港生活信息汇总网页版</h1>
         <p>由原微信小程序原型转换为 Vite + React + GitHub Pages 版本。</p>
       </div>
       <div className="about-card">
@@ -1048,20 +1115,11 @@ function EmptyPage({ title }: { title: string }) {
 
 export default function App() {
   const route = useRoute();
-  const [hasAcceptedAgreement, setHasAcceptedAgreement] = useStoredState('student-life-notes:accepted-agreement', false);
+  const [hasAcceptedAgreement, setHasAcceptedAgreement] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const activeSchool = getSchool(activeSchoolId);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (window.location.hostname === '127.0.0.1' && params.get('resetAgreement') === '1') {
-      localStorage.removeItem('student-life-notes:accepted-agreement');
-      setHasAcceptedAgreement(false);
-      setAgreementChecked(false);
-    }
-  }, []);
 
   useEffect(() => {
     try {
@@ -1124,11 +1182,18 @@ export default function App() {
         {route.name === 'section' && <SectionPage sectionId={route.id} />}
         {route.name === 'post' && <PostDetailPage id={route.id} />}
         {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} />}
+        {route.name === 'favorites' && (
+          <FavoritesPage
+            activeSchool={activeSchool}
+            favoriteCourseIds={favoriteCourseIds}
+            onToggleFavoriteCourse={toggleFavoriteCourse}
+          />
+        )}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
       </main>
       <footer>
-        <span>香港选课生活助手 v1</span>
+        <span>香港生活信息汇总 v1</span>
         <span>{DISCLAIMER}</span>
       </footer>
     </div>

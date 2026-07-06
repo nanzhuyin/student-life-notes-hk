@@ -61,50 +61,351 @@ button {
   overflow: visible;
 }
 
-.landing-bg-layer,
+.hk-sketch,
 .landing-shade {
   position: fixed;
   inset: 0;
 }
 
-.landing-bg-layer {
-  background-position: center;
-  background-size: cover;
-  opacity: 0;
-  transform: scale(1.03);
-  animation: campusFade 12s infinite;
+.hk-sketch {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 205, 119, 0.78) 0 9rem, transparent 9.2rem),
+    linear-gradient(180deg, #ffe7bd 0%, #f9c7bd 38%, #f6efe4 58%, #cfe8e0 100%);
 }
 
-.eduhk-bg {
-  background-image: url("/student-life-notes-hk/images/eduhk-campus.jpg");
+.hk-sketch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(143, 29, 44, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 29, 44, 0.055) 1px, transparent 1px);
+  background-size: 42px 42px;
+  opacity: 0.55;
 }
 
-.lingnan-bg {
-  background-image: url("/student-life-notes-hk/images/lingnan-campus.jpg");
-  animation-delay: 6s;
+.sketch-sun {
+  position: absolute;
+  top: 8vh;
+  left: 10vw;
+  width: clamp(5rem, 10vw, 9rem);
+  aspect-ratio: 1;
+  border: 3px solid rgba(143, 29, 44, 0.42);
+  border-radius: 50%;
+  background: rgba(255, 235, 168, 0.45);
+  animation: sunPulse 5.8s ease-in-out infinite;
+}
+
+.sketch-cloud {
+  position: absolute;
+  width: clamp(7rem, 16vw, 14rem);
+  height: clamp(2.4rem, 5vw, 4.2rem);
+  border: 3px solid rgba(143, 29, 44, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  animation: cloudDrift 22s linear infinite;
+}
+
+.sketch-cloud::before,
+.sketch-cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 0.55rem;
+  border: 3px solid rgba(143, 29, 44, 0.32);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sketch-cloud::before {
+  left: 1.2rem;
+  width: 3.2rem;
+  height: 2.8rem;
+}
+
+.sketch-cloud::after {
+  left: 4.2rem;
+  width: 4.6rem;
+  height: 3.6rem;
+}
+
+.cloud-a {
+  top: 11vh;
+  left: 42vw;
+}
+
+.cloud-b {
+  top: 24vh;
+  left: 72vw;
+  transform: scale(0.72);
+  animation-delay: -9s;
+}
+
+.sketch-hills {
+  position: absolute;
+  right: -6vw;
+  bottom: 31vh;
+  width: 58vw;
+  height: 18vh;
+  border-top: 4px solid rgba(46, 111, 84, 0.34);
+  border-radius: 54% 46% 0 0;
+  transform: rotate(-3deg);
+  opacity: 0.86;
+}
+
+.sketch-hills::before {
+  content: "";
+  position: absolute;
+  right: 16vw;
+  bottom: 0;
+  width: 42vw;
+  height: 12vh;
+  border-top: 4px solid rgba(46, 111, 84, 0.28);
+  border-radius: 62% 38% 0 0;
+}
+
+.sketch-skyline {
+  position: absolute;
+  right: 8vw;
+  bottom: 25vh;
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(0.45rem, 1vw, 0.9rem);
+  opacity: 0.86;
+}
+
+.tower {
+  position: relative;
+  display: block;
+  width: clamp(2.7rem, 5vw, 4.5rem);
+  border: 3px solid rgba(143, 29, 44, 0.42);
+  border-bottom-width: 4px;
+  border-radius: 0.55rem 0.55rem 0.18rem 0.18rem;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 0.95rem, rgba(143, 29, 44, 0.2) 0.95rem 1.1rem),
+    rgba(255, 255, 255, 0.23);
+  animation: windowGlow 4.8s ease-in-out infinite;
+}
+
+.tower.tall {
+  height: clamp(11rem, 26vh, 18rem);
+}
+
+.tower.slim {
+  width: clamp(1.9rem, 3vw, 2.8rem);
+  height: clamp(14rem, 32vh, 22rem);
+}
+
+.tower.block {
+  height: clamp(8rem, 20vh, 13rem);
+}
+
+.tower.round {
+  height: clamp(10rem, 24vh, 16rem);
+  border-radius: 999px 999px 0.2rem 0.2rem;
+}
+
+.tower.short {
+  height: clamp(6rem, 16vh, 10rem);
+}
+
+.sketch-sign {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 5.5rem;
+  min-height: 2.35rem;
+  border: 3px solid rgba(143, 29, 44, 0.5);
+  border-radius: 0.7rem;
+  color: #7d1c2b;
+  background: rgba(255, 249, 240, 0.7);
+  font-weight: 900;
+  box-shadow: 0 0.7rem 1.5rem rgba(71, 31, 22, 0.08);
+}
+
+.sign-food {
+  left: 10vw;
+  bottom: 30vh;
+  transform: rotate(-3deg);
+}
+
+.sign-bus {
+  right: 12vw;
+  bottom: 17vh;
+  transform: rotate(2deg);
+}
+
+.sketch-tram {
+  position: absolute;
+  left: -18rem;
+  bottom: 18vh;
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  width: clamp(13rem, 22vw, 19rem);
+  height: clamp(4.8rem, 9vw, 7rem);
+  padding: 1rem;
+  border: 4px solid rgba(143, 29, 44, 0.55);
+  border-radius: 1rem 1rem 0.4rem 0.4rem;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 1.2rem 2.6rem rgba(71, 31, 22, 0.1);
+  animation: tramPass 18s linear infinite;
+}
+
+.sketch-tram::before {
+  content: "";
+  position: absolute;
+  top: -2.8rem;
+  left: 18%;
+  width: 54%;
+  height: 2.6rem;
+  border-left: 3px solid rgba(143, 29, 44, 0.4);
+  border-right: 3px solid rgba(143, 29, 44, 0.4);
+  transform: skewX(-18deg);
+}
+
+.sketch-tram::after {
+  content: "";
+  position: absolute;
+  left: -15vw;
+  right: -15vw;
+  bottom: -0.85rem;
+  height: 3px;
+  background: rgba(143, 29, 44, 0.32);
+}
+
+.sketch-tram span {
+  flex: 1;
+  height: 58%;
+  border: 3px solid rgba(143, 29, 44, 0.38);
+  border-radius: 0.45rem;
+  background: rgba(255, 232, 205, 0.55);
+}
+
+.sketch-harbor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 17vh;
+  background: linear-gradient(180deg, rgba(103, 178, 190, 0.1), rgba(90, 163, 177, 0.34));
+}
+
+.wave {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 2.2rem;
+  background:
+    radial-gradient(circle at 1rem 1.1rem, transparent 0 1rem, rgba(47, 111, 84, 0.35) 1.05rem 1.18rem, transparent 1.22rem) 0 0 / 3.1rem 2.2rem repeat-x;
+  animation: waveSlide 9s linear infinite;
+}
+
+.wave-a {
+  top: 1.5rem;
+}
+
+.wave-b {
+  top: 4.2rem;
+  opacity: 0.78;
+  animation-duration: 12s;
+  animation-direction: reverse;
+}
+
+.wave-c {
+  top: 7rem;
+  opacity: 0.55;
+  animation-duration: 15s;
+}
+
+.sketch-ferry {
+  position: absolute;
+  left: 24vw;
+  bottom: 8vh;
+  width: clamp(9rem, 16vw, 13rem);
+  height: clamp(3.2rem, 6vw, 4.7rem);
+  border: 4px solid rgba(46, 111, 84, 0.42);
+  border-top-left-radius: 1.2rem;
+  border-top-right-radius: 1.2rem;
+  border-bottom-left-radius: 4rem;
+  border-bottom-right-radius: 4rem;
+  background: rgba(255, 255, 255, 0.35);
+  animation: ferryBob 5s ease-in-out infinite;
+}
+
+.sketch-ferry span {
+  position: absolute;
+  top: -2rem;
+  left: 25%;
+  width: 48%;
+  height: 2.2rem;
+  border: 3px solid rgba(46, 111, 84, 0.38);
+  border-radius: 0.6rem 0.6rem 0 0;
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .landing-shade {
   background:
-    linear-gradient(90deg, rgba(14, 12, 13, 0.86), rgba(14, 12, 13, 0.58) 48%, rgba(14, 12, 13, 0.32)),
-    linear-gradient(180deg, rgba(14, 12, 13, 0.15), rgba(14, 12, 13, 0.72));
+    linear-gradient(90deg, rgba(29, 20, 18, 0.78), rgba(29, 20, 18, 0.46) 48%, rgba(29, 20, 18, 0.2)),
+    linear-gradient(180deg, rgba(29, 20, 18, 0.08), rgba(29, 20, 18, 0.58));
 }
 
-@keyframes campusFade {
-  0% {
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  46% {
-    opacity: 1;
-  }
-  54% {
-    opacity: 0;
-  }
+@keyframes sunPulse {
+  0%,
   100% {
-    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes cloudDrift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -18vw 0;
+  }
+}
+
+@keyframes windowGlow {
+  0%,
+  100% {
+    filter: saturate(1);
+  }
+  50% {
+    filter: saturate(1.25) brightness(1.08);
+  }
+}
+
+@keyframes tramPass {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100vw + 32rem));
+  }
+}
+
+@keyframes waveSlide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(3.1rem);
+  }
+}
+
+@keyframes ferryBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-0.5rem) rotate(1deg);
   }
 }
 
@@ -282,18 +583,6 @@ button {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1rem;
-}
-
-.photo-credit {
-  margin-top: 1rem;
-  color: rgba(255, 255, 255, 0.66);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-.photo-credit a {
-  color: rgba(255, 255, 255, 0.92);
-  font-weight: 800;
 }
 
 .site-header {
@@ -1176,6 +1465,27 @@ footer {
     align-content: center;
   }
 
+  .sketch-skyline {
+    right: -6vw;
+    bottom: 22vh;
+    opacity: 0.58;
+  }
+
+  .sketch-tram {
+    bottom: 14vh;
+    opacity: 0.72;
+  }
+
+  .sign-food {
+    left: 6vw;
+    bottom: 24vh;
+  }
+
+  .sign-bus {
+    right: 6vw;
+    bottom: 12vh;
+  }
+
   .category-grid,
   .course-list,
   .post-grid,
@@ -1249,6 +1559,37 @@ footer {
 
   .landing-page {
     padding: 0.75rem;
+  }
+
+  .hk-sketch {
+    opacity: 0.9;
+  }
+
+  .landing-shade {
+    background:
+      linear-gradient(180deg, rgba(29, 20, 18, 0.48), rgba(29, 20, 18, 0.72)),
+      linear-gradient(90deg, rgba(29, 20, 18, 0.36), rgba(29, 20, 18, 0.16));
+  }
+
+  .sketch-skyline,
+  .sketch-sign {
+    display: none;
+  }
+
+  .sketch-tram {
+    width: 11rem;
+    height: 4.2rem;
+    bottom: 10vh;
+  }
+
+  .sketch-ferry {
+    left: 52vw;
+    bottom: 6vh;
+    width: 8rem;
+  }
+
+  .sketch-cloud {
+    opacity: 0.6;
   }
 
   .landing-overlay {
