@@ -8,7 +8,7 @@
       "name": "香港教育大学",
       "nameEn": "The Education University of Hong Kong",
       "accent": "#8f1d2c",
-      "description": "首版先做 MSc(AIEP) 研究生课程库，课程、收藏、计划独立保存。"
+      "description": "首版先做 MSc(AIEP) 研究生课程库，课程和收藏按学校独立保存。"
     },
     {
       "id": "lingnan",
@@ -16,7 +16,7 @@
       "name": "岭南大学",
       "nameEn": "Lingnan University",
       "accent": "#2f6f54",
-      "description": "从学生生活资料仓库导入岭南项目课程清单，课程、收藏、计划独立保存。"
+      "description": "从学生生活资料仓库导入岭南项目课程清单，课程和收藏按学校独立保存。"
     }
   ],
   "programmes": [

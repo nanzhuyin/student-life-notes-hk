@@ -60,7 +60,6 @@ type Route =
   | { name: 'section'; id: string }
   | { name: 'post'; id: string }
   | { name: 'search'; keyword: string }
-  | { name: 'plan' }
   | { name: 'admin' }
   | { name: 'about' };
 
@@ -91,7 +90,7 @@ function getRoute(): Route {
   if (path === 'category' && rest[0]) return { name: 'section', id: sectionIdByCategory[rest[0] as CategoryKey] || rest[0] };
   if (path === 'post' && rest[0]) return { name: 'post', id: decodeURIComponent(rest[0]) };
   if (path === 'search') return { name: 'search', keyword: new URLSearchParams(queryPart).get('q') || '' };
-  if (path === 'plan' || path === 'favorites') return { name: 'plan' };
+  if (path === 'plan' || path === 'favorites') return { name: 'courses' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
   return { name: 'home' };
@@ -259,7 +258,6 @@ function Header({
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
-        <button onClick={() => go('/plan')}>我的计划</button>
         <button onClick={() => go('/admin')}>管理视角</button>
       </nav>
       <div className="school-switcher">
@@ -323,12 +321,12 @@ function LandingPage({
             <span className="landing-kicker">香港选课生活助手 v1</span>
             <h1>把选课资料和香港生活经验放到同一个入口</h1>
             <p>
-              当前支持香港教育大学和岭南大学。课程库、收藏和选课计划按学校独立保存；
+              当前支持香港教育大学和岭南大学。课程库和收藏按学校独立保存；
               香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
             </p>
             <div className="landing-feature-grid">
               <span>专业课程知识库</span>
-              <span>课程收藏与计划</span>
+              <span>课程收藏</span>
               <span>共享生活指南</span>
               <span>学校平台切换</span>
             </div>
@@ -347,7 +345,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私说明</strong>
-              <p>v1 不要求注册账号。课程收藏、选课计划、是否确认协议等信息只保存在你当前浏览器的 localStorage 中。</p>
+              <p>v1 不要求注册账号。课程收藏、是否确认协议等信息只保存在你当前浏览器的 localStorage 中。</p>
             </div>
             <div>
               <strong>学术诚信</strong>
@@ -453,7 +451,7 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
         <div className="hero-copy">
           <span className="eyebrow">v1 · 双学校平台 / 网页版</span>
           <h1>选课和香港生活信息，放到同一个入口</h1>
-          <p>先选学校，课程库、收藏和计划独立保存；租房、通勤、美食、出行等生活内容共享给两个学校一起用。</p>
+          <p>先选学校，课程库和收藏独立保存；租房、通勤、美食、出行等生活内容共享给两个学校一起用。</p>
           <SearchBox />
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
@@ -519,15 +517,11 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
 function CoursesPage({
   activeSchool,
   favoriteCourseIds,
-  plannedCourseIds,
-  onToggleFavoriteCourse,
-  onTogglePlannedCourse
+  onToggleFavoriteCourse
 }: {
   activeSchool: School;
   favoriteCourseIds: string[];
-  plannedCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
-  onTogglePlannedCourse: (id: string) => void;
 }) {
   const routeProgramme = new URLSearchParams(window.location.hash.split('?')[1] || '').get('programme') || '';
   const programmes = useMemo(() => getProgrammes(activeSchool.id), [activeSchool.id]);
@@ -696,9 +690,6 @@ function CoursesPage({
               <button className={favoriteCourseIds.includes(course.id) ? 'active' : ''} onClick={() => onToggleFavoriteCourse(course.id)}>
                 {favoriteCourseIds.includes(course.id) ? '已收藏' : '收藏'}
               </button>
-              <button className={plannedCourseIds.includes(course.id) ? 'active' : ''} onClick={() => onTogglePlannedCourse(course.id)}>
-                {plannedCourseIds.includes(course.id) ? '已加入' : '加入计划'}
-              </button>
             </div>
           </article>
         ))}
@@ -710,15 +701,11 @@ function CoursesPage({
 function CourseDetailPage({
   id,
   favoriteCourseIds,
-  plannedCourseIds,
-  onToggleFavoriteCourse,
-  onTogglePlannedCourse
+  onToggleFavoriteCourse
 }: {
   id: string;
   favoriteCourseIds: string[];
-  plannedCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
-  onTogglePlannedCourse: (id: string) => void;
 }) {
   const course = getCourse(id);
 
@@ -756,9 +743,6 @@ function CourseDetailPage({
       <div className="detail-actions">
         <button className={`primary-action ${favoriteCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onToggleFavoriteCourse(course.id)}>
           {favoriteCourseIds.includes(course.id) ? '已收藏' : '收藏课程'}
-        </button>
-        <button className={`secondary-action ${plannedCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onTogglePlannedCourse(course.id)}>
-          {plannedCourseIds.includes(course.id) ? '已加入计划' : '加入计划'}
         </button>
       </div>
     </article>
@@ -961,65 +945,6 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
   );
 }
 
-function PlanPage({
-  activeSchool,
-  favoriteCourseIds,
-  plannedCourseIds,
-  onToggleFavoriteCourse,
-  onTogglePlannedCourse
-}: {
-  activeSchool: School;
-  favoriteCourseIds: string[];
-  plannedCourseIds: string[];
-  onToggleFavoriteCourse: (id: string) => void;
-  onTogglePlannedCourse: (id: string) => void;
-}) {
-  const schoolCourses = getCourses(activeSchool.id);
-  const favoriteCourses = schoolCourses.filter((course) => favoriteCourseIds.includes(course.id));
-  const plannedCourses = schoolCourses.filter((course) => plannedCourseIds.includes(course.id));
-  const plannedCredits = plannedCourses.reduce((sum, course) => sum + (course.credits || 0), 0);
-
-  return (
-    <section className="page-panel">
-      <div className="page-title-block centered">
-        <span className="eyebrow">本机保存</span>
-        <h1>{activeSchool.shortName}我的计划</h1>
-        <p>{activeSchool.id === 'eduhk' ? `AIEP 当前计划 ${plannedCredits} / 24 学分。` : `岭南当前计划 ${plannedCourses.length} 门课程。`}</p>
-      </div>
-      <div className="page-toolbar-actions">
-        <button className="secondary-action" onClick={() => go('/courses')}>继续选课</button>
-      </div>
-
-      <section className="section">
-        <div className="section-head"><h2>已加入计划</h2><p>按当前学校独立保存。</p></div>
-        <CourseMiniList courses={plannedCourses} actionText="移除" onAction={onTogglePlannedCourse} />
-      </section>
-
-      <section className="section">
-        <div className="section-head"><h2>收藏课程</h2><p>收藏也按学校独立保存。</p></div>
-        <CourseMiniList courses={favoriteCourses} actionText="取消收藏" onAction={onToggleFavoriteCourse} />
-      </section>
-    </section>
-  );
-}
-
-function CourseMiniList({ courses, actionText, onAction }: { courses: Course[]; actionText: string; onAction: (id: string) => void }) {
-  if (!courses.length) return <div className="empty-state"><strong>暂无课程</strong><span>去课程库添加几门。</span></div>;
-  return (
-    <div className="course-list compact">
-      {courses.map((course) => (
-        <article key={course.id} className="course-result with-action">
-          <button onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
-            <strong>{course.titleZh}</strong>
-            <span>{course.programmeTitle} · {formatCreditsText(course)}</span>
-          </button>
-          <button onClick={() => onAction(course.id)}>{actionText}</button>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void }) {
   const [code, setCode] = useState('');
   const [entered, setEntered] = useStoredState('student-life-notes:admin', false);
@@ -1082,7 +1007,7 @@ function AboutPage() {
       </div>
       <div className="about-card">
         <p>{DISCLAIMER}</p>
-        <p>v1 支持香港教育大学与岭南大学两个平台。课程库、收藏和计划按学校独立；生活类内容共享。</p>
+        <p>v1 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容共享。</p>
         <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条共享生活内容。</p>
       </div>
     </section>
@@ -1105,7 +1030,6 @@ export default function App() {
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const activeSchool = getSchool(activeSchoolId);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
-  const [plannedCourseIds, setPlannedCourseIds] = useStoredState<string[]>(getStorageKey('planned-courses', activeSchoolId), []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1119,10 +1043,8 @@ export default function App() {
   useEffect(() => {
     try {
       setFavoriteCourseIds(JSON.parse(localStorage.getItem(getStorageKey('favorite-courses', activeSchoolId)) || '[]'));
-      setPlannedCourseIds(JSON.parse(localStorage.getItem(getStorageKey('planned-courses', activeSchoolId)) || '[]'));
     } catch {
       setFavoriteCourseIds([]);
-      setPlannedCourseIds([]);
     }
   }, [activeSchoolId]);
 
@@ -1139,12 +1061,6 @@ export default function App() {
     const next = favoriteCourseIds.includes(id) ? favoriteCourseIds.filter((item) => item !== id) : favoriteCourseIds.concat(id);
     setFavoriteCourseIds(next);
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
-  };
-
-  const togglePlannedCourse = (id: string) => {
-    const next = plannedCourseIds.includes(id) ? plannedCourseIds.filter((item) => item !== id) : plannedCourseIds.concat(id);
-    setPlannedCourseIds(next);
-    localStorage.setItem(getStorageKey('planned-courses', activeSchoolId), JSON.stringify(next));
   };
 
   if (!hasAcceptedAgreement) {
@@ -1172,32 +1088,19 @@ export default function App() {
           <CoursesPage
             activeSchool={activeSchool}
             favoriteCourseIds={favoriteCourseIds}
-            plannedCourseIds={plannedCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
-            onTogglePlannedCourse={togglePlannedCourse}
           />
         )}
         {route.name === 'course' && (
           <CourseDetailPage
             id={route.id}
             favoriteCourseIds={favoriteCourseIds}
-            plannedCourseIds={plannedCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
-            onTogglePlannedCourse={togglePlannedCourse}
           />
         )}
         {route.name === 'section' && <SectionPage sectionId={route.id} />}
         {route.name === 'post' && <PostDetailPage id={route.id} />}
         {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} />}
-        {route.name === 'plan' && (
-          <PlanPage
-            activeSchool={activeSchool}
-            favoriteCourseIds={favoriteCourseIds}
-            plannedCourseIds={plannedCourseIds}
-            onToggleFavoriteCourse={toggleFavoriteCourse}
-            onTogglePlannedCourse={togglePlannedCourse}
-          />
-        )}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
       </main>
