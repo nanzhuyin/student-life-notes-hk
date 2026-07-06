@@ -14,7 +14,7 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
-const APP_VERSION = 'v1.07';
+const APP_VERSION = 'v1.08';
 const ADMIN_USERNAME = 'nanzhuyin-admin';
 const ADMIN_PASSWORD_HASH = 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
@@ -403,7 +403,7 @@ function uniqueCompact(values: Array<string | undefined | null>) {
 function formatCreditsText(course: Course) {
   if (typeof course.credits === 'number' && course.credits > 0) return `${course.credits} 学分`;
   const text = course.creditsText.trim();
-  if (!text || text.includes('待官方资料核对')) return '学分待补充';
+  if (!text) return '以项目说明为准';
   return text
     .replace(/\bcps\b/gi, '学分')
     .replace(/\bcredits?\b/gi, '学分');
@@ -421,7 +421,11 @@ function formatFacultyName(value = '') {
     '跨院 / 独立项目': '其他',
     其他: '其他'
   };
-  return facultyMap[value] || value || '学院待补充';
+  return facultyMap[value] || value || '其他';
+}
+
+function displayCourseInfo(value: string) {
+  return value.trim() || '以项目说明为准';
 }
 
 function getUnitText(item: { faculty?: string; unitName?: string; unitLabel?: string; parentUnit?: string }) {
@@ -461,6 +465,10 @@ function formatFacultyText(text = '') {
   }).reduce((current, [from, to]) => current.split(from).join(to), text);
 }
 
+function schoolAbbreviation(school: School) {
+  return school.id === 'eduhk' ? 'EdUHK' : 'LU';
+}
+
 function Header({
   activeSchool,
   onChooseSchool
@@ -474,7 +482,7 @@ function Header({
         <span className="brand-mark">{APP_VERSION}</span>
         <span>
           <strong>香港生活信息汇总</strong>
-          <small>{activeSchool.name} · Student Life Notes</small>
+          <small>{schoolAbbreviation(activeSchool)} · {activeSchool.name}</small>
         </span>
       </button>
       <nav className="top-nav">
@@ -606,7 +614,7 @@ function LandingPage({
             </div>
             <div>
               <strong>信息核对</strong>
-              <p>课程学分、开课学期、先修要求、毕业要求等必须以学校官方最新资料为准；不确定字段会明确标注待核对。</p>
+              <p>课程学分、开课学期、先修要求、毕业要求等必须以学校官方最新资料为准。</p>
             </div>
             <div>
               <strong>学校关系</strong>
@@ -668,7 +676,10 @@ function SchoolPanel({
     <section className="school-panel">
       <div>
         <span className="eyebrow">当前平台</span>
-        <h2>{activeSchool.name}</h2>
+        <h2 className="school-title-line">
+          {activeSchool.name}
+          <span>{schoolAbbreviation(activeSchool)}</span>
+        </h2>
         <p>{activeSchool.description}</p>
       </div>
       <div className="school-card-row">
@@ -678,7 +689,7 @@ function SchoolPanel({
             className={`school-card ${activeSchool.id === school.id ? 'active' : ''}`}
             onClick={() => onChooseSchool(school.id)}
           >
-            <span className="school-card-code">{school.id === 'eduhk' ? 'EdUHK' : 'LU'}</span>
+            <span className="school-card-code">{schoolAbbreviation(school)}</span>
             <strong>{school.name}</strong>
             <span>{school.nameEn}</span>
             <small>{getProgrammes(school.id).length} 个项目 · {getCourses(school.id).length} 门课程</small>
@@ -699,7 +710,7 @@ function HomePage({ activeSchool, onChooseSchool }: { activeSchool: School; onCh
     <>
       <section className={`hero school-hero ${activeSchool.id}`}>
         <div className="hero-copy">
-          <span className="eyebrow">{APP_VERSION} · {activeSchool.name}</span>
+          <span className="eyebrow">{APP_VERSION} · {schoolAbbreviation(activeSchool)} · {activeSchool.name}</span>
           <h1>{activeSchool.id === 'eduhk' ? '教大课程按官方单位归类' : '岭南课程加入中文参考名'}</h1>
           <p>{activeSchool.description} 课程、收藏和生活内容都跟随当前学校切换，减少误看别校信息。</p>
           <SearchBox />
@@ -808,7 +819,7 @@ function CoursesPage({
   const { programmeId, levelFilter, facultyFilter, typeKey, keyword } = filters;
 
   const levelOptions = useMemo(
-    () => uniqueCompact(programmes.flatMap((programme) => (programme.studyModes.length ? programme.studyModes : ['学习模式待核对']))),
+    () => uniqueCompact(programmes.flatMap((programme) => (programme.studyModes.length ? programme.studyModes : ['以项目说明为准']))),
     [programmes]
   );
 
@@ -820,7 +831,7 @@ function CoursesPage({
         const matchesLevel =
           levelFilter === 'all' ||
           programme.studyModes.includes(levelFilter) ||
-          (!programme.studyModes.length && levelFilter === '学习模式待核对');
+          (!programme.studyModes.length && levelFilter === '以项目说明为准');
         const matchesFaculty = facultyFilter === 'all' || programme.faculty === facultyFilter;
         return matchesLevel && matchesFaculty;
       }),
@@ -916,7 +927,7 @@ function CoursesPage({
           <p>{activeProgramme.mediumDetail}</p>
           <div className="tag-row">
             <span>{getUnitText(activeProgramme)}</span>
-            <span>{activeProgramme.studyModes.join(' / ') || '学习模式待核对'}</span>
+            <span>{activeProgramme.studyModes.join(' / ') || '以项目说明为准'}</span>
             <span>{activeProgramme.totalCredits ? `${activeProgramme.totalCredits} 学分` : `${activeProgramme.courseCount || courses.length} 门课程`}</span>
           </div>
           {activeProgramme.unitNote && <small>{activeProgramme.unitNote}</small>}
@@ -957,7 +968,7 @@ function CoursesPage({
                 <span>{formatCreditsText(course)}</span>
               </div>
               {getCourseSubtitle(course) && <em>{getCourseSubtitle(course)}</em>}
-              <small>{course.courseCode}</small>
+              {course.courseCode && <small>{course.courseCode}</small>}
               <p>{formatFacultyText(course.description)}</p>
               <div className="tag-row">
                 <span>{course.type}</span>
@@ -1002,7 +1013,7 @@ function CourseDetailPage({
           <span>{formatCreditsText(course)}</span>
           <span>{course.medium}</span>
           <span>{course.required ? '必修' : '可选'}</span>
-          <span>{course.courseCode}</span>
+          {course.courseCode && <span>{course.courseCode}</span>}
         </div>
       </section>
 
@@ -1014,8 +1025,8 @@ function CourseDetailPage({
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
           <div><dt>学院 / 单位</dt><dd>{getUnitText(course)}</dd></div>
           {course.parentUnit && <div><dt>上级单位</dt><dd>{course.parentUnit}</dd></div>}
-          <div><dt>开课学期</dt><dd>{course.semester}</dd></div>
-          <div><dt>先修要求</dt><dd>{course.prerequisites}</dd></div>
+          <div><dt>开课学期</dt><dd>{displayCourseInfo(course.semester)}</dd></div>
+          <div><dt>先修要求</dt><dd>{displayCourseInfo(course.prerequisites)}</dd></div>
           <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
           <div><dt>来源</dt><dd>{course.sourceUrl}</dd></div>
         </dl>
@@ -1031,7 +1042,7 @@ function CourseDetailPage({
 }
 
 function PostGrid({ posts }: { posts: SharedPost[] }) {
-  if (!posts.length) return <div className="empty-state"><strong>暂无内容</strong><span>后续可以继续补充。</span></div>;
+  if (!posts.length) return <div className="empty-state"><strong>暂无内容</strong><span>当前筛选下没有可显示内容。</span></div>;
 
   return (
     <div className="post-grid">
@@ -1511,7 +1522,7 @@ function PolicyPage() {
       <div className="page-title-block centered">
         <span className="eyebrow">Privacy & Academic Integrity</span>
         <h1>隐私政策与学术诚信说明</h1>
-        <p>这份说明适用于当前 {APP_VERSION} 本地静态版本，也会作为后续接入云开发或 CMS 时的基础规则。</p>
+        <p>这份说明适用于当前 {APP_VERSION} 本地静态版本，也可作为接入云开发或 CMS 时的基础规则。</p>
       </div>
       <div className="policy-grid">
         {policyItems.map(([title, text]) => (
