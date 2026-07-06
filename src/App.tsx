@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import postsData from './data/posts.json';
 import platformDataJson from './data/platformData.json';
 import type {
@@ -16,6 +16,7 @@ import type {
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const ADMIN_CODE = 'EDU-AIEP-2026';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
+const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -79,6 +80,16 @@ type SectionFilterState = {
   keyword: string;
 };
 
+type ScrollMode = 'top' | 'restore';
+
+type RouteState = {
+  route: Route;
+  key: string;
+  scrollMode: ScrollMode;
+};
+
+let pendingScrollMode: ScrollMode | null = null;
+
 function getRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, '');
   const [routePart = '', queryPart = ''] = hash.split('?');
@@ -97,7 +108,52 @@ function getRoute(): Route {
   return { name: 'home' };
 }
 
+function normalizeRouteKey(hash = window.location.hash) {
+  let value = hash || '#/';
+  if (!value.startsWith('#')) value = `#${value}`;
+  return value === '#' ? '#/' : value;
+}
+
+function routeKeyForPath(path: string) {
+  if (path.startsWith('#')) return normalizeRouteKey(path);
+  return normalizeRouteKey(`#${path.startsWith('/') ? path : `/${path}`}`);
+}
+
+function routeKeyFromUrl(url?: string) {
+  if (!url) return normalizeRouteKey();
+  try {
+    return normalizeRouteKey(new URL(url).hash);
+  } catch {
+    return normalizeRouteKey();
+  }
+}
+
+function saveScrollPosition(key = routeKeyFromUrl()) {
+  try {
+    sessionStorage.setItem(`${SCROLL_STORAGE_PREFIX}${key}`, String(window.scrollY || 0));
+  } catch {
+    // Ignore private-mode storage failures; scrolling still works for forward navigation.
+  }
+}
+
+function getSavedScrollPosition(key: string) {
+  try {
+    const value = Number(sessionStorage.getItem(`${SCROLL_STORAGE_PREFIX}${key}`) || '0');
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function go(path: string) {
+  const nextKey = routeKeyForPath(path);
+  if (nextKey === routeKeyFromUrl()) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    return;
+  }
+
+  saveScrollPosition();
+  pendingScrollMode = 'top';
   window.location.hash = path;
 }
 
@@ -106,15 +162,28 @@ function normalize(value: string) {
 }
 
 function useRoute() {
-  const [route, setRoute] = useState<Route>(() => getRoute());
+  const [state, setState] = useState<RouteState>(() => ({
+    route: getRoute(),
+    key: routeKeyFromUrl(),
+    scrollMode: 'top'
+  }));
 
   useEffect(() => {
-    const onHashChange = () => setRoute(getRoute());
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
+    const onHashChange = (event: HashChangeEvent) => {
+      saveScrollPosition(routeKeyFromUrl(event.oldURL));
+      const nextKey = routeKeyFromUrl(event.newURL);
+      const scrollMode = pendingScrollMode || 'restore';
+      pendingScrollMode = null;
+      setState({ route: getRoute(), key: nextKey, scrollMode });
+    };
+
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  return route;
+  return state;
 }
 
 function useStoredState<T>(key: string, fallback: T) {
@@ -1129,12 +1198,18 @@ function EmptyPage({ title }: { title: string }) {
 }
 
 export default function App() {
-  const route = useRoute();
+  const { route, key: routeKey, scrollMode } = useRoute();
   const [hasAcceptedAgreement, setHasAcceptedAgreement] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const activeSchool = getSchool(activeSchoolId);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
+
+  useLayoutEffect(() => {
+    if (!hasAcceptedAgreement) return;
+    const top = scrollMode === 'restore' ? getSavedScrollPosition(routeKey) : 0;
+    window.scrollTo({ top, left: 0, behavior: 'auto' });
+  }, [hasAcceptedAgreement, routeKey, scrollMode]);
 
   useEffect(() => {
     try {
