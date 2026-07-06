@@ -15,6 +15,8 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const ADMIN_CODE = 'EDU-AIEP-2026';
+const EDUHK_CAMPUS_IMAGE = 'https://commons.wikimedia.org/wiki/Special:FilePath/EdUHK%20Campus%20View.jpg';
+const LINGNAN_CAMPUS_IMAGE = 'https://commons.wikimedia.org/wiki/Special:FilePath/Lingnan%20University%20Campus%20Overview%20201410.jpg';
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -218,6 +220,88 @@ function SearchBox({ initialValue = '' }: { initialValue?: string }) {
       />
       <button onClick={submit}>搜索</button>
     </div>
+  );
+}
+
+function LandingPage({
+  accepted,
+  onAcceptedChange,
+  onEnter
+}: {
+  accepted: boolean;
+  onAcceptedChange: (accepted: boolean) => void;
+  onEnter: () => void;
+}) {
+  return (
+    <main className="landing-shell">
+      <section className="landing-slide eduhk-bg">
+        <div className="landing-overlay">
+          <span className="landing-kicker">香港选课生活助手 v1</span>
+          <h1>把选课资料和香港生活经验放到同一个入口</h1>
+          <p>
+            当前支持香港教育大学和岭南大学。课程库、收藏和选课计划按学校独立保存；
+            香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
+          </p>
+          <div className="landing-feature-grid">
+            <span>专业课程知识库</span>
+            <span>课程收藏与计划</span>
+            <span>共享生活指南</span>
+            <span>学校平台切换</span>
+          </div>
+          <div className="scroll-hint">向下滚动查看岭南大学背景和使用协议</div>
+        </div>
+      </section>
+
+      <section className="landing-slide lingnan-bg">
+        <div className="landing-overlay agreement-panel">
+          <span className="landing-kicker">进入前确认</span>
+          <h1>隐私与学术诚信协议</h1>
+          <p>
+            你现在可以不注册、不登录，直接进入查看。进入前请确认你理解：本工具是非官方学生信息整理工具，
+            不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明。
+          </p>
+
+          <div className="agreement-list">
+            <div>
+              <strong>隐私说明</strong>
+              <p>v1 不要求注册账号。课程收藏、选课计划、是否确认协议等信息只保存在你当前浏览器的 localStorage 中。</p>
+            </div>
+            <div>
+              <strong>学术诚信</strong>
+              <p>本工具只帮助查阅和整理公开课程信息，不能用于代写作业、规避学校规则、伪造成绩或任何学术不端行为。</p>
+            </div>
+            <div>
+              <strong>信息核对</strong>
+              <p>课程学分、开课学期、先修要求、毕业要求等必须以学校官方最新资料为准；不确定字段会明确标注待核对。</p>
+            </div>
+            <div>
+              <strong>学校关系</strong>
+              <p>本网站不使用学校官方 logo，不声称获得香港教育大学或岭南大学授权、认可或背书。</p>
+            </div>
+          </div>
+
+          <label className="agreement-check">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(event) => onAcceptedChange(event.target.checked)}
+            />
+            <span>我已阅读并同意以上隐私与学术诚信协议，明白本工具仅供参考。</span>
+          </label>
+
+          <button className="enter-app-button" disabled={!accepted} onClick={onEnter}>
+            确认并进入查看
+          </button>
+
+          <div className="photo-credit">
+            背景图来源：
+            <a href="https://commons.wikimedia.org/wiki/File:EdUHK_Campus_View.jpg" target="_blank" rel="noreferrer">EdUHK Campus View</a>
+            <span> / </span>
+            <a href="https://commons.wikimedia.org/wiki/File:Lingnan_University_Campus_Overview_201410.jpg" target="_blank" rel="noreferrer">Lingnan University Campus Overview</a>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -740,6 +824,8 @@ function EmptyPage({ title }: { title: string }) {
 
 export default function App() {
   const route = useRoute();
+  const [hasAcceptedAgreement, setHasAcceptedAgreement] = useStoredState('student-life-notes:accepted-agreement', false);
+  const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const activeSchool = getSchool(activeSchoolId);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
@@ -770,6 +856,22 @@ export default function App() {
     setPlannedCourseIds(next);
     localStorage.setItem(getStorageKey('planned-courses', activeSchoolId), JSON.stringify(next));
   };
+
+  if (!hasAcceptedAgreement) {
+    return (
+      <div className="app-shell landing-mode">
+        <LandingPage
+          accepted={agreementChecked}
+          onAcceptedChange={setAgreementChecked}
+          onEnter={() => {
+            if (!agreementChecked) return;
+            setHasAcceptedAgreement(true);
+            go('/');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">

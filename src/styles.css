@@ -36,6 +36,190 @@ button {
   min-height: 100vh;
 }
 
+.landing-mode {
+  overflow: hidden;
+}
+
+.landing-shell {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  background: #171314;
+}
+
+.landing-slide {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 4rem);
+  scroll-snap-align: start;
+  background-position: center;
+  background-size: cover;
+}
+
+.landing-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(14, 12, 13, 0.86), rgba(14, 12, 13, 0.5) 48%, rgba(14, 12, 13, 0.16)),
+    linear-gradient(180deg, rgba(14, 12, 13, 0.15), rgba(14, 12, 13, 0.72));
+}
+
+.eduhk-bg {
+  background-image: url("https://commons.wikimedia.org/wiki/Special:FilePath/EdUHK%20Campus%20View.jpg");
+}
+
+.lingnan-bg {
+  background-image: url("https://commons.wikimedia.org/wiki/Special:FilePath/Lingnan%20University%20Campus%20Overview%20201410.jpg");
+}
+
+.landing-overlay {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: min(720px, 100%);
+  padding: clamp(1.35rem, 4vw, 3rem);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.9rem;
+  color: #fff;
+  background: rgba(24, 20, 21, 0.72);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+}
+
+.landing-kicker {
+  display: inline-flex;
+  margin-bottom: 0.95rem;
+  padding: 0.42rem 0.7rem;
+  border-radius: 0.55rem;
+  color: #fff;
+  background: rgba(143, 29, 44, 0.9);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.landing-overlay h1 {
+  max-width: 11em;
+  margin-bottom: 1rem;
+  font-size: clamp(2.35rem, 7vw, 5.2rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.agreement-panel h1 {
+  max-width: 14em;
+  font-size: clamp(2.1rem, 5vw, 4rem);
+}
+
+.landing-overlay p {
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.landing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 1.3rem 0;
+}
+
+.landing-feature-grid span {
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.65rem;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 900;
+}
+
+.scroll-hint {
+  width: fit-content;
+  margin-top: 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.55rem;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.92rem;
+}
+
+.agreement-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.1rem 0;
+}
+
+.agreement-list div {
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.agreement-list strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.agreement-list p {
+  margin-bottom: 0;
+  font-size: 0.96rem;
+  line-height: 1.65;
+}
+
+.agreement-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.13);
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.55;
+}
+
+.agreement-check input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.2rem;
+  accent-color: #8f1d2c;
+}
+
+.enter-app-button {
+  width: 100%;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.95rem 1.1rem;
+  color: #fff;
+  background: #8f1d2c;
+  font-weight: 900;
+}
+
+.enter-app-button:disabled {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.photo-credit {
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.photo-credit a {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -756,5 +940,21 @@ footer {
   .info-list div {
     grid-template-columns: 1fr;
     gap: 0.25rem;
+  }
+
+  .landing-slide {
+    padding: 0.75rem;
+  }
+
+  .landing-overlay {
+    padding: 1rem;
+  }
+
+  .landing-overlay h1 {
+    font-size: 2.25rem;
+  }
+
+  .landing-feature-grid {
+    grid-template-columns: 1fr;
   }
 }
