@@ -375,10 +375,14 @@ button {
 .back-button,
 .inline-actions button,
 .login-panel button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(49, 45, 43, 0.1);
   border-radius: 0.6rem;
   padding: 0.62rem 0.9rem;
   color: #504944;
+  text-align: center;
   font-weight: 800;
   background: #fff;
 }
@@ -573,8 +577,19 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 1.1fr);
   gap: 1rem;
+  align-items: center;
   margin-top: 1rem;
   padding: 1.2rem;
+}
+
+.school-panel > div:first-child {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.school-panel .school-card {
+  text-align: center;
 }
 
 .school-panel h2,
