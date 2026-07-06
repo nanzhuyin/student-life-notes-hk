@@ -45,8 +45,15 @@ export interface Programme {
   schoolId: SchoolId;
   school: string;
   faculty: string;
+  unitName?: string;
+  unitType?: string;
+  unitLabel?: string;
+  parentUnit?: string;
+  unitNote?: string;
   title: string;
+  titleZh?: string;
   titleEn?: string;
+  translationNote?: string;
   medium: string;
   mediumDetail: string;
   programmeCodes: string[];
@@ -73,6 +80,11 @@ export interface Course {
   schoolId: SchoolId;
   school: string;
   faculty?: string;
+  unitName?: string;
+  unitType?: string;
+  unitLabel?: string;
+  parentUnit?: string;
+  unitNote?: string;
   title: string;
   titleZh: string;
   type: string;

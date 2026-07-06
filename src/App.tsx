@@ -14,7 +14,7 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
-const APP_VERSION = 'v1.05';
+const APP_VERSION = 'v1.06';
 const ADMIN_CODE = 'EDU-AIEP-2026';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
@@ -64,7 +64,8 @@ type Route =
   | { name: 'search'; keyword: string }
   | { name: 'favorites' }
   | { name: 'admin' }
-  | { name: 'about' };
+  | { name: 'about' }
+  | { name: 'policy' };
 
 type CourseFilterState = {
   programmeId: string;
@@ -107,6 +108,7 @@ function getRoute(): Route {
   if (path === 'plan' || path === 'favorites') return { name: 'favorites' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
+  if (path === 'policy') return { name: 'policy' };
   return { name: 'home' };
 }
 
@@ -323,9 +325,38 @@ function formatFacultyName(value = '') {
     社科方向: '社会科学院',
     数据科学方向: '数据科学学院',
     跨学科方向: '跨学科研究学院',
-    研究生项目方向: '研究生院'
+    研究生项目方向: '研究生院',
+    '校级中心': '校级中心',
+    '跨院 / 独立项目': '其他',
+    其他: '其他'
   };
   return facultyMap[value] || value || '学院待补充';
+}
+
+function getUnitText(item: { faculty?: string; unitName?: string; unitLabel?: string; parentUnit?: string }) {
+  const faculty = formatFacultyName(item.faculty || '');
+  const unitName = item.unitName || item.faculty || '';
+  const unitLabel = item.unitLabel || (faculty.includes('学院') ? '学院' : '单位');
+  if (!unitName || unitName === item.faculty || unitName === faculty) return `${unitLabel}：${faculty}`;
+  return `${faculty} · ${unitLabel}：${unitName}`;
+}
+
+function getProgrammeTitle(programme: { schoolId: SchoolId; title: string; titleZh?: string }) {
+  if (programme.schoolId === 'lingnan' && programme.titleZh && programme.titleZh !== programme.title) return programme.titleZh;
+  return programme.title;
+}
+
+function getProgrammeSubtitle(programme: { schoolId: SchoolId; title: string; titleZh?: string; titleEn?: string }) {
+  if (programme.schoolId === 'lingnan' && programme.titleZh && programme.titleZh !== programme.title) return programme.title;
+  return programme.titleEn && programme.titleEn !== programme.title ? programme.titleEn : '';
+}
+
+function getCourseTitle(course: Course) {
+  return course.titleZh || course.title;
+}
+
+function getCourseSubtitle(course: Course) {
+  return course.titleZh && course.titleZh !== course.title ? course.title : '';
 }
 
 function formatFacultyText(text = '') {
@@ -359,6 +390,7 @@ function Header({
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
+        <button onClick={() => go('/policy')}>隐私与诚信</button>
         <button onClick={() => go('/admin')}>管理视角</button>
       </nav>
       <div className="school-switcher">
@@ -446,10 +478,10 @@ function LandingPage({
         <div className="landing-copy">
           <div className="landing-overlay intro-panel">
             <span className="landing-kicker">香港生活信息汇总 {APP_VERSION}</span>
-            <h1>把香港生活信息和课程清单放到同一个入口</h1>
+            <h1>选课、租房、通勤和新生事项，一个入口先看清楚</h1>
             <p>
               当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
-              租房、通勤、美食、出行等生活内容会按当前学校分别显示。
+              租房、通勤、美食、出行等生活内容会按当前学校分别显示。所有课程字段都保留来源和核对日期。
             </p>
             <div className="landing-feature-grid">
               <span>专业课程知识库</span>
@@ -457,12 +489,16 @@ function LandingPage({
               <span>生活指南</span>
               <span>学校平台切换</span>
             </div>
+            <div className="landing-policy-note">
+              <strong>使用边界</strong>
+              <span>非官方、非注册制、本机保存收藏；课程决策最终以学校官网、handbook 和项目办公室通知为准。</span>
+            </div>
           </div>
         </div>
 
         <div className="landing-overlay agreement-panel">
           <span className="landing-kicker">进入前确认</span>
-          <h1>隐私与学术诚信协议</h1>
+          <h1>隐私政策与学术诚信</h1>
           <p>
             你现在可以不注册、不登录，直接进入查看。进入前请确认你理解：本工具是非官方学生信息整理工具，
             不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明。
@@ -470,12 +506,12 @@ function LandingPage({
 
           <div className="agreement-list">
             <div>
-              <strong>隐私说明</strong>
-              <p>{APP_VERSION} 不要求注册账号。课程收藏保存在你当前浏览器；本次确认只在当前页面有效，刷新后会重新显示。</p>
+              <strong>隐私政策</strong>
+              <p>{APP_VERSION} 不要求注册账号，不收集姓名、学号、证件号或联系方式。课程收藏只保存在当前浏览器本机存储中。</p>
             </div>
             <div>
-              <strong>学术诚信</strong>
-              <p>本工具只帮助查阅和整理公开课程信息，不能用于代写作业、规避学校规则、伪造成绩或任何学术不端行为。</p>
+              <strong>避免学术不端</strong>
+              <p>本工具只整理公开信息，不能用于代写作业、规避学校规则、伪造成绩、复制课程作业或任何违反学术诚信的行为。</p>
             </div>
             <div>
               <strong>信息核对</strong>
@@ -493,10 +529,10 @@ function LandingPage({
               checked={accepted}
               onChange={(event) => onAcceptedChange(event.target.checked)}
             />
-            <span>我已阅读并同意以上隐私与学术诚信协议，明白本工具仅供参考。</span>
+            <span><strong>我已阅读并同意</strong> 隐私政策与学术诚信说明，明白本工具仅供参考。</span>
           </label>
 
-          <button className="enter-app-button" onClick={() => setConfirmOpen(true)}>
+          <button className="enter-app-button" disabled={!accepted} onClick={() => setConfirmOpen(true)}>
             确认进入
           </button>
 
@@ -551,8 +587,10 @@ function SchoolPanel({
             className={`school-card ${activeSchool.id === school.id ? 'active' : ''}`}
             onClick={() => onChooseSchool(school.id)}
           >
+            <span className="school-card-code">{school.id === 'eduhk' ? 'EdUHK' : 'LU'}</span>
             <strong>{school.name}</strong>
             <span>{school.nameEn}</span>
+            <small>{getProgrammes(school.id).length} 个项目 · {getCourses(school.id).length} 门课程</small>
           </button>
         ))}
       </div>
@@ -560,7 +598,7 @@ function SchoolPanel({
   );
 }
 
-function HomePage({ activeSchool }: { activeSchool: School }) {
+function HomePage({ activeSchool, onChooseSchool }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void }) {
   const programmes = getProgrammes(activeSchool.id);
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id);
@@ -568,11 +606,11 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
 
   return (
     <>
-      <section className="hero">
+      <section className={`hero school-hero ${activeSchool.id}`}>
         <div className="hero-copy">
-          <span className="eyebrow">{APP_VERSION} · 双学校平台 / 网页版</span>
-          <h1>香港生活信息汇总，放到同一个入口</h1>
-          <p>先选学校查看课程清单，也可以收藏课程；生活内容按当前学校显示，避免混在一起看错。</p>
+          <span className="eyebrow">{APP_VERSION} · {activeSchool.name}</span>
+          <h1>{activeSchool.id === 'eduhk' ? '教大课程按官方单位归类' : '岭南课程加入中文参考名'}</h1>
+          <p>{activeSchool.description} 课程、收藏和生活内容都跟随当前学校切换，减少误看别校信息。</p>
           <SearchBox />
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
@@ -582,12 +620,13 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
         </div>
         <div className="hero-visual" aria-hidden="true">
           <div className="visual-map">
-            <span>EdUHK</span>
-            <span>LU</span>
-            <span>Life Notes</span>
+            <span>{activeSchool.id === 'eduhk' ? 'FEHD / FHM / FLASS' : '文科 / 商科 / 社科'}</span>
+            <span>{activeSchool.id === 'eduhk' ? 'Academies / Centres' : '数据科学 / 跨学科'}</span>
+            <span>{visibleSharedPosts.length} 条生活内容</span>
           </div>
         </div>
       </section>
+      <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
 
       <section className="section">
         <div className="section-head">
@@ -616,9 +655,10 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
         <div className="programme-grid">
           {programmes.slice(0, 4).map((programme) => (
             <button key={programme.id} className="programme-card" onClick={() => go(`/courses?programme=${encodeURIComponent(programme.id)}`)}>
-              <strong>{programme.schoolId === 'eduhk' ? `${programme.medium} · ${programme.title}` : programme.title}</strong>
-              <span>{programme.schoolId === 'eduhk' ? `${programme.totalCredits} cps` : `${programme.courseCount || 0} 门课程`}</span>
-              <small>{programme.faculty}</small>
+              <strong>{programme.schoolId === 'eduhk' ? `${programme.medium} · ${getProgrammeTitle(programme)}` : getProgrammeTitle(programme)}</strong>
+              {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
+              <span>{programme.totalCredits ? `${programme.totalCredits} 学分` : `${programme.courseCount || 0} 门课程`}</span>
+              <small>{programme.schoolId === 'eduhk' ? getUnitText(programme) : `${formatFacultyName(programme.faculty)} · 中文参考译名`}</small>
             </button>
           ))}
         </div>
@@ -740,7 +780,7 @@ function CoursesPage({
         </div>
 
         <div className="filter-row">
-          <span className="filter-label">学院</span>
+          <span className="filter-label">学院 / 学系 / 单位</span>
           <div className="filter-chips">
             <button className={facultyFilter === 'all' ? 'active' : ''} onClick={() => updateCourseFilters({ facultyFilter: 'all' })}>全部</button>
             {facultyOptions.map((faculty) => (
@@ -767,7 +807,7 @@ function CoursesPage({
             <span>项目</span>
             <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
               {programmeOptions.map((programme) => (
-                <option key={programme.id} value={programme.id}>{programme.title}</option>
+                <option key={programme.id} value={programme.id}>{getProgrammeTitle(programme)}</option>
               ))}
             </select>
           </label>
@@ -780,13 +820,16 @@ function CoursesPage({
 
       {activeProgramme && (
         <section className="programme-summary">
-          <strong>{activeProgramme.title}</strong>
+          <strong>{getProgrammeTitle(activeProgramme)}</strong>
+          {getProgrammeSubtitle(activeProgramme) && <em>{getProgrammeSubtitle(activeProgramme)}</em>}
           <p>{activeProgramme.mediumDetail}</p>
           <div className="tag-row">
-            <span>{formatFacultyName(activeProgramme.faculty)}</span>
+            <span>{getUnitText(activeProgramme)}</span>
             <span>{activeProgramme.studyModes.join(' / ') || '学习模式待核对'}</span>
             <span>{activeProgramme.totalCredits ? `${activeProgramme.totalCredits} 学分` : `${activeProgramme.courseCount || courses.length} 门课程`}</span>
           </div>
+          {activeProgramme.unitNote && <small>{activeProgramme.unitNote}</small>}
+          {activeProgramme.translationNote && <small>{activeProgramme.translationNote}</small>}
           <small>{formatFacultyText(activeProgramme.requirements.note)}</small>
         </section>
       )}
@@ -819,14 +862,16 @@ function CoursesPage({
           <article key={course.id} className="course-card">
             <button className="course-main" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
               <div className="course-head">
-                <strong>{course.titleZh}</strong>
+                <strong>{getCourseTitle(course)}</strong>
                 <span>{formatCreditsText(course)}</span>
               </div>
+              {getCourseSubtitle(course) && <em>{getCourseSubtitle(course)}</em>}
               <small>{course.courseCode}</small>
               <p>{formatFacultyText(course.description)}</p>
               <div className="tag-row">
                 <span>{course.type}</span>
                 <span>{course.medium}</span>
+                <span>{getUnitText(course)}</span>
                 <span>{course.required ? '必修' : '可选'}</span>
               </div>
             </button>
@@ -860,8 +905,8 @@ function CourseDetailPage({
       <button className="back-button" onClick={() => goBack('/courses')}>返回课程库</button>
       <section className="detail-head course-detail-head">
         <span className="pill">{course.school} · {course.type}</span>
-        <h1>{course.titleZh}</h1>
-        {course.title !== course.titleZh && <p>{course.title}</p>}
+        <h1>{getCourseTitle(course)}</h1>
+        {getCourseSubtitle(course) && <p>{getCourseSubtitle(course)}</p>}
         <div className="tag-row">
           <span>{formatCreditsText(course)}</span>
           <span>{course.medium}</span>
@@ -876,7 +921,8 @@ function CourseDetailPage({
         <h2>选课信息</h2>
         <dl className="info-list">
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
-          <div><dt>学院</dt><dd>{formatFacultyName(course.faculty)}</dd></div>
+          <div><dt>学院 / 单位</dt><dd>{getUnitText(course)}</dd></div>
+          {course.parentUnit && <div><dt>上级单位</dt><dd>{course.parentUnit}</dd></div>}
           <div><dt>开课学期</dt><dd>{course.semester}</dd></div>
           <div><dt>先修要求</dt><dd>{course.prerequisites}</dd></div>
           <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
@@ -1074,7 +1120,7 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
         <div className="course-list compact">
           {courses.map((course) => (
             <button key={course.id} className="course-result" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
-              <strong>{course.titleZh}</strong>
+              <strong>{getCourseTitle(course)}</strong>
               <span>{course.programmeTitle} · {course.type}</span>
             </button>
           ))}
@@ -1123,7 +1169,7 @@ function FavoritesPage({
         {favoriteCourses.map((course) => (
           <article key={course.id} className="course-result with-action">
             <button onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
-              <strong>{course.titleZh}</strong>
+              <strong>{getCourseTitle(course)}</strong>
               <span>{course.programmeTitle} · {formatCreditsText(course)}</span>
             </button>
             <button onClick={() => onToggleFavoriteCourse(course.id)}>取消收藏</button>
@@ -1198,6 +1244,35 @@ function AboutPage() {
         <p>{DISCLAIMER}</p>
         <p>{APP_VERSION} 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
         <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
+        <button className="secondary-action" onClick={() => go('/policy')}>查看隐私与学术诚信说明</button>
+      </div>
+    </section>
+  );
+}
+
+function PolicyPage() {
+  const policyItems = [
+    ['隐私政策', '本工具当前不要求注册，不收集姓名、学号、证件号码、联系方式或定位信息。课程收藏仅保存在当前浏览器本机存储中，换设备或清理浏览器数据后不会自动同步。'],
+    ['公开资料边界', '课程名称、项目要求、学分、开课学期、先修要求和来源链接来自公开网页或学生整理资料；所有重要选课决定必须回到学校官网、handbook、课程系统或项目办公室通知核对。'],
+    ['避免学术不端', '本工具只能帮助查找、对照和整理课程信息。不得用于代写作业、生成可直接提交的作业、伪造成绩、规避考核、冒充学校通知，或帮助任何违反学术诚信的行为。'],
+    ['非官方说明', '本网站不使用学校官方 logo，不声称获得香港教育大学、岭南大学或任何机构授权、认可或背书。页面颜色和名称仅用于区分信息来源。']
+  ];
+
+  return (
+    <section className="policy-page">
+      <button className="back-button" onClick={() => goBack('/')}>返回</button>
+      <div className="page-title-block centered">
+        <span className="eyebrow">Privacy & Academic Integrity</span>
+        <h1>隐私政策与学术诚信说明</h1>
+        <p>这份说明适用于当前 {APP_VERSION} 本地静态版本，也会作为后续接入云开发或 CMS 时的基础规则。</p>
+      </div>
+      <div className="policy-grid">
+        {policyItems.map(([title, text]) => (
+          <article className="policy-card" key={title}>
+            <strong>{title}</strong>
+            <p>{text}</p>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -1269,7 +1344,7 @@ export default function App() {
     <div className="app-shell">
       <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} />
       <main>
-        {route.name === 'home' && <HomePage activeSchool={activeSchool} />}
+        {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'courses' && (
           <CoursesPage
             activeSchool={activeSchool}
@@ -1296,6 +1371,7 @@ export default function App() {
         )}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
+        {route.name === 'policy' && <PolicyPage />}
       </main>
       <footer>
         <span>香港生活信息汇总 {APP_VERSION}</span>
