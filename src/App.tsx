@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.13';
+const APP_VERSION = 'v1.14';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -858,10 +858,6 @@ function RegistrationPage({
         <span className="eyebrow">{APP_NAME} {APP_VERSION}</span>
         <div className="registration-brand">
           <img src={APP_LOGO_SRC} alt="Otter logo" />
-          <div>
-            <h1>创建你的 Otter 账号</h1>
-            <p>使用真实邮箱、用户名和自设密码登录；不发送验证码。</p>
-          </div>
         </div>
         <div className="registration-form">
           <label>
@@ -886,7 +882,6 @@ function RegistrationPage({
           </label>
           <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '进入 Otter'}</button>
           {error && <p className="form-error">{error}</p>}
-          <p className="login-note">邮箱不会发送验证码；后端会检查邮箱域名是否真实可用。已有邮箱再次进入时需要密码正确。</p>
         </div>
       </section>
     </main>
