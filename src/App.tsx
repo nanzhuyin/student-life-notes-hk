@@ -15,7 +15,8 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.16';
+const APP_VERSION = 'v1.17';
+const BETA_NOTICE = '内测版本：站内信箱、在线投稿处理、用户注册和服务端统计暂未开放；如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -768,8 +769,8 @@ function LandingPage({
               <span>学校平台切换</span>
             </div>
             <div className="landing-policy-note">
-              <strong>使用边界</strong>
-              <span>非官方、非注册制、本机保存收藏；课程决策最终以学校官网、handbook 和项目办公室通知为准。</span>
+              <strong>内测说明</strong>
+              <span>{BETA_NOTICE}</span>
             </div>
           </div>
         </div>
@@ -785,7 +786,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 使用邮箱、用户名和学校创建浏览身份，不发送验证码；建议和投稿会提交到管理端处理。</p>
+              <p>{APP_VERSION} 为静态内测版本，暂不开放注册、站内信箱、在线投稿处理和服务端统计；反馈请通过微信群联系管理人员。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -1892,113 +1893,18 @@ function PolicyPage() {
   );
 }
 
-function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeSchool: School }) {
-  const [open, setOpen] = useState(false);
-  const [type, setType] = useState('建议');
-  const [contact, setContact] = useState(user.email || '');
-  const [message, setMessage] = useState('');
-  const [mailboxTickets, setMailboxTickets] = useState<SupportTicket[]>([]);
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const refreshMailbox = async () => {
-    try {
-      setMailboxTickets(await fetchMailbox(user));
-    } catch {
-      setMailboxTickets([]);
-    }
-  };
-
-  useEffect(() => {
-    void refreshMailbox();
-    const timer = window.setInterval(() => void refreshMailbox(), 12000);
-    return () => window.clearInterval(timer);
-  }, [user.id, user.email]);
-
-  const submit = async () => {
-    setError('');
-    setStatus('');
-    if (!contact.trim()) {
-      setError('请填写联系方式，推荐邮箱，也可以填写微信、电话或其他方式');
-      return;
-    }
-    if (message.trim().length < 5) {
-      setError('请填写更完整的投稿或建议内容');
-      return;
-    }
-    setSaving(true);
-    try {
-      await submitSupportTicket({
-        userId: user.id,
-        username: user.username,
-        schoolId: activeSchool.id,
-        type,
-        contact: contact.trim(),
-        message: message.trim()
-      });
-      setMessage('');
-      setStatus(API_BASE_URL ? '已发送到管理端' : '已保存到本机管理端备用数据');
-      await refreshMailbox();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '发送失败');
-    } finally {
-      setSaving(false);
-    }
-  };
-
+function SupportPanel({ activeSchool }: { user: RegisteredUser; activeSchool: School }) {
   return (
     <section className="support-panel">
       <div>
-        <span className="eyebrow">Support</span>
-        <h2>投稿和建议</h2>
-        <p>发现信息需要更新，或想补充路线、课程经验、生活建议，可以在这里发送给管理端处理。</p>
+        <span className="eyebrow">Internal Beta</span>
+        <h2>内测版本</h2>
+        <p>{BETA_NOTICE}</p>
       </div>
-      <button className="secondary-action" onClick={() => setOpen((value) => !value)}>
-        {open ? '收起窗口' : `站内信箱 ${mailboxTickets.length ? `(${mailboxTickets.length})` : ''}`}
-      </button>
-      {open && (
-        <div className="support-workspace">
-          <div className="support-form">
-            <label>
-              <span>类型</span>
-              <select value={type} onChange={(event) => setType(event.target.value)}>
-                <option>投稿</option>
-                <option>建议</option>
-                <option>纠错</option>
-                <option>合作</option>
-                <option>其他</option>
-              </select>
-            </label>
-            <label>
-              <span>联系方式</span>
-              <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，也可以填写微信 / 电话 / 其他" />
-            </label>
-            <label className="wide">
-              <span>内容</span>
-              <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写下投稿内容、建议、纠错位置或想补充的信息" rows={5}></textarea>
-            </label>
-            <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '发送中' : '发送给管理端'}</button>
-            {error && <p className="form-error">{error}</p>}
-            {status && <p className="form-success">{status}</p>}
-          </div>
-          <div className="mailbox-panel">
-            <div className="section-head compact">
-              <h3>站内信箱</h3>
-              <button className="secondary-action" onClick={() => void refreshMailbox()}>刷新</button>
-            </div>
-            {mailboxTickets.length === 0 && <p className="login-note">还没有提交记录。管理端回复后会显示在这里。</p>}
-            {mailboxTickets.map((ticket) => (
-              <article className="mailbox-card" key={ticket.id}>
-                <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
-                <span>{new Date(ticket.createdAt).toLocaleString()}</span>
-                <p>{ticket.message}</p>
-                {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
-              </article>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="support-disabled-note">
+        <strong>{schoolAbbreviation(activeSchool)} 当前反馈方式</strong>
+        <span>站内信箱、在线投稿、处理状态回执暂不开放。请在微信群联系管理人员，并说明学校、项目、问题位置和建议内容。</span>
+      </div>
     </section>
   );
 }
@@ -2127,6 +2033,10 @@ export default function App() {
   return (
     <div className="app-shell">
       <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} />
+      <section className="beta-banner">
+        <strong>内测版本</strong>
+        <span>{BETA_NOTICE}</span>
+      </section>
       <main>
         {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'courses' && (

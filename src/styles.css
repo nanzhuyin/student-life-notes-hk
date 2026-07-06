@@ -40,6 +40,27 @@ button {
   min-height: 100vh;
 }
 
+.beta-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: min(1180px, calc(100% - 2rem));
+  margin: 1rem auto 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(143, 29, 44, 0.18);
+  border-radius: 0.7rem;
+  color: #6e2530;
+  background: #fff7f0;
+}
+
+.beta-banner strong {
+  flex: 0 0 auto;
+}
+
+.beta-banner span {
+  line-height: 1.55;
+}
+
 .landing-shell {
   width: 100%;
   min-height: 100vh;
@@ -1933,6 +1954,22 @@ p {
   margin: 0;
   color: #746b64;
   line-height: 1.7;
+}
+
+.support-disabled-note {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 34rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(47, 111, 84, 0.18);
+  border-radius: 0.7rem;
+  color: #275844;
+  background: #f2fbf5;
+}
+
+.support-disabled-note span {
+  color: #50615b;
+  line-height: 1.65;
 }
 
 .support-panel .support-form {
