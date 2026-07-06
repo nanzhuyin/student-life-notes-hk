@@ -407,13 +407,7 @@ function SchoolPanel({
   );
 }
 
-function HomePage({
-  activeSchool,
-  onChooseSchool
-}: {
-  activeSchool: School;
-  onChooseSchool: (schoolId: SchoolId) => void;
-}) {
+function HomePage({ activeSchool }: { activeSchool: School }) {
   const programmes = getProgrammes(activeSchool.id);
   const courses = getCourses(activeSchool.id);
   const recommended = platformData.sharedPosts.filter((post) => post.recommended).slice(0, 4);
@@ -435,13 +429,11 @@ function HomePage({
         <div className="hero-visual" aria-hidden="true">
           <div className="visual-map">
             <span>EdUHK</span>
-            <span>Lingnan</span>
+            <span>LU</span>
             <span>Shared Life Notes</span>
           </div>
         </div>
       </section>
-
-      <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
 
       <section className="section">
         <div className="section-head">
@@ -1102,7 +1094,7 @@ export default function App() {
     <div className="app-shell">
       <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} />
       <main>
-        {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
+        {route.name === 'home' && <HomePage activeSchool={activeSchool} />}
         {route.name === 'courses' && (
           <CoursesPage
             activeSchool={activeSchool}
