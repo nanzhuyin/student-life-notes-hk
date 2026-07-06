@@ -1,10 +1,10 @@
 export type CategoryKey =
-  | 'housing'
-  | 'commute'
-  | 'food'
-  | 'travel'
-  | 'adaptation'
-  | 'hk-life';
+  | 'hk_rent'
+  | 'sz_commute'
+  | 'hk_life'
+  | 'nearby_food'
+  | 'transport_spots'
+  | 'course_catalog';
 
 export interface NotePost {
   id: string;
