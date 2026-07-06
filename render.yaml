@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: otter-api-student-life-notes-hk
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm run start:api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: ALLOWED_ORIGINS
+        value: https://nanzhuyin.github.io
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_ACCOUNTS_JSON
+        sync: false

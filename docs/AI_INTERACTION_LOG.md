@@ -12,9 +12,9 @@
 
 每一次准备 push，都必须递增一个小版本，并在提交信息和日志中注明。
 
-- 上一次版本：`v1.10`
-- 本次 Pages 部署入口修正版本：`v1.11`
-- 下一次修改：`v1.12`
+- 上一次版本：`v1.11`
+- 本次 Supabase 与 Render 后端部署准备版本：`v1.12`
+- 下一次修改：`v1.13`
 
 每次版本递增时至少同步这些位置：
 
@@ -110,6 +110,23 @@ http://127.0.0.1:5173/student-life-notes-hk/#/
 ```
 
 ## 版本日志
+
+### v1.12
+
+日期：2026-07-07
+
+改动范围：
+
+- 后端新增 Supabase 存储适配；配置 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY` 后，注册用户、浏览统计、投稿建议和站内信箱都会写入 Supabase。
+- 保留本地 JSON 存储作为开发兜底，未配置 Supabase 时仍可本地测试。
+- 新增 `supabase/schema.sql`，包含用户、统计事件和工单表结构。
+- 新增 `render.yaml`，用于 Render 免费 Web Service 部署 Node API。
+- README 更新为 v1.12，补充 Supabase / Render 部署环境变量。
+
+测试：
+
+- `npm run build` 通过。
+- 本地 API 回归验证通过：健康检查、邮箱注册、统计写入、投稿建议、管理员登录、工单回复、站内信箱读取、dashboard 读取。
 
 ### v1.11
 

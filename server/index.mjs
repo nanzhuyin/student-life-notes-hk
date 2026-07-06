@@ -1,14 +1,19 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { resolveMx } from 'node:dns/promises';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createStorage } from './storage.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
+const storage = createStorage({
+  dbFile: DB_FILE,
+  supabaseUrl: process.env.SUPABASE_URL || '',
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+});
 const adminTokens = new Map();
 const defaultAdminAccounts = [
   { username: 'otter-admin', passwordHash: 'aee6f0ecf531724f671db225e30f91d3cf21e89bb0ab639431ad237e9174caa3', role: 'owner' },
@@ -16,12 +21,6 @@ const defaultAdminAccounts = [
   { username: 'support-desk', passwordHash: '2639c55742f526036b0ecc605e00b6fad2df03b81cdfbd72cdf3ec3f0c6aaba8', role: 'support' }
 ];
 const adminAccounts = process.env.ADMIN_ACCOUNTS_JSON ? JSON.parse(process.env.ADMIN_ACCOUNTS_JSON) : defaultAdminAccounts;
-
-const defaultDb = {
-  users: [],
-  analyticsEvents: [],
-  supportTickets: []
-};
 
 function hashText(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -57,19 +56,6 @@ async function assertReachableEmailDomain(email) {
 
 function isStrongEnoughPassword(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
-}
-
-async function readDb() {
-  try {
-    return { ...defaultDb, ...JSON.parse(await readFile(DB_FILE, 'utf8')) };
-  } catch {
-    return structuredClone(defaultDb);
-  }
-}
-
-async function writeDb(db) {
-  await mkdir(dirname(DB_FILE), { recursive: true });
-  await writeFile(DB_FILE, JSON.stringify(db, null, 2) + '\n');
 }
 
 function corsHeaders(req) {
@@ -150,7 +136,7 @@ async function route(req, res) {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(req, res, 200, { ok: true, name: 'Otter API', time: nowIso() });
+    sendJson(req, res, 200, { ok: true, name: 'Otter API', storage: storage.type, time: nowIso() });
     return;
   }
 
@@ -165,9 +151,8 @@ async function route(req, res) {
     if (username.length < 2) throw new Error('用户名至少 2 个字符');
     if (!isStrongEnoughPassword(password)) throw new Error('密码至少 8 位，并包含字母和数字');
     if (!['eduhk', 'lingnan'].includes(schoolId)) throw new Error('请选择学校');
-    const db = await readDb();
     const passwordHash = hashText(password);
-    let user = db.users.find((item) => item.email === email);
+    let user = await storage.findUserByEmail(email);
     if (user) {
       if (!safeCompare(user.passwordHash || '', passwordHash)) throw new Error('邮箱或密码不正确');
       user.username = username;
@@ -175,9 +160,8 @@ async function route(req, res) {
       user.updatedAt = nowIso();
     } else {
       user = { id: createId('user'), email, username, schoolId, passwordHash, createdAt: nowIso(), updatedAt: nowIso() };
-      db.users.push(user);
     }
-    await writeDb(db);
+    user = await storage.upsertUser(user);
     const { passwordHash: _, ...publicUser } = user;
     sendJson(req, res, 200, { user: publicUser });
     return;
@@ -185,16 +169,13 @@ async function route(req, res) {
 
   if (req.method === 'POST' && url.pathname === '/api/analytics') {
     const body = await readJson(req);
-    const db = await readDb();
-    db.analyticsEvents.push({
+    await storage.insertAnalyticsEvent({
       ...body,
       id: body.id || createId('event'),
       timestamp: body.timestamp || nowIso(),
       userAgent: req.headers['user-agent'] || '',
       ipHint: req.socket.remoteAddress || ''
     });
-    db.analyticsEvents = db.analyticsEvents.slice(-20000);
-    await writeDb(db);
     sendJson(req, res, 200, { ok: true });
     return;
   }
@@ -205,7 +186,6 @@ async function route(req, res) {
     const contact = String(body.contact || '').trim();
     if (message.length < 5) throw new Error('请填写建议或投稿内容');
     if (contact.length < 2) throw new Error('请填写联系方式');
-    const db = await readDb();
     const ticket = {
       id: createId('ticket'),
       userId: body.userId || '',
@@ -220,9 +200,7 @@ async function route(req, res) {
       createdAt: nowIso(),
       updatedAt: nowIso()
     };
-    db.supportTickets.push(ticket);
-    await writeDb(db);
-    sendJson(req, res, 200, { ticket });
+    sendJson(req, res, 200, { ticket: await storage.insertSupportTicket(ticket) });
     return;
   }
 
@@ -230,12 +208,7 @@ async function route(req, res) {
     const userId = String(url.searchParams.get('userId') || '');
     const email = String(url.searchParams.get('email') || '').trim().toLowerCase();
     if (!userId && !email) throw new Error('缺少用户信息');
-    const db = await readDb();
-    const tickets = db.supportTickets
-      .filter((ticket) => (userId && ticket.userId === userId) || (email && ticket.contact.toLowerCase() === email))
-      .slice()
-      .reverse();
-    sendJson(req, res, 200, { tickets });
+    sendJson(req, res, 200, { tickets: await storage.getMailboxTickets({ userId, email }) });
     return;
   }
 
@@ -259,7 +232,7 @@ async function route(req, res) {
       sendJson(req, res, 401, { error: '需要管理员登录' });
       return;
     }
-    const db = await readDb();
+    const db = await storage.readAll();
     sendJson(req, res, 200, {
       users: db.users.slice(-100).reverse().map(({ passwordHash, ...user }) => user),
       analyticsEvents: db.analyticsEvents,
@@ -276,17 +249,16 @@ async function route(req, res) {
       return;
     }
     const body = await readJson(req);
-    const db = await readDb();
-    const ticket = db.supportTickets.find((item) => item.id === ticketMatch[1]);
+    const ticket = await storage.updateSupportTicket(ticketMatch[1], {
+      status: body.status,
+      adminNote: typeof body.adminNote === 'string' ? body.adminNote : undefined,
+      adminReply: typeof body.adminReply === 'string' ? body.adminReply : undefined,
+      updatedAt: nowIso()
+    });
     if (!ticket) {
       sendJson(req, res, 404, { error: '没有找到这条记录' });
       return;
     }
-    ticket.status = body.status || ticket.status;
-    ticket.adminNote = typeof body.adminNote === 'string' ? body.adminNote : ticket.adminNote;
-    ticket.adminReply = typeof body.adminReply === 'string' ? body.adminReply : ticket.adminReply;
-    ticket.updatedAt = nowIso();
-    await writeDb(db);
     sendJson(req, res, 200, { ticket });
     return;
   }
