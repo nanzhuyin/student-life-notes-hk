@@ -1,0 +1,25 @@
+node_modules/
+.DS_Store
+miniprogram_npm/
+*.log
+dist/
+.env
+.env.*
+
+# Legacy WeChat mini program files kept locally but excluded from the new static site repo.
+app.js
+app.json
+app.wxss
+project.config.json
+project.private.config.json
+sitemap.json
+pages/
+components/
+cloudfunctions/
+utils/
+seed/
+scraped/
+docs/*
+!docs/
+!docs/API_CONTRACT.md
+assets/
