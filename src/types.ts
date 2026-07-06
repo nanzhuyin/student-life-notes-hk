@@ -55,6 +55,9 @@ export interface Programme {
   sourceUrl?: string;
   checkedAt?: string;
   courseCount?: number;
+  dataLevel?: 'programme' | 'courses';
+  statusBadge?: string;
+  statusNote?: string;
   requirements: {
     core: number | null;
     elective: number | null;
@@ -101,9 +104,12 @@ export interface SharedPost {
   source?: string;
   authorRole: string;
   createdAt: string;
-  status: 'published' | string;
+  updatedAt?: string;
+  status: 'published' | 'draft' | 'deleted' | string;
   shared?: boolean;
   recommended?: boolean;
+  ownerId?: string;
+  schoolId?: SchoolId | 'shared';
 }
 
 export interface PlatformData {

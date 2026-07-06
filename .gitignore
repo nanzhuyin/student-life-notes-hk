@@ -19,7 +19,9 @@ cloudfunctions/
 utils/
 seed/
 scraped/
+tmp-eduhk-course-extract.json
 docs/*
 !docs/
 !docs/API_CONTRACT.md
+!docs/AI_INTERACTION_LOG.md
 assets/

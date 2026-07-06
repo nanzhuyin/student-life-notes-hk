@@ -14,6 +14,7 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
+const APP_VERSION = 'v1.05';
 const ADMIN_CODE = 'EDU-AIEP-2026';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
@@ -348,7 +349,7 @@ function Header({
   return (
     <header className="site-header">
       <button className="brand-button" onClick={() => go('/')}>
-        <span className="brand-mark">v1</span>
+        <span className="brand-mark">{APP_VERSION}</span>
         <span>
           <strong>香港生活信息汇总</strong>
           <small>{activeSchool.name} · Student Life Notes</small>
@@ -444,7 +445,7 @@ function LandingPage({
 
         <div className="landing-copy">
           <div className="landing-overlay intro-panel">
-            <span className="landing-kicker">香港生活信息汇总 v1</span>
+            <span className="landing-kicker">香港生活信息汇总 {APP_VERSION}</span>
             <h1>把香港生活信息和课程清单放到同一个入口</h1>
             <p>
               当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
@@ -470,7 +471,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私说明</strong>
-              <p>v1 不要求注册账号。课程收藏保存在你当前浏览器；本次确认只在当前页面有效，刷新后会重新显示。</p>
+              <p>{APP_VERSION} 不要求注册账号。课程收藏保存在你当前浏览器；本次确认只在当前页面有效，刷新后会重新显示。</p>
             </div>
             <div>
               <strong>学术诚信</strong>
@@ -569,7 +570,7 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">v1 · 双学校平台 / 网页版</span>
+          <span className="eyebrow">{APP_VERSION} · 双学校平台 / 网页版</span>
           <h1>香港生活信息汇总，放到同一个入口</h1>
           <p>先选学校查看课程清单，也可以收藏课程；生活内容按当前学校显示，避免混在一起看错。</p>
           <SearchBox />
@@ -860,7 +861,7 @@ function CourseDetailPage({
       <section className="detail-head course-detail-head">
         <span className="pill">{course.school} · {course.type}</span>
         <h1>{course.titleZh}</h1>
-        <p>{course.title}</p>
+        {course.title !== course.titleZh && <p>{course.title}</p>}
         <div className="tag-row">
           <span>{formatCreditsText(course)}</span>
           <span>{course.medium}</span>
@@ -1146,7 +1147,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
     <section className="page-panel">
       <div className="page-title-block centered">
         <span className="eyebrow">管理视角</span>
-        <h1>v1 内容工作台</h1>
+        <h1>{APP_VERSION} 内容工作台</h1>
         <p>网页版先提供数据检查和视角切换；正式 CMS 后续再接入。</p>
       </div>
       <div className="page-toolbar-actions">
@@ -1189,13 +1190,13 @@ function AboutPage() {
     <section className="about-page">
       <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
-        <span className="eyebrow">v1 总结</span>
+        <span className="eyebrow">{APP_VERSION} 总结</span>
         <h1>香港生活信息汇总网页版</h1>
         <p>由原微信小程序原型转换为 Vite + React + GitHub Pages 版本。</p>
       </div>
       <div className="about-card">
         <p>{DISCLAIMER}</p>
-        <p>v1 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
+        <p>{APP_VERSION} 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
         <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
       </div>
     </section>
@@ -1297,7 +1298,7 @@ export default function App() {
         {route.name === 'about' && <AboutPage />}
       </main>
       <footer>
-        <span>香港生活信息汇总 v1</span>
+        <span>香港生活信息汇总 {APP_VERSION}</span>
         <span>{DISCLAIMER}</span>
       </footer>
     </div>
