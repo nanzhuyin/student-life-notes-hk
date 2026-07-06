@@ -204,6 +204,21 @@ function postMatches(post: SharedPost, keyword: string) {
     .includes(token);
 }
 
+function getSharedPostText(post: SharedPost) {
+  return [post.id, post.title, post.summary || '', post.content, post.region || '', post.tags.join(' ')]
+    .join(' ')
+    .toLowerCase();
+}
+
+function isEduhkSharedPost(post: SharedPost) {
+  const text = getSharedPostText(post);
+  return text.includes('eduhk') || text.includes('aiep') || text.includes('教育大学') || text.includes('教大');
+}
+
+function getVisibleSharedPosts(schoolId: SchoolId) {
+  return platformData.sharedPosts.filter((post) => (schoolId === 'eduhk' ? isEduhkSharedPost(post) : !isEduhkSharedPost(post)));
+}
+
 function uniqueCompact(values: Array<string | undefined | null>) {
   return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean)));
 }
@@ -350,15 +365,14 @@ function LandingPage({
             <h1>把香港生活信息和课程清单放到同一个入口</h1>
             <p>
               当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
-              香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
+              租房、通勤、美食、出行等生活内容会按当前学校分别显示。
             </p>
             <div className="landing-feature-grid">
               <span>专业课程知识库</span>
               <span>课程收藏</span>
-              <span>共享生活指南</span>
+              <span>生活指南</span>
               <span>学校平台切换</span>
             </div>
-            <div className="bg-switch-note">背景在教大和岭南校园图之间自动切换。</div>
           </div>
         </div>
 
@@ -465,7 +479,8 @@ function SchoolPanel({
 function HomePage({ activeSchool }: { activeSchool: School }) {
   const programmes = getProgrammes(activeSchool.id);
   const courses = getCourses(activeSchool.id);
-  const recommended = platformData.sharedPosts.filter((post) => post.recommended).slice(0, 4);
+  const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id);
+  const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
 
   return (
     <>
@@ -473,7 +488,7 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
         <div className="hero-copy">
           <span className="eyebrow">v1 · 双学校平台 / 网页版</span>
           <h1>香港生活信息汇总，放到同一个入口</h1>
-          <p>先选学校查看课程清单，也可以收藏课程；租房、通勤、美食、出行等生活内容共享给两个学校一起用。</p>
+          <p>先选学校查看课程清单，也可以收藏课程；生活内容按当前学校显示，避免混在一起看错。</p>
           <SearchBox />
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
@@ -485,7 +500,7 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
           <div className="visual-map">
             <span>EdUHK</span>
             <span>LU</span>
-            <span>Shared Life Notes</span>
+            <span>Life Notes</span>
           </div>
         </div>
       </section>
@@ -493,7 +508,7 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
       <section className="section">
         <div className="section-head">
           <h2>功能分类</h2>
-          <p>专业课程知识库按学校独立，其他生活分区共享。</p>
+          <p>课程清单和生活分区都会跟随当前学校切换；暂无内容的分区会显示空状态。</p>
         </div>
         <div className="category-grid">
           {sectionCategories.map((category) => (
@@ -527,8 +542,8 @@ function HomePage({ activeSchool }: { activeSchool: School }) {
 
       <section className="section">
         <div className="section-head">
-          <h2>共享推荐</h2>
-          <p>来自原 GitHub Pages 内容库。</p>
+          <h2>当前推荐</h2>
+          <p>只显示当前学校相关内容。</p>
         </div>
         <PostGrid posts={recommended} />
       </section>
@@ -819,12 +834,12 @@ function PostGrid({ posts }: { posts: SharedPost[] }) {
   );
 }
 
-function SectionPage({ sectionId }: { sectionId: string }) {
+function SectionPage({ sectionId, activeSchool }: { sectionId: string; activeSchool: School }) {
   const category = categoryBySectionId[sectionId];
   const meta = sectionCategories.find((item) => item.key === category);
   const posts = useMemo(
-    () => platformData.sharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published'),
-    [sectionId]
+    () => getVisibleSharedPosts(activeSchool.id).filter((post) => post.sectionId === sectionId && post.status === 'published'),
+    [activeSchool.id, sectionId]
   );
   const sectionFilterKey = `${FILTER_STORAGE_PREFIX}section:${sectionId}`;
   const defaultSectionFilters = useMemo<SectionFilterState>(
@@ -875,9 +890,9 @@ function SectionPage({ sectionId }: { sectionId: string }) {
     <section className="page-panel">
       <button className="back-button" onClick={() => go('/')}>返回首页</button>
       <div className="page-title-block centered">
-        <span className="eyebrow">共享生活内容</span>
+        <span className="eyebrow">{activeSchool.shortName}生活内容</span>
         <h1>{meta?.name || '生活分区'}</h1>
-        <p>{meta?.description || '两个学校共享使用的生活信息。'}</p>
+        <p>{posts.length ? meta?.description || '当前学校相关生活信息。' : '这个分区当前学校暂时还没有上传内容。'}</p>
       </div>
 
       <div className="filter-panel">
@@ -927,8 +942,8 @@ function SectionPage({ sectionId }: { sectionId: string }) {
   );
 }
 
-function PostDetailPage({ id }: { id: string }) {
-  const post = platformData.sharedPosts.find((item) => item.id === id);
+function PostDetailPage({ id, activeSchool }: { id: string; activeSchool: School }) {
+  const post = getVisibleSharedPosts(activeSchool.id).find((item) => item.id === id);
   if (!post) return <EmptyPage title="没有找到这篇内容" />;
   const paragraphs = post.content.split('\n').filter(Boolean);
 
@@ -954,7 +969,7 @@ function PostDetailPage({ id }: { id: string }) {
 
 function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: School }) {
   const courses = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, 80);
-  const posts = platformData.sharedPosts.filter((post) => postMatches(post, keyword)).slice(0, 30);
+  const posts = getVisibleSharedPosts(activeSchool.id).filter((post) => postMatches(post, keyword)).slice(0, 30);
   const legacyMatches = legacyPosts.filter((post) => {
     const token = normalize(keyword);
     return token && [post.title, post.summary, post.content.join(' ')].join(' ').toLowerCase().includes(token);
@@ -966,7 +981,7 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
       <div className="page-title-block centered">
         <span className="eyebrow">搜索</span>
         <h1>{keyword ? `“${keyword}” 的结果` : '搜索内容'}</h1>
-        <p>当前课程平台：{activeSchool.name}；生活内容两个学校共享。原仓库匹配记录：{legacyMatches} 条。</p>
+        <p>当前课程平台：{activeSchool.name}；生活内容按当前学校显示。原仓库匹配记录：{legacyMatches} 条。</p>
       </div>
       <SearchBox initialValue={keyword} />
 
@@ -1068,7 +1083,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div><strong>{platformData.schools.length}</strong><span>学校平台</span></div>
             <div><strong>{platformData.programmes.length}</strong><span>项目</span></div>
             <div><strong>{platformData.courses.length}</strong><span>课程</span></div>
-            <div><strong>{platformData.sharedPosts.length}</strong><span>共享生活内容</span></div>
+            <div><strong>{platformData.sharedPosts.length}</strong><span>生活内容</span></div>
           </div>
           <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
           <div className="programme-grid">
@@ -1097,8 +1112,8 @@ function AboutPage() {
       </div>
       <div className="about-card">
         <p>{DISCLAIMER}</p>
-        <p>v1 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容共享。</p>
-        <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条共享生活内容。</p>
+        <p>v1 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
+        <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
       </div>
     </section>
   );
@@ -1179,8 +1194,8 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {route.name === 'section' && <SectionPage sectionId={route.id} />}
-        {route.name === 'post' && <PostDetailPage id={route.id} />}
+        {route.name === 'section' && <SectionPage sectionId={route.id} activeSchool={activeSchool} />}
+        {route.name === 'post' && <PostDetailPage id={route.id} activeSchool={activeSchool} />}
         {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} />}
         {route.name === 'favorites' && (
           <FavoritesPage
