@@ -15,6 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const ADMIN_CODE = 'EDU-AIEP-2026';
+const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -62,6 +63,21 @@ type Route =
   | { name: 'plan' }
   | { name: 'admin' }
   | { name: 'about' };
+
+type CourseFilterState = {
+  programmeId: string;
+  levelFilter: string;
+  facultyFilter: string;
+  typeKey: CourseTypeKey | 'all';
+  keyword: string;
+};
+
+type SectionFilterState = {
+  regionFilter: string;
+  tagFilter: string;
+  sortKey: 'latest' | 'recommended';
+  keyword: string;
+};
 
 function getRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, '');
@@ -117,6 +133,25 @@ function useStoredState<T>(key: string, fallback: T) {
   };
 
   return [value, save] as const;
+}
+
+function getStoredObject<T>(key: string, fallback: T) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? ({ ...fallback, ...(JSON.parse(raw) as Partial<T>) } as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveStoredObject<T>(key: string, value: T) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function clearTransientFilters() {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(FILTER_STORAGE_PREFIX))
+    .forEach((key) => localStorage.removeItem(key));
 }
 
 function getSchool(id: SchoolId) {
@@ -496,18 +531,35 @@ function CoursesPage({
 }) {
   const routeProgramme = new URLSearchParams(window.location.hash.split('?')[1] || '').get('programme') || '';
   const programmes = useMemo(() => getProgrammes(activeSchool.id), [activeSchool.id]);
-  const [programmeId, setProgrammeId] = useState(routeProgramme || programmes[0]?.id || '');
-  const [levelFilter, setLevelFilter] = useState('all');
-  const [facultyFilter, setFacultyFilter] = useState('all');
-  const [typeKey, setTypeKey] = useState<CourseTypeKey | 'all'>('all');
-  const [keyword, setKeyword] = useState('');
+  const courseFilterKey = `${FILTER_STORAGE_PREFIX}courses:${activeSchool.id}`;
+  const defaultCourseFilters = useMemo<CourseFilterState>(
+    () => ({
+      programmeId: routeProgramme || programmes[0]?.id || '',
+      levelFilter: 'all',
+      facultyFilter: 'all',
+      typeKey: 'all',
+      keyword: ''
+    }),
+    [programmes, routeProgramme]
+  );
+  const [filters, setFilters] = useState<CourseFilterState>(() => defaultCourseFilters);
 
   useEffect(() => {
-    setProgrammeId(routeProgramme || programmes[0]?.id || '');
-    setLevelFilter('all');
-    setFacultyFilter('all');
-    setTypeKey('all');
-  }, [activeSchool.id, programmes, routeProgramme]);
+    const next = getStoredObject(courseFilterKey, defaultCourseFilters);
+    const resolved = routeProgramme ? { ...next, programmeId: routeProgramme } : next;
+    setFilters(resolved);
+    saveStoredObject(courseFilterKey, resolved);
+  }, [courseFilterKey, defaultCourseFilters, routeProgramme]);
+
+  const updateCourseFilters = (patch: Partial<CourseFilterState>) => {
+    setFilters((current) => {
+      const next = { ...current, ...patch };
+      saveStoredObject(courseFilterKey, next);
+      return next;
+    });
+  };
+
+  const { programmeId, levelFilter, facultyFilter, typeKey, keyword } = filters;
 
   const levelOptions = useMemo(
     () => uniqueCompact(programmes.flatMap((programme) => (programme.studyModes.length ? programme.studyModes : ['学习模式待核对']))),
@@ -531,11 +583,11 @@ function CoursesPage({
 
   useEffect(() => {
     if (!programmeOptions.length) {
-      setProgrammeId('');
+      updateCourseFilters({ programmeId: '' });
       return;
     }
     if (!programmeOptions.some((programme) => programme.id === programmeId)) {
-      setProgrammeId(programmeOptions[0].id);
+      updateCourseFilters({ programmeId: programmeOptions[0].id });
     }
   }, [programmeId, programmeOptions]);
 
@@ -563,9 +615,9 @@ function CoursesPage({
         <div className="filter-row">
           <span className="filter-label">学历</span>
           <div className="filter-chips">
-            <button className={levelFilter === 'all' ? 'active' : ''} onClick={() => setLevelFilter('all')}>全部</button>
+            <button className={levelFilter === 'all' ? 'active' : ''} onClick={() => updateCourseFilters({ levelFilter: 'all' })}>全部</button>
             {levelOptions.map((level) => (
-              <button key={level} className={levelFilter === level ? 'active' : ''} onClick={() => setLevelFilter(level)}>
+              <button key={level} className={levelFilter === level ? 'active' : ''} onClick={() => updateCourseFilters({ levelFilter: level })}>
                 {level}
               </button>
             ))}
@@ -575,9 +627,9 @@ function CoursesPage({
         <div className="filter-row">
           <span className="filter-label">学院</span>
           <div className="filter-chips">
-            <button className={facultyFilter === 'all' ? 'active' : ''} onClick={() => setFacultyFilter('all')}>全部</button>
+            <button className={facultyFilter === 'all' ? 'active' : ''} onClick={() => updateCourseFilters({ facultyFilter: 'all' })}>全部</button>
             {facultyOptions.map((faculty) => (
-              <button key={faculty} className={facultyFilter === faculty ? 'active' : ''} onClick={() => setFacultyFilter(faculty)}>
+              <button key={faculty} className={facultyFilter === faculty ? 'active' : ''} onClick={() => updateCourseFilters({ facultyFilter: faculty })}>
                 {formatFacultyName(faculty)}
               </button>
             ))}
@@ -588,7 +640,7 @@ function CoursesPage({
           <span className="filter-label">课程类型</span>
           <div className="filter-chips">
             {courseTypeOptions.map((option) => (
-              <button key={option.key} className={typeKey === option.key ? 'active' : ''} onClick={() => setTypeKey(option.key)}>
+              <button key={option.key} className={typeKey === option.key ? 'active' : ''} onClick={() => updateCourseFilters({ typeKey: option.key })}>
                 {option.label}
               </button>
             ))}
@@ -598,7 +650,7 @@ function CoursesPage({
         <div className="filter-grid">
           <label>
             <span>项目</span>
-            <select value={programmeId} onChange={(event) => setProgrammeId(event.target.value)}>
+            <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
               {programmeOptions.map((programme) => (
                 <option key={programme.id} value={programme.id}>{programme.title}</option>
               ))}
@@ -606,7 +658,7 @@ function CoursesPage({
           </label>
           <label>
             <span>关键词</span>
-            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索课程名、代码、标签" />
+            <input value={keyword} onChange={(event) => updateCourseFilters({ keyword: event.target.value })} placeholder="搜索课程名、代码、标签" />
           </label>
         </div>
       </div>
@@ -745,17 +797,33 @@ function SectionPage({ sectionId }: { sectionId: string }) {
     () => platformData.sharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published'),
     [sectionId]
   );
-  const [regionFilter, setRegionFilter] = useState('all');
-  const [tagFilter, setTagFilter] = useState('all');
-  const [sortKey, setSortKey] = useState<'latest' | 'recommended'>('latest');
-  const [keyword, setKeyword] = useState('');
+  const sectionFilterKey = `${FILTER_STORAGE_PREFIX}section:${sectionId}`;
+  const defaultSectionFilters = useMemo<SectionFilterState>(
+    () => ({
+      regionFilter: 'all',
+      tagFilter: 'all',
+      sortKey: 'latest',
+      keyword: ''
+    }),
+    []
+  );
+  const [filters, setFilters] = useState<SectionFilterState>(() => defaultSectionFilters);
 
   useEffect(() => {
-    setRegionFilter('all');
-    setTagFilter('all');
-    setSortKey('latest');
-    setKeyword('');
-  }, [sectionId]);
+    const next = getStoredObject(sectionFilterKey, defaultSectionFilters);
+    setFilters(next);
+    saveStoredObject(sectionFilterKey, next);
+  }, [sectionFilterKey, defaultSectionFilters]);
+
+  const updateSectionFilters = (patch: Partial<SectionFilterState>) => {
+    setFilters((current) => {
+      const next = { ...current, ...patch };
+      saveStoredObject(sectionFilterKey, next);
+      return next;
+    });
+  };
+
+  const { regionFilter, tagFilter, sortKey, keyword } = filters;
 
   const regionOptions = useMemo(() => uniqueCompact(posts.map((post) => post.region || '香港')), [posts]);
   const tagOptions = useMemo(() => uniqueCompact(posts.flatMap((post) => post.tags)).slice(0, 18), [posts]);
@@ -787,9 +855,9 @@ function SectionPage({ sectionId }: { sectionId: string }) {
         <div className="filter-row">
           <span className="filter-label">地区</span>
           <div className="filter-chips">
-            <button className={regionFilter === 'all' ? 'active' : ''} onClick={() => setRegionFilter('all')}>全部</button>
+            <button className={regionFilter === 'all' ? 'active' : ''} onClick={() => updateSectionFilters({ regionFilter: 'all' })}>全部</button>
             {regionOptions.map((region) => (
-              <button key={region} className={regionFilter === region ? 'active' : ''} onClick={() => setRegionFilter(region)}>
+              <button key={region} className={regionFilter === region ? 'active' : ''} onClick={() => updateSectionFilters({ regionFilter: region })}>
                 {region}
               </button>
             ))}
@@ -799,9 +867,9 @@ function SectionPage({ sectionId }: { sectionId: string }) {
         <div className="filter-row">
           <span className="filter-label">标签</span>
           <div className="filter-chips">
-            <button className={tagFilter === 'all' ? 'active' : ''} onClick={() => setTagFilter('all')}>全部</button>
+            <button className={tagFilter === 'all' ? 'active' : ''} onClick={() => updateSectionFilters({ tagFilter: 'all' })}>全部</button>
             {tagOptions.map((tag) => (
-              <button key={tag} className={tagFilter === tag ? 'active' : ''} onClick={() => setTagFilter(tag)}>
+              <button key={tag} className={tagFilter === tag ? 'active' : ''} onClick={() => updateSectionFilters({ tagFilter: tag })}>
                 {tag}
               </button>
             ))}
@@ -811,14 +879,14 @@ function SectionPage({ sectionId }: { sectionId: string }) {
         <div className="filter-grid compact">
           <label>
             <span>排序</span>
-            <select value={sortKey} onChange={(event) => setSortKey(event.target.value as 'latest' | 'recommended')}>
+            <select value={sortKey} onChange={(event) => updateSectionFilters({ sortKey: event.target.value as 'latest' | 'recommended' })}>
               <option value="latest">最新更新</option>
               <option value="recommended">推荐优先</option>
             </select>
           </label>
           <label>
             <span>关键词</span>
-            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索标题、正文、标签、地区" />
+            <input value={keyword} onChange={(event) => updateSectionFilters({ keyword: event.target.value })} placeholder="搜索标题、正文、标签、地区" />
           </label>
         </div>
 
@@ -1058,8 +1126,13 @@ export default function App() {
     }
   }, [activeSchoolId]);
 
+  useEffect(() => {
+    if (route.name === 'home') clearTransientFilters();
+  }, [route.name]);
+
   const chooseSchool = (schoolId: SchoolId) => {
     setActiveSchoolId(schoolId);
+    if (route.name === 'course') go('/courses');
   };
 
   const toggleFavoriteCourse = (id: string) => {
