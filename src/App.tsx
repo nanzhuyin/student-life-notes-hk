@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.14';
+const APP_VERSION = 'v1.15';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -1988,6 +1988,14 @@ export default function App() {
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
   const activeSchool = getSchool(activeSchoolId);
+  const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
+    id: 'guest-browser',
+    email: '',
+    username: '访客',
+    schoolId: activeSchoolId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }, [activeSchoolId, currentUser]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
 
   useLayoutEffect(() => {
@@ -2020,8 +2028,8 @@ export default function App() {
       feature,
       targetId,
       path: routeKey,
-      userId: currentUser?.id,
-      username: currentUser?.username
+      userId: effectiveUser.id,
+      username: effectiveUser.username
     });
     return () => {
       const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
@@ -2033,11 +2041,11 @@ export default function App() {
         targetId,
         durationSeconds,
         path: routeKey,
-        userId: currentUser?.id,
-        username: currentUser?.username
+        userId: effectiveUser.id,
+        username: effectiveUser.username
       });
     };
-  }, [activeSchoolId, currentUser?.id, currentUser?.username, hasAcceptedAgreement, route, routeKey]);
+  }, [activeSchoolId, effectiveUser.id, effectiveUser.username, hasAcceptedAgreement, route, routeKey]);
 
   const chooseSchool = (schoolId: SchoolId) => {
     recordAnalyticsEvent({
@@ -2046,8 +2054,8 @@ export default function App() {
       routeName: route.name,
       feature: '学校切换',
       targetId: schoolId,
-      userId: currentUser?.id,
-      username: currentUser?.username
+      userId: effectiveUser.id,
+      username: effectiveUser.username
     });
     setActiveSchoolId(schoolId);
     if (currentUser) setCurrentUser({ ...currentUser, schoolId, updatedAt: new Date().toISOString() });
@@ -2062,8 +2070,8 @@ export default function App() {
       routeName: route.name,
       feature: favoriteCourseIds.includes(id) ? '取消收藏' : '收藏课程',
       targetId: id,
-      userId: currentUser?.id,
-      username: currentUser?.username
+      userId: effectiveUser.id,
+      username: effectiveUser.username
     });
     setFavoriteCourseIds(next);
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
@@ -2079,20 +2087,6 @@ export default function App() {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
             go('/');
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return (
-      <div className="app-shell">
-        <RegistrationPage
-          activeSchoolId={activeSchoolId}
-          onRegistered={(user) => {
-            setCurrentUser(user);
-            setActiveSchoolId(user.schoolId);
           }}
         />
       </div>
@@ -2132,7 +2126,7 @@ export default function App() {
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
       </main>
-      <SupportPanel user={currentUser} activeSchool={activeSchool} />
+      <SupportPanel user={effectiveUser} activeSchool={activeSchool} />
       <footer>
         <span>{APP_NAME} {APP_VERSION}</span>
         <span>{DISCLAIMER}</span>
