@@ -4,17 +4,17 @@
 
 ## 当前分支
 
-- 当前开发分支：`v1-web-staging`
-- 不直接推送：`main`
-- 所有功能先在 `v1-web-staging` 或自己的 feature 分支完成，确认后再讨论是否合并到 `main`。
+- 当前稳定部署分支：`main`
+- 功能开发分支：独立 feature 分支或 `v1-web-staging`
+- GitHub Pages 只从 `main` 自动部署，避免旧 staging 分支覆盖线上页面。
 
 ## 版本号规则
 
 每一次准备 push，都必须递增一个小版本，并在提交信息和日志中注明。
 
-- 上一次版本：`v1.09`
-- 本次 Otter 品牌、站内信箱与管理端处理版本：`v1.10`
-- 下一次修改：`v1.11`
+- 上一次版本：`v1.10`
+- 本次 Pages 部署入口修正版本：`v1.11`
+- 下一次修改：`v1.12`
 
 每次版本递增时至少同步这些位置：
 
@@ -110,6 +110,20 @@ http://127.0.0.1:5173/student-life-notes-hk/#/
 ```
 
 ## 版本日志
+
+### v1.11
+
+日期：2026-07-07
+
+改动范围：
+
+- GitHub Pages workflow 移除 `v1-web-staging` push 触发，只保留 `main` 和手动 `workflow_dispatch`。
+- README 更新为 v1.11，并说明 GitHub Pages 只托管前端、真实后端需单独部署。
+- 前端展示版本、平台数据版本、npm 版本同步到 v1.11 / 1.0.11。
+
+测试：
+
+- `npm run build` 通过。
 
 ### v1.10
 
