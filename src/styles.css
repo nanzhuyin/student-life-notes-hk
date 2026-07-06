@@ -657,6 +657,22 @@ p {
   gap: 1rem;
 }
 
+.section-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.section-head h2,
+.section-head p {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-head p {
+  max-width: 40rem;
+}
+
 .category-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -985,12 +1001,33 @@ p {
   padding: clamp(1.1rem, 3vw, 1.8rem);
 }
 
+.detail-head,
+.source-card {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
 .detail-head h1 {
   max-width: 17em;
-  margin-bottom: 0.8rem;
+  margin: 0 auto 0.8rem;
   font-size: clamp(2rem, 5vw, 3.7rem);
   line-height: 1.08;
   letter-spacing: 0;
+}
+
+.detail-head p {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.detail-head .tag-row {
+  justify-content: center;
+}
+
+.detail-body h2 {
+  text-align: center;
 }
 
 .course-detail-head h1 {
@@ -1007,6 +1044,7 @@ p {
   display: grid;
   grid-template-columns: 8rem minmax(0, 1fr);
   gap: 1rem;
+  align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(49, 45, 43, 0.08);
 }
@@ -1014,11 +1052,13 @@ p {
 .info-list dt {
   color: #746b64;
   font-weight: 800;
+  text-align: center;
 }
 
 .info-list dd {
   margin: 0;
   overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .source-card {
@@ -1056,9 +1096,11 @@ p {
 
 .empty-state {
   display: grid;
+  justify-items: center;
   gap: 0.35rem;
   padding: 1.4rem;
   color: #746b64;
+  text-align: center;
 }
 
 footer {
