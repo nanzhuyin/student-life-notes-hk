@@ -44,6 +44,14 @@ const categoryBySectionId: Record<string, CategoryKey> = {
   travel: 'transport_spots'
 };
 
+const courseTypeOptions: Array<{ key: CourseTypeKey | 'all'; label: string }> = [
+  { key: 'all', label: '全部类型' },
+  { key: 'core', label: '核心课' },
+  { key: 'elective', label: '选修课' },
+  { key: 'project', label: '项目 / 研究' },
+  { key: 'general', label: '普通课程' }
+];
+
 type Route =
   | { name: 'home' }
   | { name: 'courses' }
@@ -159,6 +167,10 @@ function postMatches(post: SharedPost, keyword: string) {
     .join(' ')
     .toLowerCase()
     .includes(token);
+}
+
+function uniqueCompact(values: Array<string | undefined | null>) {
+  return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean)));
 }
 
 function Header({
@@ -461,15 +473,49 @@ function CoursesPage({
   const routeProgramme = new URLSearchParams(window.location.hash.split('?')[1] || '').get('programme') || '';
   const programmes = useMemo(() => getProgrammes(activeSchool.id), [activeSchool.id]);
   const [programmeId, setProgrammeId] = useState(routeProgramme || programmes[0]?.id || '');
+  const [levelFilter, setLevelFilter] = useState('all');
+  const [facultyFilter, setFacultyFilter] = useState('all');
   const [typeKey, setTypeKey] = useState<CourseTypeKey | 'all'>('all');
   const [keyword, setKeyword] = useState('');
 
   useEffect(() => {
     setProgrammeId(routeProgramme || programmes[0]?.id || '');
+    setLevelFilter('all');
+    setFacultyFilter('all');
     setTypeKey('all');
   }, [activeSchool.id, programmes, routeProgramme]);
 
-  const activeProgramme = getProgramme(programmeId) || programmes[0];
+  const levelOptions = useMemo(
+    () => uniqueCompact(programmes.flatMap((programme) => (programme.studyModes.length ? programme.studyModes : ['学习模式待核对']))),
+    [programmes]
+  );
+
+  const facultyOptions = useMemo(() => uniqueCompact(programmes.map((programme) => programme.faculty)), [programmes]);
+
+  const programmeOptions = useMemo(
+    () =>
+      programmes.filter((programme) => {
+        const matchesLevel =
+          levelFilter === 'all' ||
+          programme.studyModes.includes(levelFilter) ||
+          (!programme.studyModes.length && levelFilter === '学习模式待核对');
+        const matchesFaculty = facultyFilter === 'all' || programme.faculty === facultyFilter;
+        return matchesLevel && matchesFaculty;
+      }),
+    [facultyFilter, levelFilter, programmes]
+  );
+
+  useEffect(() => {
+    if (!programmeOptions.length) {
+      setProgrammeId('');
+      return;
+    }
+    if (!programmeOptions.some((programme) => programme.id === programmeId)) {
+      setProgrammeId(programmeOptions[0].id);
+    }
+  }, [programmeId, programmeOptions]);
+
+  const activeProgramme = programmeOptions.find((programme) => programme.id === programmeId) || programmeOptions[0];
   const courses = useMemo(() => {
     if (!activeProgramme) return [];
     return getCourses(activeSchool.id)
@@ -480,29 +526,65 @@ function CoursesPage({
 
   return (
     <section className="page-panel">
-      <div className="page-title-block split">
-        <div>
-          <span className="eyebrow">专业课程知识库</span>
-          <h1>{activeSchool.name}</h1>
-          <p>{activeSchool.description}</p>
-        </div>
+      <div className="page-title-block centered">
+        <span className="eyebrow">专业课程知识库</span>
+        <h1>{activeSchool.name}</h1>
+        <p>{activeSchool.description}</p>
+      </div>
+      <div className="page-toolbar-actions">
         <button className="secondary-action" onClick={() => go('/')}>返回首页</button>
       </div>
 
-      <div className="toolbar">
-        <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索课程名、代码、标签" />
-        <select value={programmeId} onChange={(event) => setProgrammeId(event.target.value)}>
-          {programmes.map((programme) => (
-            <option key={programme.id} value={programme.id}>{programme.title}</option>
-          ))}
-        </select>
-        <select value={typeKey} onChange={(event) => setTypeKey(event.target.value as CourseTypeKey | 'all')}>
-          <option value="all">全部类型</option>
-          <option value="core">核心课</option>
-          <option value="elective">选修课</option>
-          <option value="project">项目 / 研究</option>
-          <option value="general">普通课程</option>
-        </select>
+      <div className="filter-panel">
+        <div className="filter-row">
+          <span className="filter-label">学历</span>
+          <div className="filter-chips">
+            <button className={levelFilter === 'all' ? 'active' : ''} onClick={() => setLevelFilter('all')}>全部</button>
+            {levelOptions.map((level) => (
+              <button key={level} className={levelFilter === level ? 'active' : ''} onClick={() => setLevelFilter(level)}>
+                {level}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-row">
+          <span className="filter-label">学院</span>
+          <div className="filter-chips">
+            <button className={facultyFilter === 'all' ? 'active' : ''} onClick={() => setFacultyFilter('all')}>全部</button>
+            {facultyOptions.map((faculty) => (
+              <button key={faculty} className={facultyFilter === faculty ? 'active' : ''} onClick={() => setFacultyFilter(faculty)}>
+                {faculty}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-row">
+          <span className="filter-label">课程类型</span>
+          <div className="filter-chips">
+            {courseTypeOptions.map((option) => (
+              <button key={option.key} className={typeKey === option.key ? 'active' : ''} onClick={() => setTypeKey(option.key)}>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-grid">
+          <label>
+            <span>项目</span>
+            <select value={programmeId} onChange={(event) => setProgrammeId(event.target.value)}>
+              {programmeOptions.map((programme) => (
+                <option key={programme.id} value={programme.id}>{programme.title}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>关键词</span>
+            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索课程名、代码、标签" />
+          </label>
+        </div>
       </div>
 
       {activeProgramme && (
@@ -635,17 +717,91 @@ function PostGrid({ posts }: { posts: SharedPost[] }) {
 function SectionPage({ sectionId }: { sectionId: string }) {
   const category = categoryBySectionId[sectionId];
   const meta = sectionCategories.find((item) => item.key === category);
-  const posts = platformData.sharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published');
+  const posts = useMemo(
+    () => platformData.sharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published'),
+    [sectionId]
+  );
+  const [regionFilter, setRegionFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
+  const [sortKey, setSortKey] = useState<'latest' | 'recommended'>('latest');
+  const [keyword, setKeyword] = useState('');
+
+  useEffect(() => {
+    setRegionFilter('all');
+    setTagFilter('all');
+    setSortKey('latest');
+    setKeyword('');
+  }, [sectionId]);
+
+  const regionOptions = useMemo(() => uniqueCompact(posts.map((post) => post.region || '香港')), [posts]);
+  const tagOptions = useMemo(() => uniqueCompact(posts.flatMap((post) => post.tags)).slice(0, 18), [posts]);
+  const filteredPosts = useMemo(() => {
+    return posts
+      .filter((post) => regionFilter === 'all' || (post.region || '香港') === regionFilter)
+      .filter((post) => tagFilter === 'all' || post.tags.includes(tagFilter))
+      .filter((post) => postMatches(post, keyword))
+      .slice()
+      .sort((a, b) => {
+        if (sortKey === 'recommended') {
+          const recommendedDiff = Number(Boolean(b.recommended)) - Number(Boolean(a.recommended));
+          if (recommendedDiff) return recommendedDiff;
+        }
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      });
+  }, [keyword, posts, regionFilter, sortKey, tagFilter]);
 
   return (
     <section className="page-panel">
       <button className="back-button" onClick={() => go('/')}>返回首页</button>
-      <div className="page-title-block">
+      <div className="page-title-block centered">
         <span className="eyebrow">共享生活内容</span>
         <h1>{meta?.name || '生活分区'}</h1>
         <p>{meta?.description || '两个学校共享使用的生活信息。'}</p>
       </div>
-      <PostGrid posts={posts} />
+
+      <div className="filter-panel">
+        <div className="filter-row">
+          <span className="filter-label">地区</span>
+          <div className="filter-chips">
+            <button className={regionFilter === 'all' ? 'active' : ''} onClick={() => setRegionFilter('all')}>全部</button>
+            {regionOptions.map((region) => (
+              <button key={region} className={regionFilter === region ? 'active' : ''} onClick={() => setRegionFilter(region)}>
+                {region}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-row">
+          <span className="filter-label">标签</span>
+          <div className="filter-chips">
+            <button className={tagFilter === 'all' ? 'active' : ''} onClick={() => setTagFilter('all')}>全部</button>
+            {tagOptions.map((tag) => (
+              <button key={tag} className={tagFilter === tag ? 'active' : ''} onClick={() => setTagFilter(tag)}>
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-grid compact">
+          <label>
+            <span>排序</span>
+            <select value={sortKey} onChange={(event) => setSortKey(event.target.value as 'latest' | 'recommended')}>
+              <option value="latest">最新更新</option>
+              <option value="recommended">推荐优先</option>
+            </select>
+          </label>
+          <label>
+            <span>关键词</span>
+            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索标题、正文、标签、地区" />
+          </label>
+        </div>
+
+        <div className="filter-count">当前显示 {filteredPosts.length} / {posts.length} 条</div>
+      </div>
+
+      <PostGrid posts={filteredPosts} />
     </section>
   );
 }
