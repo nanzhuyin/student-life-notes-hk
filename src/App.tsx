@@ -89,6 +89,7 @@ type RouteState = {
 };
 
 let pendingScrollMode: ScrollMode | null = null;
+let appNavigationDepth = 0;
 
 function getRoute(): Route {
   const hash = window.location.hash.replace(/^#\/?/, '');
@@ -154,7 +155,19 @@ function go(path: string) {
 
   saveScrollPosition();
   pendingScrollMode = 'top';
+  appNavigationDepth += 1;
   window.location.hash = path;
+}
+
+function goBack(fallbackPath = '/') {
+  if (appNavigationDepth > 0) {
+    saveScrollPosition();
+    pendingScrollMode = 'restore';
+    window.history.back();
+    return;
+  }
+
+  go(fallbackPath);
 }
 
 function normalize(value: string) {
@@ -176,6 +189,7 @@ function useRoute() {
       const nextKey = routeKeyFromUrl(event.newURL);
       const scrollMode = pendingScrollMode || 'restore';
       pendingScrollMode = null;
+      if (scrollMode === 'restore' && appNavigationDepth > 0) appNavigationDepth -= 1;
       setState({ route: getRoute(), key: nextKey, scrollMode });
     };
 
@@ -708,7 +722,7 @@ function CoursesPage({
         <p>{activeSchool.description}</p>
       </div>
       <div className="page-toolbar-actions">
-        <button className="secondary-action" onClick={() => go('/')}>返回首页</button>
+        <button className="secondary-action" onClick={() => goBack('/')}>返回首页</button>
       </div>
 
       <div className="filter-panel">
@@ -842,7 +856,7 @@ function CourseDetailPage({
 
   return (
     <article className="detail-page">
-      <button className="back-button" onClick={() => go('/courses')}>返回课程库</button>
+      <button className="back-button" onClick={() => goBack('/courses')}>返回课程库</button>
       <section className="detail-head course-detail-head">
         <span className="pill">{course.school} · {course.type}</span>
         <h1>{course.titleZh}</h1>
@@ -957,7 +971,7 @@ function SectionPage({ sectionId, activeSchool }: { sectionId: string; activeSch
 
   return (
     <section className="page-panel">
-      <button className="back-button" onClick={() => go('/')}>返回首页</button>
+      <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
         <span className="eyebrow">{activeSchool.shortName}生活内容</span>
         <h1>{meta?.name || '生活分区'}</h1>
@@ -1018,7 +1032,7 @@ function PostDetailPage({ id, activeSchool }: { id: string; activeSchool: School
 
   return (
     <article className="detail-page">
-      <button className="back-button" onClick={() => go(`/section/${post.sectionId}`)}>返回分区</button>
+      <button className="back-button" onClick={() => goBack(`/section/${post.sectionId}`)}>返回分区</button>
       <section className="detail-head">
         <span className="pill">{post.authorRole}</span>
         <h1>{post.title}</h1>
@@ -1046,7 +1060,7 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
 
   return (
     <section className="page-panel">
-      <button className="back-button" onClick={() => go('/')}>返回首页</button>
+      <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
         <span className="eyebrow">搜索</span>
         <h1>{keyword ? `“${keyword}” 的结果` : '搜索内容'}</h1>
@@ -1173,7 +1187,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
 function AboutPage() {
   return (
     <section className="about-page">
-      <button className="back-button" onClick={() => go('/')}>返回首页</button>
+      <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
         <span className="eyebrow">v1 总结</span>
         <h1>香港生活信息汇总网页版</h1>
@@ -1191,7 +1205,7 @@ function AboutPage() {
 function EmptyPage({ title }: { title: string }) {
   return (
     <section className="page-panel">
-      <button className="back-button" onClick={() => go('/')}>返回首页</button>
+      <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="empty-state"><strong>{title}</strong><span>可能是链接已经变化。</span></div>
     </section>
   );
