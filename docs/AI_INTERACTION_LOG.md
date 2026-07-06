@@ -12,9 +12,9 @@
 
 每一次准备 push，都必须递增一个小版本，并在提交信息和日志中注明。
 
-- 上一次版本：`v1.11`
-- 本次 Supabase 与 Render 后端部署准备版本：`v1.12`
-- 下一次修改：`v1.13`
+- 上一次版本：`v1.12`
+- 本次静态部署交接与动态后端运行手册版本：`v1.13`
+- 下一次修改：`v1.14`
 
 每次版本递增时至少同步这些位置：
 
@@ -110,6 +110,21 @@ http://127.0.0.1:5173/student-life-notes-hk/#/
 ```
 
 ## 版本日志
+
+### v1.13
+
+日期：2026-07-07
+
+改动范围：
+
+- 明确当前 GitHub Pages 先以静态模式上线，未配置 `VITE_API_BASE_URL` 时使用本机备用数据。
+- 新增 `docs/STATIC_DEPLOYMENT_AND_DYNAMIC_BACKEND_PLAN.md`，记录 Supabase、Render、GitHub Pages 动态接入步骤。
+- GitHub Actions 预留 `VITE_API_BASE_URL` 仓库变量，后续填入 Render 后端地址后可重新部署接入真实后端。
+- README 更新为 v1.13，并补充静态/动态部署边界。
+
+测试：
+
+- `npm run build` 通过。
 
 ### v1.12
 

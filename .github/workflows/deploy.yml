@@ -34,6 +34,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_PATH: /student-life-notes-hk/
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
