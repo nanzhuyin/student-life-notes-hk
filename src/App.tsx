@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.15';
+const APP_VERSION = 'v1.16';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -594,6 +594,37 @@ function getProgrammeSubtitle(programme: { schoolId: SchoolId; title: string; ti
   return programme.titleEn && programme.titleEn !== programme.title ? programme.titleEn : '';
 }
 
+function getProgrammeEnglishShortName(programme: { title: string; titleEn?: string }) {
+  const english = (programme.titleEn || programme.title || '').trim();
+  if (!english) return '';
+  const degreeNames: Array<[string, string]> = [
+    ['Doctor of Business Administration', 'DBA'],
+    ['Doctor of Business Studies', 'DBS'],
+    ['Doctor of Artificial Intelligence Studies', 'DAIS'],
+    ['Doctor of Policy Studies', 'DPS'],
+    ['Doctor of Smart Manufacturing', 'DSM'],
+    ['Master of Social Sciences', 'MSocSc'],
+    ['Master of Science', 'MSc'],
+    ['Master of Arts', 'MA'],
+    ['Master of Accountancy', 'MAcc'],
+    ['Master of Cultural Studies', 'MCS'],
+    ['Master of Cities and Governance', 'MCG'],
+    ['Bachelor of Business Administration (Honours)', 'BBA (Hons)'],
+    ['Bachelor of Social Sciences (Honours)', 'BSocSc (Hons)'],
+    ['Bachelor of Liberal Arts (Honours)', 'BLA (Hons)'],
+    ['Bachelor of Science (Honours)', 'BSc (Hons)'],
+    ['Bachelor of Arts (Honours)', 'BA (Hons)']
+  ];
+  return degreeNames.reduce((label, [full, short]) => label.split(full).join(short), english);
+}
+
+function getProgrammeSelectLabel(programme: { schoolId: SchoolId; title: string; titleZh?: string; titleEn?: string }) {
+  const title = getProgrammeTitle(programme);
+  if (programme.schoolId !== 'lingnan') return title;
+  const shortName = getProgrammeEnglishShortName(programme);
+  return shortName && shortName !== title ? `${title} / ${shortName}` : title;
+}
+
 function getCourseTitle(course: Course) {
   return course.titleZh || course.title;
 }
@@ -1132,7 +1163,7 @@ function CoursesPage({
             <span>项目</span>
             <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
               {programmeOptions.map((programme) => (
-                <option key={programme.id} value={programme.id}>{getProgrammeTitle(programme)}</option>
+                <option key={programme.id} value={programme.id}>{getProgrammeSelectLabel(programme)}</option>
               ))}
             </select>
           </label>
