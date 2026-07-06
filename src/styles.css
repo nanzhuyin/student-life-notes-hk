@@ -878,6 +878,30 @@ p {
   line-height: 1.55;
 }
 
+.course-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(143, 29, 44, 0.12);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0.75rem 2rem rgba(47, 34, 29, 0.05);
+}
+
+.course-list-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.course-list-head p {
+  margin: 0.3rem 0 0;
+  color: #746b64;
+  line-height: 1.55;
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -1191,6 +1215,7 @@ footer {
   .login-panel,
   .section-head,
   .page-title-block.split,
+  .course-list-head,
   .course-result.with-action {
     flex-direction: column;
   }

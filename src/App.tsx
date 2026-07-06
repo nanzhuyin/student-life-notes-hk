@@ -670,6 +670,29 @@ function CoursesPage({
         </section>
       )}
 
+      <div className="course-list-head">
+        <div>
+          <h2>课程清单</h2>
+          <p>
+            {activeProgramme
+              ? `当前项目共显示 ${courses.length} 门课程${keyword || typeKey !== 'all' ? '，已按关键词或课程类型筛选。' : '。'}`
+              : '请先选择一个项目。'}
+          </p>
+        </div>
+        {(keyword || typeKey !== 'all') && (
+          <button className="secondary-action" onClick={() => updateCourseFilters({ keyword: '', typeKey: 'all' })}>
+            清除课程筛选
+          </button>
+        )}
+      </div>
+
+      {!courses.length && (
+        <div className="empty-state">
+          <strong>当前筛选下暂无课程</strong>
+          <span>本科项目有课程数据。请清除课程类型或关键词后再看。</span>
+        </div>
+      )}
+
       <div className="course-list">
         {courses.map((course) => (
           <article key={course.id} className="course-card">
