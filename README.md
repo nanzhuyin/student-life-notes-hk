@@ -1,4 +1,4 @@
-# 香港选课生活助手 v1
+# 香港生活信息汇总 v1
 
 Student Course & Life Notes in Hong Kong
 
@@ -18,7 +18,7 @@ https://nanzhuyin.github.io/student-life-notes-hk/#/
 - 专业课程知识库：按学校、项目、课程类型、关键词筛选。
 - 香港教育大学课程库：MSc(AIEP) 中文授课 / 英文授课版本。
 - 岭南大学课程库：由现有 `course_catalog` 内容导入。
-- 收藏课程：按学校独立保存。
+- 我的收藏：按学校独立保存课程收藏。
 - 共享生活内容：香港租房、港深通勤、新生入学指导、附近美食、出行与景点。
 - 管理视角演示入口：邀请码 `EDU-AIEP-2026`。
 
