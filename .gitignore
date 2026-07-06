@@ -19,5 +19,7 @@ cloudfunctions/
 utils/
 seed/
 scraped/
-docs/
+docs/*
+!docs/
+!docs/API_CONTRACT.md
 assets/
