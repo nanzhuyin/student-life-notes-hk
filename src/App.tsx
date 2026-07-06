@@ -860,6 +860,15 @@ export default function App() {
   const [plannedCourseIds, setPlannedCourseIds] = useStoredState<string[]>(getStorageKey('planned-courses', activeSchoolId), []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (window.location.hostname === '127.0.0.1' && params.get('resetAgreement') === '1') {
+      localStorage.removeItem('student-life-notes:accepted-agreement');
+      setHasAcceptedAgreement(false);
+      setAgreementChecked(false);
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       setFavoriteCourseIds(JSON.parse(localStorage.getItem(getStorageKey('favorite-courses', activeSchoolId)) || '[]'));
       setPlannedCourseIds(JSON.parse(localStorage.getItem(getStorageKey('planned-courses', activeSchoolId)) || '[]'));

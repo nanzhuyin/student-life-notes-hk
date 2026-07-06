@@ -37,15 +37,16 @@ button {
 }
 
 .landing-mode {
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .landing-shell {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #171314;
 }
 
@@ -57,12 +58,12 @@ button {
   align-items: center;
   min-height: 100vh;
   padding: clamp(1rem, 4vw, 4rem);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .landing-bg-layer,
 .landing-shade {
-  position: absolute;
+  position: fixed;
   inset: 0;
 }
 
