@@ -173,6 +173,38 @@ function uniqueCompact(values: Array<string | undefined | null>) {
   return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean)));
 }
 
+function formatCreditsText(course: Course) {
+  if (typeof course.credits === 'number' && course.credits > 0) return `${course.credits} 学分`;
+  const text = course.creditsText.trim();
+  if (!text || text.includes('待官方资料核对')) return '学分待补充';
+  return text
+    .replace(/\bcps\b/gi, '学分')
+    .replace(/\bcredits?\b/gi, '学分');
+}
+
+function formatFacultyName(value = '') {
+  const facultyMap: Record<string, string> = {
+    文科方向: '文学院',
+    商科方向: '商学院',
+    社科方向: '社会科学院',
+    数据科学方向: '数据科学学院',
+    跨学科方向: '跨学科研究学院',
+    研究生项目方向: '研究生院'
+  };
+  return facultyMap[value] || value || '学院待补充';
+}
+
+function formatFacultyText(text = '') {
+  return Object.entries({
+    文科方向: '文学院',
+    商科方向: '商学院',
+    社科方向: '社会科学院',
+    数据科学方向: '数据科学学院',
+    跨学科方向: '跨学科研究学院',
+    研究生项目方向: '研究生院'
+  }).reduce((current, [from, to]) => current.split(from).join(to), text);
+}
+
 function Header({
   activeSchool,
   onChooseSchool
@@ -554,7 +586,7 @@ function CoursesPage({
             <button className={facultyFilter === 'all' ? 'active' : ''} onClick={() => setFacultyFilter('all')}>全部</button>
             {facultyOptions.map((faculty) => (
               <button key={faculty} className={facultyFilter === faculty ? 'active' : ''} onClick={() => setFacultyFilter(faculty)}>
-                {faculty}
+                {formatFacultyName(faculty)}
               </button>
             ))}
           </div>
@@ -592,11 +624,11 @@ function CoursesPage({
           <strong>{activeProgramme.title}</strong>
           <p>{activeProgramme.mediumDetail}</p>
           <div className="tag-row">
-            <span>{activeProgramme.faculty}</span>
+            <span>{formatFacultyName(activeProgramme.faculty)}</span>
             <span>{activeProgramme.studyModes.join(' / ') || '学习模式待核对'}</span>
-            <span>{activeProgramme.totalCredits ? `${activeProgramme.totalCredits} cps` : `${activeProgramme.courseCount || courses.length} 门课程`}</span>
+            <span>{activeProgramme.totalCredits ? `${activeProgramme.totalCredits} 学分` : `${activeProgramme.courseCount || courses.length} 门课程`}</span>
           </div>
-          <small>{activeProgramme.requirements.note}</small>
+          <small>{formatFacultyText(activeProgramme.requirements.note)}</small>
         </section>
       )}
 
@@ -606,10 +638,10 @@ function CoursesPage({
             <button className="course-main" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
               <div className="course-head">
                 <strong>{course.titleZh}</strong>
-                <span>{course.creditsText}</span>
+                <span>{formatCreditsText(course)}</span>
               </div>
               <small>{course.courseCode}</small>
-              <p>{course.description}</p>
+              <p>{formatFacultyText(course.description)}</p>
               <div className="tag-row">
                 <span>{course.type}</span>
                 <span>{course.medium}</span>
@@ -656,7 +688,7 @@ function CourseDetailPage({
         <h1>{course.titleZh}</h1>
         <p>{course.title}</p>
         <div className="tag-row">
-          <span>{course.creditsText}</span>
+          <span>{formatCreditsText(course)}</span>
           <span>{course.medium}</span>
           <span>{course.required ? '必修' : '可选'}</span>
           <span>{course.courseCode}</span>
@@ -665,11 +697,11 @@ function CourseDetailPage({
 
       <section className="detail-body">
         <h2>课程简介</h2>
-        <p>{course.description}</p>
+        <p>{formatFacultyText(course.description)}</p>
         <h2>选课信息</h2>
         <dl className="info-list">
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
-          <div><dt>学院 / 方向</dt><dd>{course.faculty || '待核对'}</dd></div>
+          <div><dt>学院</dt><dd>{formatFacultyName(course.faculty)}</dd></div>
           <div><dt>开课学期</dt><dd>{course.semester}</dd></div>
           <div><dt>先修要求</dt><dd>{course.prerequisites}</dd></div>
           <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
@@ -842,7 +874,7 @@ function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: 
   return (
     <section className="page-panel">
       <button className="back-button" onClick={() => go('/')}>返回首页</button>
-      <div className="page-title-block">
+      <div className="page-title-block centered">
         <span className="eyebrow">搜索</span>
         <h1>{keyword ? `“${keyword}” 的结果` : '搜索内容'}</h1>
         <p>当前课程平台：{activeSchool.name}；生活内容两个学校共享。原仓库匹配记录：{legacyMatches} 条。</p>
@@ -889,12 +921,12 @@ function PlanPage({
 
   return (
     <section className="page-panel">
-      <div className="page-title-block split">
-        <div>
-          <span className="eyebrow">本机保存</span>
-          <h1>{activeSchool.shortName}我的计划</h1>
-          <p>{activeSchool.id === 'eduhk' ? `AIEP 当前计划 ${plannedCredits} / 24 cps。` : `岭南当前计划 ${plannedCourses.length} 门课程。`}</p>
-        </div>
+      <div className="page-title-block centered">
+        <span className="eyebrow">本机保存</span>
+        <h1>{activeSchool.shortName}我的计划</h1>
+        <p>{activeSchool.id === 'eduhk' ? `AIEP 当前计划 ${plannedCredits} / 24 学分。` : `岭南当前计划 ${plannedCourses.length} 门课程。`}</p>
+      </div>
+      <div className="page-toolbar-actions">
         <button className="secondary-action" onClick={() => go('/courses')}>继续选课</button>
       </div>
 
@@ -919,7 +951,7 @@ function CourseMiniList({ courses, actionText, onAction }: { courses: Course[]; 
         <article key={course.id} className="course-result with-action">
           <button onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
             <strong>{course.titleZh}</strong>
-            <span>{course.programmeTitle} · {course.creditsText}</span>
+            <span>{course.programmeTitle} · {formatCreditsText(course)}</span>
           </button>
           <button onClick={() => onAction(course.id)}>{actionText}</button>
         </article>
@@ -939,12 +971,12 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
 
   return (
     <section className="page-panel">
-      <div className="page-title-block split">
-        <div>
-          <span className="eyebrow">管理视角</span>
-          <h1>v1 内容工作台</h1>
-          <p>网页版先提供数据检查和视角切换；正式 CMS 后续再接入。</p>
-        </div>
+      <div className="page-title-block centered">
+        <span className="eyebrow">管理视角</span>
+        <h1>v1 内容工作台</h1>
+        <p>网页版先提供数据检查和视角切换；正式 CMS 后续再接入。</p>
+      </div>
+      <div className="page-toolbar-actions">
         <button className="secondary-action" onClick={() => go('/')}>用户视角</button>
       </div>
 
@@ -983,7 +1015,7 @@ function AboutPage() {
   return (
     <section className="about-page">
       <button className="back-button" onClick={() => go('/')}>返回首页</button>
-      <div className="page-title-block">
+      <div className="page-title-block centered">
         <span className="eyebrow">v1 总结</span>
         <h1>香港选课生活助手网页版</h1>
         <p>由原微信小程序原型转换为 Vite + React + GitHub Pages 版本。</p>
