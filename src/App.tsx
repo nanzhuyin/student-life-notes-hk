@@ -15,8 +15,6 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const ADMIN_CODE = 'EDU-AIEP-2026';
-const EDUHK_CAMPUS_IMAGE = 'https://commons.wikimedia.org/wiki/Special:FilePath/EdUHK%20Campus%20View.jpg';
-const LINGNAN_CAMPUS_IMAGE = 'https://commons.wikimedia.org/wiki/Special:FilePath/Lingnan%20University%20Campus%20Overview%20201410.jpg';
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -232,27 +230,33 @@ function LandingPage({
   onAcceptedChange: (accepted: boolean) => void;
   onEnter: () => void;
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
     <main className="landing-shell">
-      <section className="landing-slide eduhk-bg">
-        <div className="landing-overlay">
-          <span className="landing-kicker">香港选课生活助手 v1</span>
-          <h1>把选课资料和香港生活经验放到同一个入口</h1>
-          <p>
-            当前支持香港教育大学和岭南大学。课程库、收藏和选课计划按学校独立保存；
-            香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
-          </p>
-          <div className="landing-feature-grid">
-            <span>专业课程知识库</span>
-            <span>课程收藏与计划</span>
-            <span>共享生活指南</span>
-            <span>学校平台切换</span>
-          </div>
-          <div className="scroll-hint">向下滚动查看岭南大学背景和使用协议</div>
-        </div>
-      </section>
+      <section className="landing-page">
+        <div className="landing-bg-layer eduhk-bg" aria-hidden="true"></div>
+        <div className="landing-bg-layer lingnan-bg" aria-hidden="true"></div>
+        <div className="landing-shade" aria-hidden="true"></div>
 
-      <section className="landing-slide lingnan-bg">
+        <div className="landing-copy">
+          <div className="landing-overlay intro-panel">
+            <span className="landing-kicker">香港选课生活助手 v1</span>
+            <h1>把选课资料和香港生活经验放到同一个入口</h1>
+            <p>
+              当前支持香港教育大学和岭南大学。课程库、收藏和选课计划按学校独立保存；
+              香港租房、港深通勤、新生入学指导、附近美食、出行与景点作为共享内容。
+            </p>
+            <div className="landing-feature-grid">
+              <span>专业课程知识库</span>
+              <span>课程收藏与计划</span>
+              <span>共享生活指南</span>
+              <span>学校平台切换</span>
+            </div>
+            <div className="bg-switch-note">背景在教大和岭南校园图之间自动切换。</div>
+          </div>
+        </div>
+
         <div className="landing-overlay agreement-panel">
           <span className="landing-kicker">进入前确认</span>
           <h1>隐私与学术诚信协议</h1>
@@ -289,8 +293,8 @@ function LandingPage({
             <span>我已阅读并同意以上隐私与学术诚信协议，明白本工具仅供参考。</span>
           </label>
 
-          <button className="enter-app-button" disabled={!accepted} onClick={onEnter}>
-            确认并进入查看
+          <button className="enter-app-button" onClick={() => setConfirmOpen(true)}>
+            确认进入
           </button>
 
           <div className="photo-credit">
@@ -300,6 +304,30 @@ function LandingPage({
             <a href="https://commons.wikimedia.org/wiki/File:Lingnan_University_Campus_Overview_201410.jpg" target="_blank" rel="noreferrer">Lingnan University Campus Overview</a>
           </div>
         </div>
+
+        {confirmOpen && (
+          <div className="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+            <div className="confirm-dialog">
+              <span className="landing-kicker">确认操作</span>
+              <h2 id="confirm-title">{accepted ? '是否确认进入？' : '请先勾选协议'}</h2>
+              <p>
+                {accepted
+                  ? '请确认你已经阅读并同意隐私与学术诚信协议，理解本工具仅供参考，不代表任何学校官方立场。'
+                  : '进入前需要先勾选“我已阅读并同意以上隐私与学术诚信协议”。'}
+              </p>
+              <div className="confirm-actions">
+                <button className="secondary-action" onClick={() => setConfirmOpen(false)}>
+                  {accepted ? '再看看' : '我知道了'}
+                </button>
+                {accepted && (
+                  <button className="primary-action" onClick={onEnter}>
+                    确认进入
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );

@@ -45,44 +45,72 @@ button {
   height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
+  overflow: hidden;
   background: #171314;
 }
 
-.landing-slide {
+.landing-page {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.68fr);
+  gap: clamp(1rem, 4vw, 3rem);
+  align-items: center;
   min-height: 100vh;
   padding: clamp(1rem, 4vw, 4rem);
-  scroll-snap-align: start;
-  background-position: center;
-  background-size: cover;
+  overflow: hidden;
 }
 
-.landing-slide::before {
-  content: "";
+.landing-bg-layer,
+.landing-shade {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg, rgba(14, 12, 13, 0.86), rgba(14, 12, 13, 0.5) 48%, rgba(14, 12, 13, 0.16)),
-    linear-gradient(180deg, rgba(14, 12, 13, 0.15), rgba(14, 12, 13, 0.72));
+}
+
+.landing-bg-layer {
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.03);
+  animation: campusFade 12s infinite;
 }
 
 .eduhk-bg {
-  background-image: url("https://commons.wikimedia.org/wiki/Special:FilePath/EdUHK%20Campus%20View.jpg");
+  background-image: url("/student-life-notes-hk/images/eduhk-campus.jpg");
 }
 
 .lingnan-bg {
-  background-image: url("https://commons.wikimedia.org/wiki/Special:FilePath/Lingnan%20University%20Campus%20Overview%20201410.jpg");
+  background-image: url("/student-life-notes-hk/images/lingnan-campus.jpg");
+  animation-delay: 6s;
+}
+
+.landing-shade {
+  background:
+    linear-gradient(90deg, rgba(14, 12, 13, 0.86), rgba(14, 12, 13, 0.58) 48%, rgba(14, 12, 13, 0.32)),
+    linear-gradient(180deg, rgba(14, 12, 13, 0.15), rgba(14, 12, 13, 0.72));
+}
+
+@keyframes campusFade {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 1;
+  }
+  54% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .landing-overlay {
   position: relative;
   z-index: 1;
-  align-self: center;
-  width: min(720px, 100%);
+  width: 100%;
   padding: clamp(1.35rem, 4vw, 3rem);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 0.9rem;
@@ -90,6 +118,15 @@ button {
   background: rgba(24, 20, 21, 0.72);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(18px);
+}
+
+.landing-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.intro-panel {
+  width: min(760px, 100%);
 }
 
 .landing-kicker {
@@ -113,7 +150,7 @@ button {
 
 .agreement-panel h1 {
   max-width: 14em;
-  font-size: clamp(2.1rem, 5vw, 4rem);
+  font-size: clamp(1.9rem, 4vw, 3.35rem);
 }
 
 .landing-overlay p {
@@ -138,7 +175,7 @@ button {
   font-weight: 900;
 }
 
-.scroll-hint {
+.bg-switch-note {
   width: fit-content;
   margin-top: 1rem;
   padding: 0.6rem 0.75rem;
@@ -206,6 +243,44 @@ button {
   cursor: not-allowed;
   color: rgba(255, 255, 255, 0.58);
   background: rgba(255, 255, 255, 0.18);
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 10, 11, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.confirm-dialog {
+  width: min(460px, 100%);
+  padding: 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.85rem;
+  color: #fff;
+  background: rgba(24, 20, 21, 0.95);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+}
+
+.confirm-dialog h2 {
+  margin-bottom: 0.65rem;
+  font-size: 1.55rem;
+}
+
+.confirm-dialog p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .photo-credit {
@@ -886,8 +961,18 @@ footer {
 
   .hero,
   .school-panel,
-  .toolbar {
+  .toolbar,
+  .landing-page {
     grid-template-columns: 1fr;
+  }
+
+  .landing-shell {
+    overflow-y: auto;
+  }
+
+  .landing-page {
+    min-height: 100vh;
+    align-content: center;
   }
 
   .category-grid,
@@ -942,7 +1027,7 @@ footer {
     gap: 0.25rem;
   }
 
-  .landing-slide {
+  .landing-page {
     padding: 0.75rem;
   }
 
@@ -956,5 +1041,17 @@ footer {
 
   .landing-feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .agreement-list {
+    gap: 0.5rem;
+  }
+
+  .agreement-list div {
+    padding: 0.75rem;
+  }
+
+  .confirm-actions {
+    flex-direction: column;
   }
 }
