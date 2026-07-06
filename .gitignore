@@ -5,6 +5,7 @@ miniprogram_npm/
 dist/
 .env
 .env.*
+server/data/
 
 # Legacy WeChat mini program files kept locally but excluded from the new static site repo.
 app.js

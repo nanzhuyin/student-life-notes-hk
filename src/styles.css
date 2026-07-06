@@ -1561,6 +1561,69 @@ p {
   color: #5d5550;
 }
 
+.registration-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.registration-panel {
+  display: grid;
+  gap: 1rem;
+  width: min(46rem, 100%);
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.8rem;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(68, 45, 40, 0.12);
+}
+
+.registration-panel h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0;
+}
+
+.registration-panel p {
+  margin: 0;
+  color: #746b64;
+  line-height: 1.7;
+}
+
+.registration-form,
+.support-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.registration-form label,
+.support-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.registration-form label span,
+.support-form label span {
+  color: #5f5650;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.support-form .wide,
+.support-form textarea,
+.registration-form .primary-action,
+.support-form .primary-action,
+.support-form .form-error,
+.support-form .form-success {
+  grid-column: 1 / -1;
+}
+
+.support-form textarea {
+  width: 100%;
+  resize: vertical;
+}
+
 .login-panel {
   display: flex;
   gap: 0.75rem;
@@ -1601,6 +1664,12 @@ p {
 
 .form-error {
   color: #a51f2f;
+  font-weight: 900;
+}
+
+.form-success {
+  margin: 0;
+  color: #2f6f54;
   font-weight: 900;
 }
 
@@ -1758,6 +1827,70 @@ p {
   overflow-wrap: anywhere;
 }
 
+.ticket-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ticket-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.7rem;
+  background: #fff;
+}
+
+.ticket-card > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  justify-content: space-between;
+}
+
+.ticket-card strong {
+  color: #312d2b;
+}
+
+.ticket-card span,
+.ticket-card small {
+  color: #746b64;
+}
+
+.ticket-card p {
+  margin: 0;
+  color: #504944;
+  line-height: 1.7;
+}
+
+.support-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  padding: clamp(1rem, 2.6vw, 1.35rem);
+  border: 1px solid rgba(49, 45, 43, 0.08);
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.support-panel h2 {
+  margin: 0.2rem 0;
+  letter-spacing: 0;
+}
+
+.support-panel p {
+  margin: 0;
+  color: #746b64;
+  line-height: 1.7;
+}
+
+.support-panel .support-form {
+  grid-column: 1 / -1;
+}
+
 .empty-state {
   display: grid;
   justify-items: center;
@@ -1828,7 +1961,10 @@ footer {
   .stats-grid,
   .analytics-grid,
   .analytics-head,
-  .admin-login-panel {
+  .admin-login-panel,
+  .registration-form,
+  .support-form,
+  .support-panel {
     grid-template-columns: 1fr;
   }
 

@@ -14,13 +14,18 @@ import type {
 } from './types';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
-const APP_VERSION = 'v1.08';
+const APP_NAME = '港伴记';
+const APP_VERSION = 'v1.09';
 const ADMIN_USERNAME = 'nanzhuyin-admin';
 const ADMIN_PASSWORD_HASH = 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
 const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
+const USER_STORAGE_KEY = 'student-life-notes:user';
+const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
+const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
+const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
 
@@ -101,8 +106,33 @@ type AnalyticsEvent = {
   routeName: string;
   feature: string;
   path: string;
+  userId?: string;
+  username?: string;
   targetId?: string;
   durationSeconds?: number;
+};
+
+type RegisteredUser = {
+  id: string;
+  email: string;
+  username: string;
+  schoolId: SchoolId;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type SupportTicket = {
+  id: string;
+  userId?: string;
+  username?: string;
+  schoolId?: SchoolId | '';
+  type: string;
+  contact: string;
+  message: string;
+  status: 'new' | 'reviewing' | 'resolved' | 'closed' | string;
+  adminNote?: string;
+  createdAt: string;
+  updatedAt?: string;
 };
 
 let pendingScrollMode: ScrollMode | null = null;
@@ -176,6 +206,82 @@ function writeAnalyticsEvents(events: AnalyticsEvent[]) {
   }
 }
 
+function readSupportTickets(): SupportTicket[] {
+  try {
+    const raw = localStorage.getItem(SUPPORT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as SupportTicket[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSupportTickets(tickets: SupportTicket[]) {
+  try {
+    localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(tickets.slice(-500)));
+  } catch {
+    // Local fallback only; ignore storage failures.
+  }
+}
+
+async function apiRequest<T>(path: string, options: RequestInit = {}) {
+  if (!API_BASE_URL) throw new Error('未配置后端地址');
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || '请求失败');
+  return data as T;
+}
+
+async function registerUser(input: { email: string; username: string; schoolId: SchoolId }) {
+  if (!API_BASE_URL) {
+    return {
+      id: `local-user-${Date.now()}`,
+      ...input,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+  const data = await apiRequest<{ user: RegisteredUser }>('/api/register', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  });
+  return data.user;
+}
+
+function sendAnalyticsEvent(event: AnalyticsEvent) {
+  if (!API_BASE_URL) return;
+  void apiRequest('/api/analytics', {
+    method: 'POST',
+    body: JSON.stringify(event)
+  }).catch(() => {
+    // Keep the local copy when the network is unavailable.
+  });
+}
+
+async function submitSupportTicket(input: Omit<SupportTicket, 'id' | 'status' | 'createdAt' | 'updatedAt'>) {
+  if (!API_BASE_URL) {
+    const ticket: SupportTicket = {
+      ...input,
+      id: `local-ticket-${Date.now()}`,
+      status: 'new',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    writeSupportTickets(readSupportTickets().concat(ticket));
+    return ticket;
+  }
+  const data = await apiRequest<{ ticket: SupportTicket }>('/api/support', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  });
+  return data.ticket;
+}
+
 function routeFeature(route: Route) {
   if (route.name === 'home') return '首页';
   if (route.name === 'courses') return '课程库';
@@ -203,6 +309,8 @@ function recordAnalyticsEvent(input: Omit<AnalyticsEvent, 'id' | 'timestamp' | '
     path: input.path || normalizeRouteKey()
   };
   writeAnalyticsEvents(readAnalyticsEvents().concat(event));
+  sendAnalyticsEvent(event);
+  return event;
 }
 
 async function hashText(value: string) {
@@ -481,7 +589,7 @@ function Header({
       <button className="brand-button" onClick={() => go('/')}>
         <span className="brand-mark">{APP_VERSION}</span>
         <span>
-          <strong>香港生活信息汇总</strong>
+          <strong>{APP_NAME}</strong>
           <small>{schoolAbbreviation(activeSchool)} · {activeSchool.name}</small>
         </span>
       </button>
@@ -576,7 +684,7 @@ function LandingPage({
 
         <div className="landing-copy">
           <div className="landing-overlay intro-panel">
-            <span className="landing-kicker">香港生活信息汇总 {APP_VERSION}</span>
+            <span className="landing-kicker">{APP_NAME} {APP_VERSION}</span>
             <h1>选课、租房、通勤和新生事项，一个入口先看清楚</h1>
             <p>
               当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
@@ -606,7 +714,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 不要求注册账号，不收集姓名、学号、证件号或联系方式。课程收藏只保存在当前浏览器本机存储中。</p>
+              <p>{APP_VERSION} 使用邮箱、用户名和学校创建浏览身份，不发送验证码；建议和投稿会提交到管理端处理。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -660,6 +768,72 @@ function LandingPage({
             </div>
           </div>
         )}
+      </section>
+    </main>
+  );
+}
+
+function RegistrationPage({
+  activeSchoolId,
+  onRegistered
+}: {
+  activeSchoolId: SchoolId;
+  onRegistered: (user: RegisteredUser) => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [schoolId, setSchoolId] = useState<SchoolId>(activeSchoolId);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    setError('');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('请填写有效邮箱');
+      return;
+    }
+    if (username.trim().length < 2) {
+      setError('用户名至少 2 个字符');
+      return;
+    }
+    setSaving(true);
+    try {
+      const user = await registerUser({ email: email.trim(), username: username.trim(), schoolId });
+      onRegistered(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '注册失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <main className="registration-shell">
+      <section className="registration-panel">
+        <span className="eyebrow">{APP_NAME} {APP_VERSION}</span>
+        <h1>创建你的浏览身份</h1>
+        <p>注册只用于保存学校选择、统计真实访问和接收建议投稿；不发送验证码。</p>
+        <div className="registration-form">
+          <label>
+            <span>邮箱</span>
+            <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="推荐填写常用邮箱" type="email" autoComplete="email" />
+          </label>
+          <label>
+            <span>用户名</span>
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="例如：港伴用户" autoComplete="nickname" />
+          </label>
+          <label>
+            <span>学校</span>
+            <select value={schoolId} onChange={(event) => setSchoolId(event.target.value as SchoolId)}>
+              {platformData.schools.map((school) => (
+                <option key={school.id} value={school.id}>{school.name}</option>
+              ))}
+            </select>
+          </label>
+          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '进入港伴记'}</button>
+          {error && <p className="form-error">{error}</p>}
+          <p className="login-note">当前版本不做邮箱验证码；管理端可看到注册用户、学校选择和访问统计。</p>
+        </div>
       </section>
     </main>
   );
@@ -1341,7 +1515,11 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [entered, setEntered] = useStoredState('student-life-notes:admin-session', false);
+  const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>(() => readAnalyticsEvents());
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(() => readSupportTickets().slice().reverse());
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
+  const [adminNotice, setAdminNotice] = useState('');
   const schoolCounts = platformData.schools.map((school) => ({
     school,
     programmes: getProgrammes(school.id).length,
@@ -1349,7 +1527,26 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   }));
   const analytics = useMemo(() => buildAnalyticsSummary(analyticsEvents), [analyticsEvents]);
   const maxFeatureViews = Math.max(1, ...analytics.features.map((item) => item.views));
-  const refreshAnalytics = () => setAnalyticsEvents(readAnalyticsEvents());
+  const dataSourceLabel = API_BASE_URL && adminToken ? '服务端真实数据' : '本机备用数据';
+  const adminReady = entered && (!API_BASE_URL || Boolean(adminToken));
+  const refreshAnalytics = async () => {
+    if (API_BASE_URL && adminToken) {
+      try {
+        const data = await apiRequest<{ analyticsEvents: AnalyticsEvent[]; supportTickets: SupportTicket[]; users: RegisteredUser[] }>('/api/admin/dashboard', {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        setAnalyticsEvents(data.analyticsEvents || []);
+        setSupportTickets(data.supportTickets || []);
+        setRegisteredUsers(data.users || []);
+        setAdminNotice('已刷新服务端数据');
+        return;
+      } catch (err) {
+        setAdminNotice(err instanceof Error ? err.message : '服务端刷新失败');
+      }
+    }
+    setAnalyticsEvents(readAnalyticsEvents());
+    setSupportTickets(readSupportTickets().slice().reverse());
+  };
   const exportAnalytics = (format: 'json' | 'csv') => {
     recordAnalyticsEvent({
       type: 'export',
@@ -1366,34 +1563,66 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
     refreshAnalytics();
   };
   const clearAnalytics = () => {
-    if (!confirm('确认清空当前浏览器里的统计事件？这个操作不会影响真实线上数据库，因为当前版本还没有后端。')) return;
+    if (!confirm('确认清空当前浏览器里的备用统计事件？服务端真实数据不会被清空。')) return;
     writeAnalyticsEvents([]);
     setAnalyticsEvents([]);
   };
   const login = async () => {
-    const passwordHash = await hashText(password);
-    if (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
-      setEntered(true);
-      setLoginError('');
-      setPassword('');
-      refreshAnalytics();
+    try {
+      if (API_BASE_URL) {
+        const data = await apiRequest<{ token: string }>('/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ username: username.trim(), password })
+        });
+        setAdminToken(data.token);
+        setEntered(true);
+        setLoginError('');
+        setPassword('');
+        return;
+      }
+      const passwordHash = await hashText(password);
+      if (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
+        setEntered(true);
+        setLoginError('');
+        setPassword('');
+        return;
+      }
+      setLoginError('账号或密码不正确');
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : '账号或密码不正确');
+    }
+  };
+  const updateTicket = async (ticketId: string, status: string) => {
+    if (API_BASE_URL && adminToken) {
+      const data = await apiRequest<{ ticket: SupportTicket }>(`/api/admin/tickets/${encodeURIComponent(ticketId)}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ status })
+      });
+      setSupportTickets((tickets) => tickets.map((ticket) => ticket.id === ticketId ? data.ticket : ticket));
       return;
     }
-    setLoginError('账号或密码不正确');
+    const next = readSupportTickets().map((ticket) => ticket.id === ticketId ? { ...ticket, status, updatedAt: new Date().toISOString() } : ticket);
+    writeSupportTickets(next);
+    setSupportTickets(next.slice().reverse());
   };
+
+  useEffect(() => {
+    if (entered) void refreshAnalytics();
+  }, [entered, adminToken]);
 
   return (
     <section className="page-panel">
       <div className="page-title-block centered">
         <span className="eyebrow">管理视角</span>
         <h1>{APP_VERSION} 内容与统计工作台</h1>
-        <p>当前静态版统计保存在本机浏览器。要查看所有用户的真实浏览量和停留时间，需要接入后端统计 API。</p>
+        <p>{API_BASE_URL ? '已接入后端，管理端显示服务端注册、浏览统计和支持处理数据。' : '未配置后端地址，当前显示本机备用数据。'}</p>
       </div>
       <div className="page-toolbar-actions">
         <button className="secondary-action" onClick={() => go('/')}>用户视角</button>
       </div>
 
-      {!entered && (
+      {!adminReady && (
         <div className="login-panel admin-login-panel">
           <label>
             <span>管理员账号</span>
@@ -1405,11 +1634,11 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
           </label>
           <button onClick={login}>进入管理端</button>
           {loginError && <p className="form-error">{loginError}</p>}
-          <p className="login-note">静态页面无法提供真正的权限安全；正式上线请改为后端登录、权限校验和服务端统计。</p>
+          <p className="login-note">{API_BASE_URL ? '登录后可查看真实服务端统计和用户提交内容。' : '配置 VITE_API_BASE_URL 后可启用服务端真实统计。'}</p>
         </div>
       )}
 
-      {entered && (
+      {adminReady && (
         <>
           <div className="stats-grid">
             <div><strong>{platformData.schools.length}</strong><span>学校平台</span></div>
@@ -1421,8 +1650,9 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div className="analytics-head">
               <div>
                 <span className="eyebrow">浏览统计</span>
-                <h2>本机访问数据</h2>
-                <p>记录页面浏览、学校切换、收藏和导出操作。当前事件数：{analyticsEvents.length}</p>
+                <h2>{dataSourceLabel}</h2>
+                <p>记录页面浏览、学校切换、收藏和导出操作。当前事件数：{analyticsEvents.length}；注册用户：{registeredUsers.length}</p>
+                {adminNotice && <p>{adminNotice}</p>}
               </div>
               <div className="analytics-actions">
                 <button className="secondary-action" onClick={refreshAnalytics}>刷新</button>
@@ -1473,6 +1703,34 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               </div>
             </div>
           </section>
+          <section className="analytics-panel">
+            <div className="analytics-head">
+              <div>
+                <span className="eyebrow">支持处理</span>
+                <h2>投稿与建议</h2>
+                <p>用户提交时必须填写联系方式，推荐邮箱，也可以填写微信、电话或其他方式。</p>
+              </div>
+              <button className="secondary-action" onClick={() => void refreshAnalytics()}>刷新工单</button>
+            </div>
+            <div className="ticket-list">
+              {supportTickets.length === 0 && <div className="empty-state"><strong>暂无投稿或建议</strong><span>用户提交后会显示在这里。</span></div>}
+              {supportTickets.map((ticket) => (
+                <article className="ticket-card" key={ticket.id}>
+                  <div>
+                    <strong>{ticket.type} · {ticket.status}</strong>
+                    <span>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p>{ticket.message}</p>
+                  <small>联系方式：{ticket.contact}</small>
+                  <div className="inline-actions">
+                    <button onClick={() => void updateTicket(ticket.id, 'reviewing')}>处理中</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'resolved')}>已处理</button>
+                    <button onClick={() => void updateTicket(ticket.id, 'closed')}>关闭</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
           <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
           <div className="programme-grid">
             {schoolCounts.map((item) => (
@@ -1495,7 +1753,7 @@ function AboutPage() {
       <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
         <span className="eyebrow">{APP_VERSION} 总结</span>
-        <h1>香港生活信息汇总网页版</h1>
+        <h1>{APP_NAME} 网页版</h1>
         <p>由原微信小程序原型转换为 Vite + React + GitHub Pages 版本。</p>
       </div>
       <div className="about-card">
@@ -1536,6 +1794,84 @@ function PolicyPage() {
   );
 }
 
+function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeSchool: School }) {
+  const [open, setOpen] = useState(false);
+  const [type, setType] = useState('建议');
+  const [contact, setContact] = useState(user.email || '');
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    setError('');
+    setStatus('');
+    if (!contact.trim()) {
+      setError('请填写联系方式，推荐邮箱，也可以填写微信、电话或其他方式');
+      return;
+    }
+    if (message.trim().length < 5) {
+      setError('请填写更完整的投稿或建议内容');
+      return;
+    }
+    setSaving(true);
+    try {
+      await submitSupportTicket({
+        userId: user.id,
+        username: user.username,
+        schoolId: activeSchool.id,
+        type,
+        contact: contact.trim(),
+        message: message.trim()
+      });
+      setMessage('');
+      setStatus(API_BASE_URL ? '已发送到管理端' : '已保存到本机管理端备用数据');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '发送失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="support-panel">
+      <div>
+        <span className="eyebrow">Support</span>
+        <h2>投稿和建议</h2>
+        <p>发现信息需要更新，或想补充路线、课程经验、生活建议，可以在这里发送给管理端处理。</p>
+      </div>
+      <button className="secondary-action" onClick={() => setOpen((value) => !value)}>
+        {open ? '收起窗口' : '发送投稿 / 建议'}
+      </button>
+      {open && (
+        <div className="support-form">
+          <label>
+            <span>类型</span>
+            <select value={type} onChange={(event) => setType(event.target.value)}>
+              <option>投稿</option>
+              <option>建议</option>
+              <option>纠错</option>
+              <option>合作</option>
+              <option>其他</option>
+            </select>
+          </label>
+          <label>
+            <span>联系方式</span>
+            <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，也可以填写微信 / 电话 / 其他" />
+          </label>
+          <label className="wide">
+            <span>内容</span>
+            <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写下投稿内容、建议、纠错位置或想补充的信息" rows={5}></textarea>
+          </label>
+          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '发送中' : '发送给管理端'}</button>
+          {error && <p className="form-error">{error}</p>}
+          {status && <p className="form-success">{status}</p>}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function EmptyPage({ title }: { title: string }) {
   return (
     <section className="page-panel">
@@ -1550,6 +1886,7 @@ export default function App() {
   const [hasAcceptedAgreement, setHasAcceptedAgreement] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
+  const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
   const activeSchool = getSchool(activeSchoolId);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
 
@@ -1582,7 +1919,9 @@ export default function App() {
       routeName: route.name,
       feature,
       targetId,
-      path: routeKey
+      path: routeKey,
+      userId: currentUser?.id,
+      username: currentUser?.username
     });
     return () => {
       const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
@@ -1593,10 +1932,12 @@ export default function App() {
         feature,
         targetId,
         durationSeconds,
-        path: routeKey
+        path: routeKey,
+        userId: currentUser?.id,
+        username: currentUser?.username
       });
     };
-  }, [activeSchoolId, hasAcceptedAgreement, route, routeKey]);
+  }, [activeSchoolId, currentUser?.id, currentUser?.username, hasAcceptedAgreement, route, routeKey]);
 
   const chooseSchool = (schoolId: SchoolId) => {
     recordAnalyticsEvent({
@@ -1604,9 +1945,12 @@ export default function App() {
       schoolId,
       routeName: route.name,
       feature: '学校切换',
-      targetId: schoolId
+      targetId: schoolId,
+      userId: currentUser?.id,
+      username: currentUser?.username
     });
     setActiveSchoolId(schoolId);
+    if (currentUser) setCurrentUser({ ...currentUser, schoolId, updatedAt: new Date().toISOString() });
     if (route.name === 'course') go('/courses');
   };
 
@@ -1617,7 +1961,9 @@ export default function App() {
       schoolId: activeSchoolId,
       routeName: route.name,
       feature: favoriteCourseIds.includes(id) ? '取消收藏' : '收藏课程',
-      targetId: id
+      targetId: id,
+      userId: currentUser?.id,
+      username: currentUser?.username
     });
     setFavoriteCourseIds(next);
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
@@ -1633,6 +1979,20 @@ export default function App() {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
             go('/');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="app-shell">
+        <RegistrationPage
+          activeSchoolId={activeSchoolId}
+          onRegistered={(user) => {
+            setCurrentUser(user);
+            setActiveSchoolId(user.schoolId);
           }}
         />
       </div>
@@ -1672,8 +2032,9 @@ export default function App() {
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
       </main>
+      <SupportPanel user={currentUser} activeSchool={activeSchool} />
       <footer>
-        <span>香港生活信息汇总 {APP_VERSION}</span>
+        <span>{APP_NAME} {APP_VERSION}</span>
         <span>{DISCLAIMER}</span>
       </footer>
     </div>
