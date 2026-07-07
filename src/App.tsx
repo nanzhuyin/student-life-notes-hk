@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.27';
+const APP_VERSION = 'v1.28';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -971,10 +971,12 @@ function schoolAbbreviation(school: School) {
 
 function Header({
   activeSchool,
-  onChooseSchool
+  onChooseSchool,
+  isAdmin
 }: {
   activeSchool: School;
   onChooseSchool: (schoolId: SchoolId) => void;
+  isAdmin: boolean;
 }) {
   return (
     <header className="site-header">
@@ -992,7 +994,7 @@ function Header({
         <button onClick={() => go('/register')}>注册</button>
         <button onClick={() => go('/login')}>登录</button>
         <button onClick={() => go('/policy')}>隐私与诚信</button>
-        <button onClick={() => go('/admin')}>管理视角</button>
+        {isAdmin && <button onClick={() => go('/admin')}>管理视角</button>}
       </nav>
       <div className="school-switcher">
         {platformData.schools.map((school) => (
@@ -3019,7 +3021,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} />
+      <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} isAdmin={userRole === 'admin'} />
       <section className="beta-banner">
         <strong>内测版本</strong>
         <span>{BETA_NOTICE}</span>
