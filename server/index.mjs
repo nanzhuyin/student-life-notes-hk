@@ -254,7 +254,8 @@ async function route(req, res) {
   if (req.method === 'POST' && url.pathname === '/api/support') {
     const body = await readJson(req);
     const message = String(body.message || '').trim();
-    const contact = String(body.contact || '').trim();
+    const rawContact = String(body.contact || '').trim();
+    const contact = isValidEmailShape(rawContact) ? rawContact.toLowerCase() : rawContact;
     if (message.length < 5) throw new Error('请填写建议或投稿内容');
     if (contact.length < 2) throw new Error('请填写联系方式');
     const ticket = {

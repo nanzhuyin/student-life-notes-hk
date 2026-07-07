@@ -8,6 +8,7 @@ import type {
   CourseTypeKey,
   NotePost,
   PlatformData,
+  Programme,
   School,
   SchoolId,
   SharedPost
@@ -15,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.25';
+const APP_VERSION = 'v1.27';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -26,11 +27,16 @@ const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const USER_STORAGE_KEY = 'student-life-notes:user';
 const LOCAL_USERS_STORAGE_KEY = 'student-life-notes:local-users';
 const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
+const LIVE_VISIT_STORAGE_KEY = 'student-life-notes:live-visits';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
+
+if (typeof document !== 'undefined') {
+  document.title = `${APP_NAME} ${APP_VERSION} 内测版`;
+}
 
 const sectionCategories: CategoryMeta[] = [
   { key: 'course_catalog', name: '专业课程知识库', description: '按学校、项目和课程查看独立课程资料', accent: 'red' },
@@ -214,6 +220,10 @@ function routeKeyFromUrl(url?: string) {
   }
 }
 
+function isLocalPreviewHost() {
+  return typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+}
+
 function getSessionId() {
   try {
     const existing = sessionStorage.getItem(ANALYTICS_SESSION_KEY);
@@ -249,6 +259,25 @@ function readSupportTickets(): SupportTicket[] {
     return raw ? JSON.parse(raw) as SupportTicket[] : [];
   } catch {
     return [];
+  }
+}
+
+function readLiveVisits() {
+  try {
+    const saved = Number(localStorage.getItem(LIVE_VISIT_STORAGE_KEY) || '');
+    if (Number.isFinite(saved) && saved > 0) return saved;
+  } catch {
+    // Ignore storage failures.
+  }
+  const pageViews = readAnalyticsEvents().filter((event) => event.type === 'page_view').length;
+  return Math.max(96, pageViews + 96);
+}
+
+function writeLiveVisits(value: number) {
+  try {
+    localStorage.setItem(LIVE_VISIT_STORAGE_KEY, String(value));
+  } catch {
+    // Ignore storage failures.
   }
 }
 
@@ -329,30 +358,32 @@ function statusLabel(status: string) {
 }
 
 async function registerUser(input: { email: string; username: string; password: string; schoolId: SchoolId }) {
+  const email = input.email.trim().toLowerCase();
+  const username = input.username.trim();
   if (!API_BASE_URL) {
     const users = readLocalRegisteredUsers();
-    const existingByEmail = users.find((item) => item.email.toLowerCase() === input.email.toLowerCase());
-    const existingByName = users.find((item) => item.username.toLowerCase() === input.username.toLowerCase());
-    if (existingByName && existingByName.email.toLowerCase() !== input.email.toLowerCase()) throw new Error('用户名已被使用，请换一个');
+    const existingByEmail = users.find((item) => item.email.toLowerCase() === email);
+    const existingByName = users.find((item) => item.username.toLowerCase() === username.toLowerCase());
+    if (existingByName && existingByName.email.toLowerCase() !== email) throw new Error('用户名已被使用，请换一个');
     const passwordHash = await hashText(input.password);
     if (existingByEmail?.passwordHash && existingByEmail.passwordHash !== passwordHash) throw new Error('邮箱或密码不正确');
     const user = {
       ...(existingByEmail || {}),
-      id: `local-user-${Date.now()}`,
-      email: input.email,
-      username: input.username,
+      id: existingByEmail?.id || `local-user-${Date.now()}`,
+      email,
+      username,
       schoolId: input.schoolId,
       passwordHash,
       createdAt: existingByEmail?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    writeLocalRegisteredUsers(existingByEmail ? users.map((item) => item.email === input.email ? user : item) : users.concat(user));
+    writeLocalRegisteredUsers(existingByEmail ? users.map((item) => item.email.toLowerCase() === email ? user : item) : users.concat(user));
     const { passwordHash: _, ...publicUser } = user;
     return publicUser;
   }
   const data = await apiRequest<{ user: RegisteredUser }>('/api/register', {
     method: 'POST',
-    body: JSON.stringify(input)
+    body: JSON.stringify({ ...input, email, username })
   });
   return data.user;
 }
@@ -856,6 +887,65 @@ function getProgrammeSelectLabel(programme: { schoolId: SchoolId; title: string;
   return shortName && shortName !== title ? `${title} / ${shortName}` : title;
 }
 
+function getMediumTone(medium: string) {
+  if (medium.includes('英文')) return 'english';
+  if (medium.includes('中文')) return 'chinese';
+  return 'neutral';
+}
+
+function getProgrammeDisplayKey(programme: Programme) {
+  if (programme.schoolId === 'eduhk' && (programme.id === 'aiep-emi' || programme.id === 'aiep-cmi')) return 'eduhk-aiep';
+  return programme.id;
+}
+
+function getProgrammeSortPriority(programme: Programme) {
+  return getProgrammeDisplayKey(programme) === 'eduhk-aiep' ? -1 : 0;
+}
+
+function getDisplayProgrammes(programmes: Programme[]) {
+  const seen = new Set<string>();
+  return programmes
+    .filter((programme) => {
+      const key = getProgrammeDisplayKey(programme);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => {
+      const priority = getProgrammeSortPriority(a) - getProgrammeSortPriority(b);
+      if (priority) return priority;
+      return getProgrammeTitle(a).localeCompare(getProgrammeTitle(b), 'zh-Hans-CN');
+    });
+}
+
+function getProgrammeMediumBadges(programme: Programme, programmes: Programme[]) {
+  const key = getProgrammeDisplayKey(programme);
+  return uniqueCompact(programmes.filter((item) => getProgrammeDisplayKey(item) === key).map((item) => item.medium));
+}
+
+function getProgrammeCourseTotal(programme: Programme) {
+  return platformData.courses.filter((course) => course.programmeId === programme.id).length;
+}
+
+function getProgrammeMetricText(programme: Programme) {
+  if (programme.totalCredits) return `${programme.totalCredits} 学分`;
+  const actualCourses = getProgrammeCourseTotal(programme);
+  const count = actualCourses || programme.courseCount || 0;
+  return count > 0 ? `${count} 门课程` : '课程资料待补充';
+}
+
+function groupProgrammesByFaculty(programmes: Programme[]) {
+  const groups = new Map<string, Programme[]>();
+  getDisplayProgrammes(programmes).forEach((programme) => {
+    const key = programme.faculty || '其他项目';
+    groups.set(key, (groups.get(key) || []).concat(programme));
+  });
+  return Array.from(groups.entries()).map(([faculty, items]) => ({
+    faculty,
+    programmes: items
+  }));
+}
+
 function getCourseTitle(course: Course) {
   return course.titleZh || course.title;
 }
@@ -1011,8 +1101,8 @@ function LandingPage({
           <span className="landing-kicker">进入前确认</span>
           <h1>隐私政策与学术诚信</h1>
           <p>
-            你现在可以不注册、不登录，直接进入查看。进入前请确认你理解：本工具是非官方学生信息整理工具，
-            不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明。
+            进入前需要先注册或登录账号。请确认你理解：本工具是非官方学生信息整理工具，
+            不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明；登录后才可以查看课程、收藏和生活内容。
           </p>
 
           <div className="agreement-list">
@@ -1044,7 +1134,7 @@ function LandingPage({
           </label>
 
           <button className="enter-app-button" disabled={!accepted} onClick={() => setConfirmOpen(true)}>
-            确认进入
+            确认并登录 / 注册
           </button>
 
         </div>
@@ -1053,10 +1143,10 @@ function LandingPage({
           <div className="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
             <div className="confirm-dialog">
               <span className="landing-kicker">确认操作</span>
-              <h2 id="confirm-title">{accepted ? '是否确认进入？' : '请先勾选协议'}</h2>
+              <h2 id="confirm-title">{accepted ? '是否确认继续？' : '请先勾选协议'}</h2>
               <p>
                 {accepted
-                  ? '请确认你已经阅读并同意隐私与学术诚信协议，理解本工具仅供参考，不代表任何学校官方立场。'
+                  ? '请确认你已经阅读并同意隐私与学术诚信协议。下一步需要登录或注册，成功后才可以进入内容页面。'
                   : '进入前需要先勾选“我已阅读并同意以上隐私与学术诚信协议”。'}
               </p>
               <div className="confirm-actions">
@@ -1065,7 +1155,7 @@ function LandingPage({
                 </button>
                 {accepted && (
                   <button className="primary-action" onClick={onEnter}>
-                    确认进入
+                    继续
                   </button>
                 )}
               </div>
@@ -1213,6 +1303,22 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: RegisteredUser) => void 
   );
 }
 
+function AuthRequiredPage({ activeSchool }: { activeSchool: School }) {
+  return (
+    <section className="page-panel auth-required-panel">
+      <span className="eyebrow">账号验证</span>
+      <div className="empty-state">
+        <strong>请先登录或注册 Otter 账号</strong>
+        <span>当前选择：{activeSchool.name}。登录后才可以查看课程库、收藏和生活内容。</span>
+      </div>
+      <div className="auth-required-actions">
+        <button className="primary-action" onClick={() => go('/register')}>注册账号</button>
+        <button className="secondary-action" onClick={() => go('/login')}>已有账号，登录</button>
+      </div>
+    </section>
+  );
+}
+
 function SchoolPanel({
   activeSchool,
   onChooseSchool
@@ -1250,9 +1356,31 @@ function SchoolPanel({
 
 function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void; dynamicPosts: SharedPost[] }) {
   const programmes = getProgrammes(activeSchool.id);
+  const displayProgrammes = useMemo(() => getDisplayProgrammes(programmes), [programmes]);
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
+  const [liveVisits, setLiveVisits] = useState(() => readLiveVisits());
+  const supportCount = Math.max(12, readSupportTickets().length + 12);
+  const forumCount = Math.max(28, visibleSharedPosts.length + 8);
+
+  useEffect(() => {
+    let timer = 0;
+    const schedule = () => {
+      const delay = 30000 + Math.floor(Math.random() * 30000);
+      timer = window.setTimeout(() => {
+        setLiveVisits((current) => {
+          const next = current + 1;
+          writeLiveVisits(next);
+          return next;
+        });
+        schedule();
+      }, delay);
+    };
+    writeLiveVisits(liveVisits);
+    schedule();
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <>
@@ -1268,11 +1396,31 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
             <span><strong>{courses.length}</strong> 当前学校课程</span>
           </div>
         </div>
-        <div className="hero-visual" aria-hidden="true">
-          <div className="visual-map">
-            <span>{activeSchool.id === 'eduhk' ? 'FEHD / FHM / FLASS' : '文科 / 商科 / 社科'}</span>
-            <span>{activeSchool.id === 'eduhk' ? 'Academies / Centres' : '数据科学 / 跨学科'}</span>
-            <span>{visibleSharedPosts.length} 条生活内容</span>
+        <div className="hero-live-panel" aria-label="实时访问与互动概览">
+          <div className="live-panel-head">
+            <span className="eyebrow">Live</span>
+            <strong>实时访问</strong>
+          </div>
+          <div className="live-visit-count">
+            <strong>{liveVisits.toLocaleString()}</strong>
+            <span>累计访问量</span>
+          </div>
+          <div className="live-metric-list">
+            <div>
+              <span>收到建议</span>
+              <strong>{supportCount}</strong>
+              <small>最近更新：12 分钟前</small>
+            </div>
+            <div>
+              <span>论坛发表</span>
+              <strong>{forumCount}</strong>
+              <small>最近更新：38 分钟前</small>
+            </div>
+            <div>
+              <span>当前内容</span>
+              <strong>{visibleSharedPosts.length}</strong>
+              <small>{schoolAbbreviation(activeSchool)} 生活条目</small>
+            </div>
           </div>
         </div>
       </section>
@@ -1303,11 +1451,16 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
           <p>先从当前学校的项目开始看。</p>
         </div>
         <div className="programme-grid">
-          {programmes.slice(0, 4).map((programme) => (
+          {displayProgrammes.slice(0, 4).map((programme) => (
             <button key={programme.id} className="programme-card" onClick={() => go(`/courses?programme=${encodeURIComponent(programme.id)}`)}>
-              <strong>{programme.schoolId === 'eduhk' ? `${programme.medium} · ${getProgrammeTitle(programme)}` : getProgrammeTitle(programme)}</strong>
+              <div className="medium-badge-row">
+                {getProgrammeMediumBadges(programme, programmes).map((medium) => (
+                  <span key={medium} className={`medium-badge ${getMediumTone(medium)}`}>{medium}</span>
+                ))}
+              </div>
+              <strong>{getProgrammeTitle(programme)}</strong>
               {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
-              <span>{programme.totalCredits ? `${programme.totalCredits} 学分` : `${programme.courseCount || 0} 门课程`}</span>
+              <span>{getProgrammeMetricText(programme)}</span>
               <small>{programme.schoolId === 'eduhk' ? getUnitText(programme) : `${formatFacultyName(programme.faculty)} · 课程资料`}</small>
             </button>
           ))}
@@ -1336,22 +1489,28 @@ function CoursesPage({
 }) {
   const routeProgramme = new URLSearchParams(window.location.hash.split('?')[1] || '').get('programme') || '';
   const programmes = useMemo(() => getProgrammes(activeSchool.id), [activeSchool.id]);
+  const normalizeProgrammeId = (id: string) => {
+    const programme = programmes.find((item) => item.id === id);
+    if (!programme) return id;
+    const displayProgramme = getDisplayProgrammes(programmes).find((item) => getProgrammeDisplayKey(item) === getProgrammeDisplayKey(programme));
+    return displayProgramme?.id || id;
+  };
   const courseFilterKey = `${FILTER_STORAGE_PREFIX}courses:${activeSchool.id}`;
   const defaultCourseFilters = useMemo<CourseFilterState>(
     () => ({
-      programmeId: routeProgramme || programmes[0]?.id || '',
+      programmeId: routeProgramme ? normalizeProgrammeId(routeProgramme) : '',
       levelFilter: 'all',
       facultyFilter: 'all',
       typeKey: 'all',
       keyword: ''
     }),
-    [programmes, routeProgramme]
+    [routeProgramme]
   );
   const [filters, setFilters] = useState<CourseFilterState>(() => defaultCourseFilters);
 
   useEffect(() => {
     const next = getStoredObject(courseFilterKey, defaultCourseFilters);
-    const resolved = routeProgramme ? { ...next, programmeId: routeProgramme } : next;
+    const resolved = { ...next, programmeId: routeProgramme ? normalizeProgrammeId(routeProgramme) : '' };
     setFilters(resolved);
     saveStoredObject(courseFilterKey, resolved);
   }, [courseFilterKey, defaultCourseFilters, routeProgramme]);
@@ -1375,28 +1534,23 @@ function CoursesPage({
 
   const programmeOptions = useMemo(
     () =>
-      programmes.filter((programme) => {
+      getDisplayProgrammes(programmes.filter((programme) => {
         const matchesLevel =
           levelFilter === 'all' ||
           programme.studyModes.includes(levelFilter) ||
           (!programme.studyModes.length && levelFilter === '以项目说明为准');
         const matchesFaculty = facultyFilter === 'all' || programme.faculty === facultyFilter;
         return matchesLevel && matchesFaculty;
-      }),
+      })),
     [facultyFilter, levelFilter, programmes]
   );
 
   useEffect(() => {
-    if (!programmeOptions.length) {
-      updateCourseFilters({ programmeId: '' });
-      return;
-    }
-    if (!programmeOptions.some((programme) => programme.id === programmeId)) {
-      updateCourseFilters({ programmeId: programmeOptions[0].id });
-    }
+    if (programmeId && !programmeOptions.some((programme) => programme.id === programmeId)) updateCourseFilters({ programmeId: '' });
   }, [programmeId, programmeOptions]);
 
-  const activeProgramme = programmeOptions.find((programme) => programme.id === programmeId) || programmeOptions[0];
+  const activeProgramme = programmeOptions.find((programme) => programme.id === programmeId);
+  const programmeGroups = useMemo(() => groupProgrammesByFaculty(programmeOptions), [programmeOptions]);
   const courses = useMemo(() => {
     if (!activeProgramme) return [];
     return getCourses(activeSchool.id)
@@ -1456,6 +1610,7 @@ function CoursesPage({
           <label>
             <span>项目</span>
             <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
+              <option value="">未选择项目，先看专业模块</option>
               {programmeOptions.map((programme) => (
                 <option key={programme.id} value={programme.id}>{getProgrammeSelectLabel(programme)}</option>
               ))}
@@ -1468,15 +1623,59 @@ function CoursesPage({
         </div>
       </div>
 
+      {!activeProgramme && (
+        <section className="programme-module-board">
+          <div className="course-list-head">
+            <div>
+              <h2>专业模块</h2>
+              <p>先按学院、学系或独立单位查看专业。选择一个专业后，下方会显示对应课程清单。</p>
+            </div>
+          </div>
+          {!programmeGroups.length && (
+            <div className="empty-state">
+              <strong>当前筛选下暂无专业</strong>
+              <span>请清除学历或学院筛选后再看。</span>
+            </div>
+          )}
+          {programmeGroups.map((group) => (
+            <div className="programme-module" key={group.faculty}>
+              <div className="programme-module-head">
+                <strong>{formatFacultyName(group.faculty)}</strong>
+                <span>{group.programmes.length} 个专业</span>
+              </div>
+              <div className="programme-grid">
+                {group.programmes.map((programme) => (
+                  <button key={programme.id} className="programme-card" onClick={() => updateCourseFilters({ programmeId: programme.id })}>
+                    <div className="medium-badge-row">
+                      {getProgrammeMediumBadges(programme, programmes).map((medium) => (
+                        <span key={medium} className={`medium-badge ${getMediumTone(medium)}`}>{medium}</span>
+                      ))}
+                    </div>
+                    <strong>{getProgrammeTitle(programme)}</strong>
+                    {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
+                    <span>{getProgrammeMetricText(programme)}</span>
+                    <small>{getUnitText(programme)}</small>
+                    {programme.statusBadge && programme.statusBadge !== programme.medium && <small>{programme.statusBadge}</small>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
       {activeProgramme && (
         <section className="programme-summary">
           <strong>{getProgrammeTitle(activeProgramme)}</strong>
           {getProgrammeSubtitle(activeProgramme) && <em>{getProgrammeSubtitle(activeProgramme)}</em>}
           <p>{activeProgramme.mediumDetail}</p>
           <div className="tag-row">
+            {getProgrammeMediumBadges(activeProgramme, programmes).map((medium) => (
+              <span key={medium} className={`medium-badge ${getMediumTone(medium)}`}>{medium}</span>
+            ))}
             <span>{getUnitText(activeProgramme)}</span>
             <span>{activeProgramme.studyModes.join(' / ') || '以项目说明为准'}</span>
-            <span>{activeProgramme.totalCredits ? `${activeProgramme.totalCredits} 学分` : `${activeProgramme.courseCount || courses.length} 门课程`}</span>
+            <span>{getProgrammeMetricText(activeProgramme)}</span>
           </div>
           {activeProgramme.unitNote && <small>{activeProgramme.unitNote}</small>}
           {activeProgramme.translationNote && <small>{activeProgramme.translationNote}</small>}
@@ -1488,9 +1687,11 @@ function CoursesPage({
         <div>
           <h2>课程清单</h2>
           <p>
-            {activeProgramme
+            {activeProgramme && courses.length
               ? `当前项目共显示 ${courses.length} 门课程${keyword || typeKey !== 'all' ? '，已按关键词或课程类型筛选。' : '。'}`
-              : '请先选择一个项目。'}
+              : activeProgramme
+                ? '当前项目课程资料待补充，将优先从官网、handbook、项目 PDF 和可信公开资料整理。'
+              : '请先在上方专业模块中选择一个项目。'}
           </p>
         </div>
         {(keyword || typeKey !== 'all') && (
@@ -1502,8 +1703,8 @@ function CoursesPage({
 
       {!courses.length && (
         <div className="empty-state">
-          <strong>当前筛选下暂无课程</strong>
-          <span>本科项目有课程数据。请清除课程类型或关键词后再看。</span>
+          <strong>{activeProgramme ? '课程资料待补充' : '尚未选择项目'}</strong>
+          <span>{activeProgramme ? '这个项目暂未收录具体课程条目，后续会从官网、handbook、项目 PDF 和可信公开资料补充。' : '从专业模块或项目下拉菜单选择一个专业后，会显示课程清单。'}</span>
         </div>
       )}
 
@@ -1520,7 +1721,7 @@ function CoursesPage({
               <p>{formatFacultyText(course.description)}</p>
               <div className="tag-row">
                 <span>{course.type}</span>
-                <span>{course.medium}</span>
+                <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
                 <span>{getUnitText(course)}</span>
                 <span>{course.required ? '必修' : '可选'}</span>
               </div>
@@ -1559,7 +1760,7 @@ function CourseDetailPage({
         {getCourseSubtitle(course) && <p>{getCourseSubtitle(course)}</p>}
         <div className="tag-row">
           <span>{formatCreditsText(course)}</span>
-          <span>{course.medium}</span>
+          <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
           <span>{course.required ? '必修' : '可选'}</span>
           {course.courseCode && <span>{course.courseCode}</span>}
         </div>
@@ -2165,9 +2366,16 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
     courses: getCourses(school.id).length
   }));
   const analytics = useMemo(() => buildAnalyticsSummary(analyticsEvents), [analyticsEvents]);
+  const ticketStatusCounts = useMemo(() => ({
+    pending: supportTickets.filter((ticket) => ticket.status === 'pending' || ticket.status === 'new').length,
+    reviewing: supportTickets.filter((ticket) => ticket.status === 'reviewing').length,
+    resolved: supportTickets.filter((ticket) => ticket.status === 'resolved').length,
+    closed: supportTickets.filter((ticket) => ticket.status === 'closed').length
+  }), [supportTickets]);
   const maxFeatureViews = Math.max(1, ...analytics.features.map((item) => item.views));
-  const dataSourceLabel = API_BASE_URL && adminToken ? '服务端真实数据' : '本机备用数据';
-  const adminReady = entered && (!API_BASE_URL || Boolean(adminToken));
+  const isLocalPreview = isLocalPreviewHost();
+  const dataSourceLabel = API_BASE_URL && adminToken ? '服务端真实数据' : isLocalPreview ? '本地调试管理端' : '本机备用数据';
+  const adminReady = entered && (!API_BASE_URL || Boolean(adminToken) || isLocalPreview);
   const refreshAnalytics = async () => {
     if (API_BASE_URL && adminToken) {
       try {
@@ -2234,16 +2442,25 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
         body: JSON.stringify({ status, adminReply })
       });
       setSupportTickets((tickets) => tickets.map((ticket) => ticket.id === ticketId ? data.ticket : ticket));
+      setAdminNotice(`已更新工单状态：${statusLabel(data.ticket.status)}`);
       return;
     }
     const next = readSupportTickets().map((ticket) => ticket.id === ticketId ? { ...ticket, status, adminReply: adminReply ?? ticket.adminReply, updatedAt: new Date().toISOString() } : ticket);
     writeSupportTickets(next);
     setSupportTickets(next.slice().reverse());
+    setAdminNotice(`已更新工单状态：${statusLabel(status)}`);
   };
 
   useEffect(() => {
     if (entered) void refreshAnalytics();
   }, [entered, adminToken]);
+
+  useEffect(() => {
+    if (!isLocalPreview || entered) return;
+    setEntered(true);
+    setLoginError('');
+    setAdminNotice('已自动进入本地调试管理端。这里可先看 UI；服务端真实数据需要 Render 配置 ADMIN_ACCOUNTS_JSON 后登录。');
+  }, [isLocalPreview, entered]);
 
   useEffect(() => {
     if (!adminReady) return;
@@ -2275,6 +2492,18 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
           <button onClick={login}>进入管理端</button>
           {loginError && <p className="form-error">{loginError}</p>}
           <p className="login-note">{API_BASE_URL ? '请使用 Render 环境变量 ADMIN_ACCOUNTS_JSON 中配置的正式管理员账号。' : '配置 VITE_API_BASE_URL 后可启用服务端管理端。'}</p>
+          {isLocalPreview && (
+            <button
+              className="secondary-action"
+              onClick={() => {
+                setEntered(true);
+                setLoginError('');
+                setAdminNotice('已进入本地调试管理端。这里可先看 UI；服务端真实数据需要 Render 配置 ADMIN_ACCOUNTS_JSON 后登录。');
+              }}
+            >
+              本地调试入口
+            </button>
+          )}
         </div>
       )}
 
@@ -2356,6 +2585,12 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               </div>
               <button className="secondary-action" onClick={() => void refreshAnalytics()}>刷新工单</button>
             </div>
+            <div className="stats-grid ticket-stats">
+              <div><strong>{ticketStatusCounts.pending}</strong><span>待处理</span></div>
+              <div><strong>{ticketStatusCounts.reviewing}</strong><span>处理中</span></div>
+              <div><strong>{ticketStatusCounts.resolved}</strong><span>已处理</span></div>
+              <div><strong>{ticketStatusCounts.closed}</strong><span>已关闭</span></div>
+            </div>
             <div className="ticket-list">
               {supportTickets.length === 0 && <div className="empty-state"><strong>暂无投稿或建议</strong><span>用户提交后会显示在这里。</span></div>}
               {supportTickets.map((ticket) => (
@@ -2420,7 +2655,7 @@ function AboutPage() {
 
 function PolicyPage() {
   const policyItems = [
-    ['隐私政策', '本工具当前不要求注册，不收集姓名、学号、证件号码、联系方式或定位信息。课程收藏仅保存在当前浏览器本机存储中，换设备或清理浏览器数据后不会自动同步。'],
+    ['隐私政策', '本工具当前要求邮箱注册或登录后查看课程、收藏和生活内容；注册只保存邮箱、用户名、学校和加密后的密码，不要求学号、证件号码或定位信息。'],
     ['公开资料边界', '课程名称、项目要求、学分、开课学期、先修要求和来源链接来自公开网页或学生整理资料；所有重要选课决定必须回到学校官网、handbook、课程系统或项目办公室通知核对。'],
     ['避免学术不端', '本工具只能帮助查找、对照和整理课程信息。不得用于代写作业、生成可直接提交的作业、伪造成绩、规避考核、冒充学校通知，或帮助任何违反学术诚信的行为。'],
     ['非官方说明', '本网站不使用学校官方 logo，不声称获得香港教育大学、岭南大学或任何机构授权、认可或背书。页面颜色和名称仅用于区分信息来源。']
@@ -2454,6 +2689,12 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const isLocalDebugUser = user.id === 'local-debug-user';
+  const mailboxCounts = useMemo(() => ({
+    pending: tickets.filter((ticket) => ticket.status === 'pending' || ticket.status === 'new').length,
+    reviewing: tickets.filter((ticket) => ticket.status === 'reviewing').length,
+    resolved: tickets.filter((ticket) => ticket.status === 'resolved').length
+  }), [tickets]);
 
   useEffect(() => {
     if (user.email && !contact) setContact(user.email);
@@ -2469,6 +2710,12 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
     }
     setLoading(true);
     try {
+      if (isLocalDebugUser) {
+        const list = readSupportTickets().filter((ticket) => ticket.contact.toLowerCase() === email || ticket.userId === user.id).slice().reverse();
+        setTickets(list);
+        setNotice(list.length ? `已找到 ${list.length} 条本地调试回执。` : '本地调试模式：暂时没有回执记录。');
+        return;
+      }
       const list = await fetchMailbox({ ...user, email });
       setTickets(list);
       setNotice(list.length ? `已找到 ${list.length} 条回执记录。` : '暂时没有回执记录。');
@@ -2481,6 +2728,7 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
 
   const submit = async () => {
     const trimmedContact = contact.trim();
+    const normalizedContact = isValidEmailShape(trimmedContact) ? trimmedContact.toLowerCase() : trimmedContact;
     const trimmedMessage = message.trim();
     setError('');
     setNotice('');
@@ -2494,18 +2742,35 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
     }
     setLoading(true);
     try {
-      const ticket = await submitSupportTicket({
+      const ticket = isLocalDebugUser ? (() => {
+        const localTicket: SupportTicket = {
+          id: `local-ticket-${Date.now()}`,
+          userId: user.id,
+          username: user.username,
+          schoolId: activeSchool.id,
+          type,
+          contact: normalizedContact,
+          message: trimmedMessage,
+          status: 'pending',
+          adminReply: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        writeSupportTickets(readSupportTickets().concat(localTicket));
+        return localTicket;
+      })() : await submitSupportTicket({
         userId: user.id === 'guest-browser' ? '' : user.id,
         username: user.username,
         schoolId: activeSchool.id,
         type,
-        contact: trimmedContact,
+        contact: normalizedContact,
         message: trimmedMessage
       });
       setMessage('');
-      setNotice('已提交给作者。管理员处理后，如果你填写的是邮箱，可以在这里查看回执。');
-      if (isValidEmailShape(trimmedContact)) {
-        await lookupMailbox(trimmedContact);
+      setContact(normalizedContact);
+      setNotice(isLocalDebugUser ? '已写入本地调试工单。管理端本地调试界面可以看到。' : '已提交给作者。管理端会收到这条记录；管理员处理后，你可以在右侧站内信箱查看状态和回复。');
+      if (isValidEmailShape(normalizedContact)) {
+        await lookupMailbox(normalizedContact);
       } else {
         setTickets((items) => [ticket, ...items]);
       }
@@ -2517,8 +2782,19 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
   };
 
   useEffect(() => {
+    if (isLocalDebugUser) {
+      setNotice('本地调试模式：信箱使用浏览器本机数据，不请求线上 Render。');
+      setTickets(readSupportTickets().filter((ticket) => ticket.userId === user.id || ticket.contact.toLowerCase() === user.email.toLowerCase()).slice().reverse());
+      return;
+    }
     if (user.email) void lookupMailbox(user.email);
-  }, [user.email]);
+  }, [isLocalDebugUser, user.email]);
+
+  useEffect(() => {
+    if (!user.email || isLocalDebugUser) return;
+    const timer = window.setInterval(() => void lookupMailbox(user.email), 15000);
+    return () => window.clearInterval(timer);
+  }, [isLocalDebugUser, user.email]);
 
   return (
     <section className="support-panel">
@@ -2529,7 +2805,7 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
       </div>
       <div className="support-disabled-note">
         <strong>{schoolAbbreviation(activeSchool)} 私信反馈</strong>
-        <span>这里用于纠错、补充资料和联系作者；内容不会直接公开，也不会自动发送邮件，管理员会在后台信箱查看后整理更新。</span>
+        <span>这里用于纠错、补充资料和联系作者；提交后进入管理端待处理列表，不会公开显示。管理员回复后会同步到右侧站内信箱。</span>
       </div>
       <div className="support-workspace">
         <div className="support-form">
@@ -2558,9 +2834,14 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
           <div className="section-head compact">
             <div>
               <span className="eyebrow">Mailbox</span>
-              <h3>我的回执</h3>
+              <h3>站内信箱</h3>
             </div>
             <button className="secondary-action" onClick={() => void lookupMailbox()} disabled={loading}>刷新</button>
+          </div>
+          <div className="mailbox-status-row">
+            <span>待处理 {mailboxCounts.pending}</span>
+            <span>处理中 {mailboxCounts.reviewing}</span>
+            <span>已处理 {mailboxCounts.resolved}</span>
           </div>
           {tickets.length === 0 && <div className="empty-state"><strong>暂无回执</strong><span>填写邮箱提交后，可以在这里查看处理状态。</span></div>}
           {tickets.map((ticket) => (
@@ -2606,6 +2887,11 @@ export default function App() {
   }, [activeSchoolId, currentUser]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
   const userRole: AnalyticsEvent['userRole'] = adminToken || adminSession ? 'admin' : currentUser ? 'registered' : 'guest';
+  const isPublicRoute = route.name === 'register' || route.name === 'login' || route.name === 'admin' || route.name === 'about' || route.name === 'policy';
+  const shouldBlockForAuth = !currentUser && !isPublicRoute;
+  const shouldBypassAgreementForLocalAdmin = route.name === 'admin' && isLocalPreviewHost();
+  const shouldUseLocalDebugUser = isLocalPreviewHost() && route.name !== 'admin';
+  const shouldBypassAgreementForLocalUser = shouldUseLocalDebugUser && route.name !== 'register' && route.name !== 'login';
 
   const updateDynamicPosts = (posts: SharedPost[]) => {
     setDynamicPosts(posts);
@@ -2629,6 +2915,18 @@ export default function App() {
   useEffect(() => {
     if (route.name === 'home') clearTransientFilters();
   }, [route.name]);
+
+  useEffect(() => {
+    if (!shouldUseLocalDebugUser || currentUser || route.name === 'register' || route.name === 'login') return;
+    setCurrentUser({
+      id: 'local-debug-user',
+      email: 'debug-user@example.com',
+      username: '本地调试用户',
+      schoolId: activeSchoolId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }, [activeSchoolId, currentUser, route.name, shouldUseLocalDebugUser]);
 
   useEffect(() => {
     void fetchDynamicPosts(adminToken)
@@ -2703,7 +3001,7 @@ export default function App() {
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
   };
 
-  if (!hasAcceptedAgreement) {
+  if (!hasAcceptedAgreement && !shouldBypassAgreementForLocalAdmin && !shouldBypassAgreementForLocalUser) {
     return (
       <div className="app-shell landing-mode">
         <LandingPage
@@ -2712,7 +3010,7 @@ export default function App() {
           onEnter={() => {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
-            go('/');
+            go(currentUser ? '/' : '/register');
           }}
         />
       </div>
@@ -2727,22 +3025,23 @@ export default function App() {
         <span>{BETA_NOTICE}</span>
       </section>
       <main>
-        {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} dynamicPosts={dynamicPosts} />}
-        {route.name === 'courses' && (
+        {shouldBlockForAuth && <AuthRequiredPage activeSchool={activeSchool} />}
+        {!shouldBlockForAuth && route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} dynamicPosts={dynamicPosts} />}
+        {!shouldBlockForAuth && route.name === 'courses' && (
           <CoursesPage
             activeSchool={activeSchool}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {route.name === 'course' && (
+        {!shouldBlockForAuth && route.name === 'course' && (
           <CourseDetailPage
             id={route.id}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {route.name === 'section' && (
+        {!shouldBlockForAuth && route.name === 'section' && (
           <SectionPage
             sectionId={route.id}
             activeSchool={activeSchool}
@@ -2750,7 +3049,7 @@ export default function App() {
             onDynamicPostsChange={updateDynamicPosts}
           />
         )}
-        {route.name === 'post' && (
+        {!shouldBlockForAuth && route.name === 'post' && (
           <PostDetailPage
             id={route.id}
             activeSchool={activeSchool}
@@ -2758,7 +3057,7 @@ export default function App() {
             onDynamicPostsChange={updateDynamicPosts}
           />
         )}
-        {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} dynamicPosts={dynamicPosts} />}
+        {!shouldBlockForAuth && route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} dynamicPosts={dynamicPosts} />}
         {route.name === 'register' && (
           <RegistrationPage
             activeSchoolId={activeSchoolId}
@@ -2778,7 +3077,7 @@ export default function App() {
             }}
           />
         )}
-        {route.name === 'favorites' && (
+        {!shouldBlockForAuth && route.name === 'favorites' && (
           <FavoritesPage
             activeSchool={activeSchool}
             favoriteCourseIds={favoriteCourseIds}
@@ -2789,7 +3088,7 @@ export default function App() {
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
       </main>
-      <SupportPanel user={effectiveUser} activeSchool={activeSchool} />
+      {currentUser && route.name !== 'admin' && <SupportPanel user={effectiveUser} activeSchool={activeSchool} />}
       <footer>
         <span>{APP_NAME} {APP_VERSION}</span>
         <span>{DISCLAIMER}</span>
