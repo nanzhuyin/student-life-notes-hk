@@ -81,3 +81,10 @@ drop policy if exists "No public client access to otter_users" on public.otter_u
 drop policy if exists "No public client access to otter_analytics_events" on public.otter_analytics_events;
 drop policy if exists "No public client access to otter_support_tickets" on public.otter_support_tickets;
 drop policy if exists "No public client access to otter_posts" on public.otter_posts;
+
+grant usage on schema public to service_role;
+grant all privileges on table public.otter_users to service_role;
+grant all privileges on table public.otter_analytics_events to service_role;
+grant all privileges on table public.otter_support_tickets to service_role;
+grant all privileges on table public.otter_posts to service_role;
+alter default privileges in schema public grant all privileges on tables to service_role;

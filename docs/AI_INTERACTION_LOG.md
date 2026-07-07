@@ -12,10 +12,10 @@
 
 每一次准备 push，都必须递增一个小版本，并在提交信息和日志中注明。
 
-- 上一次版本：`v1.22`
-- 上一次开放管理员板块投稿与编辑版本：`v1.22`
-- 本次登录与统计修复版本：`v1.23`
-- 下一次修改：`v1.24`
+- 上一次版本：`v1.23`
+- 上一次登录与统计修复版本：`v1.23`
+- 本次 Supabase service_role 权限修复版本：`v1.24`
+- 下一次修改：`v1.25`
 
 每次版本递增时至少同步这些位置：
 
@@ -111,6 +111,21 @@ http://127.0.0.1:5173/student-life-notes-hk/#/
 ```
 
 ## 版本日志
+
+### v1.24
+
+日期：2026-07-07
+
+改动范围：
+
+- 线上检查发现 Render 后端已部署到 v1.23，但 Supabase 返回 `permission denied for table otter_users`。
+- `supabase/schema.sql` 增加 `service_role` 对 `otter_users`、`otter_analytics_events`、`otter_support_tickets`、`otter_posts` 的表权限授权。
+- README 和部署交接文档补充说明：如果重跑 schema 后仍报权限错误，检查 Render 的 `SUPABASE_SERVICE_ROLE_KEY` 是否误填成 publishable key。
+
+测试：
+
+- GitHub Pages v1.23 线上检查通过，页面返回 `Otter v1.23`。
+- Render `/api/login` 已存在，但在重跑 Supabase schema 或修正 service role key 前会继续返回数据库权限错误。
 
 ### v1.23
 
