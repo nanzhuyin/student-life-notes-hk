@@ -178,7 +178,8 @@ function fromPostRow(row) {
 
 export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
   const hasSupabase = Boolean(supabaseUrl && supabaseServiceRoleKey);
-  const restBase = hasSupabase ? `${supabaseUrl.replace(/\/$/, '')}/rest/v1` : '';
+  const supabaseBase = supabaseUrl.replace(/\/$/, '').replace(/\/rest\/v1$/, '');
+  const restBase = hasSupabase ? `${supabaseBase}/rest/v1` : '';
 
   async function supabaseRequest(path, options = {}) {
     const response = await fetch(`${restBase}${path}`, {
@@ -255,6 +256,15 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         return db.users.find((item) => item.email === email) || null;
       }
       const rows = await selectRows('otter_users', `select=*&email=eq.${encodeURIComponent(email)}&limit=1`);
+      return rows[0] ? fromUserRow(rows[0]) : null;
+    },
+
+    async findUserByUsername(username) {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        return db.users.find((item) => item.username.toLowerCase() === username.toLowerCase()) || null;
+      }
+      const rows = await selectRows('otter_users', `select=*&username=ilike.${encodeURIComponent(username)}&limit=1`);
       return rows[0] ? fromUserRow(rows[0]) : null;
     },
 

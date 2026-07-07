@@ -61,6 +61,7 @@ create table if not exists public.otter_posts (
 );
 
 create index if not exists otter_users_email_idx on public.otter_users (email);
+create unique index if not exists otter_users_username_lower_unique_idx on public.otter_users (lower(username));
 create index if not exists otter_analytics_events_timestamp_idx on public.otter_analytics_events (timestamp desc);
 create index if not exists otter_analytics_events_school_idx on public.otter_analytics_events (school_id);
 create index if not exists otter_support_tickets_user_idx on public.otter_support_tickets (user_id);

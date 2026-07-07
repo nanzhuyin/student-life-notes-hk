@@ -1447,6 +1447,33 @@ p {
   padding: 1rem;
 }
 
+.post-card.with-image {
+  align-content: start;
+  padding: 0.75rem;
+}
+
+.post-cover-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.7rem;
+  background: #fff3e8;
+}
+
+.post-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #fff3e8;
+  transition: transform 160ms ease;
+}
+
+.post-cover-button:hover .post-cover {
+  transform: scale(1.025);
+}
+
 .course-main {
   padding: 0;
 }
@@ -1914,9 +1941,9 @@ p {
 
 .event-table > div {
   display: grid;
-  grid-template-columns: minmax(10rem, 1.2fr) minmax(6.5rem, 0.7fr) minmax(4.5rem, 0.45fr) minmax(10rem, 1fr) minmax(5.5rem, 0.55fr);
+  grid-template-columns: minmax(10rem, 1.2fr) minmax(6.5rem, 0.7fr) minmax(5rem, 0.55fr) minmax(4.5rem, 0.45fr) minmax(10rem, 1fr) minmax(5.5rem, 0.55fr);
   gap: 0.65rem;
-  min-width: 46rem;
+  min-width: 52rem;
   padding: 0.65rem 0;
   border-bottom: 1px solid rgba(49, 45, 43, 0.08);
 }

@@ -15,8 +15,8 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.22';
-const BETA_NOTICE = '内测版本：邮箱注册和联系作者信箱已开放；公开投稿、评论和社区功能不开放，内容仍由管理员整理后发布。';
+const APP_VERSION = 'v1.23';
+const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -31,6 +31,7 @@ const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
 const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const USER_STORAGE_KEY = 'student-life-notes:user';
+const LOCAL_USERS_STORAGE_KEY = 'student-life-notes:local-users';
 const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
@@ -108,6 +109,7 @@ type Route =
   | { name: 'post'; id: string }
   | { name: 'search'; keyword: string }
   | { name: 'register' }
+  | { name: 'login' }
   | { name: 'favorites' }
   | { name: 'admin' }
   | { name: 'about' }
@@ -146,6 +148,7 @@ type AnalyticsEvent = {
   path: string;
   userId?: string;
   username?: string;
+  userRole?: 'guest' | 'registered' | 'admin';
   targetId?: string;
   durationSeconds?: number;
 };
@@ -190,6 +193,7 @@ function getRoute(): Route {
   if (path === 'post' && rest[0]) return { name: 'post', id: decodeURIComponent(rest[0]) };
   if (path === 'search') return { name: 'search', keyword: new URLSearchParams(queryPart).get('q') || '' };
   if (path === 'register') return { name: 'register' };
+  if (path === 'login') return { name: 'login' };
   if (path === 'plan' || path === 'favorites') return { name: 'favorites' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
@@ -280,6 +284,25 @@ function writeLocalDynamicPosts(posts: SharedPost[]) {
   }
 }
 
+type LocalRegisteredUser = RegisteredUser & { passwordHash?: string };
+
+function readLocalRegisteredUsers(): LocalRegisteredUser[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_USERS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as LocalRegisteredUser[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalRegisteredUsers(users: LocalRegisteredUser[]) {
+  try {
+    localStorage.setItem(LOCAL_USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch {
+    // Local fallback only.
+  }
+}
+
 async function apiRequest<T>(path: string, options: RequestInit = {}) {
   if (!API_BASE_URL) throw new Error('未配置后端地址');
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -314,16 +337,42 @@ function statusLabel(status: string) {
 
 async function registerUser(input: { email: string; username: string; password: string; schoolId: SchoolId }) {
   if (!API_BASE_URL) {
-    return {
+    const users = readLocalRegisteredUsers();
+    const existingByEmail = users.find((item) => item.email.toLowerCase() === input.email.toLowerCase());
+    const existingByName = users.find((item) => item.username.toLowerCase() === input.username.toLowerCase());
+    if (existingByName && existingByName.email.toLowerCase() !== input.email.toLowerCase()) throw new Error('用户名已被使用，请换一个');
+    const passwordHash = await hashText(input.password);
+    if (existingByEmail?.passwordHash && existingByEmail.passwordHash !== passwordHash) throw new Error('邮箱或密码不正确');
+    const user = {
+      ...(existingByEmail || {}),
       id: `local-user-${Date.now()}`,
       email: input.email,
       username: input.username,
       schoolId: input.schoolId,
-      createdAt: new Date().toISOString(),
+      passwordHash,
+      createdAt: existingByEmail?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    writeLocalRegisteredUsers(existingByEmail ? users.map((item) => item.email === input.email ? user : item) : users.concat(user));
+    const { passwordHash: _, ...publicUser } = user;
+    return publicUser;
   }
   const data = await apiRequest<{ user: RegisteredUser }>('/api/register', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  });
+  return data.user;
+}
+
+async function loginUser(input: { account: string; password: string }) {
+  if (!API_BASE_URL) {
+    const user = readLocalRegisteredUsers().find((item) => item.email.toLowerCase() === input.account.toLowerCase() || item.username.toLowerCase() === input.account.toLowerCase());
+    if (!user) throw new Error('本机没有这个账号记录，请先注册');
+    if (user.passwordHash && user.passwordHash !== await hashText(input.password)) throw new Error('账号或密码不正确');
+    const { passwordHash: _, ...publicUser } = user;
+    return publicUser;
+  }
+  const data = await apiRequest<{ user: RegisteredUser }>('/api/login', {
     method: 'POST',
     body: JSON.stringify(input)
   });
@@ -417,6 +466,7 @@ function routeFeature(route: Route) {
   if (route.name === 'post') return '生活内容详情';
   if (route.name === 'search') return '搜索';
   if (route.name === 'register') return '注册';
+  if (route.name === 'login') return '登录';
   if (route.name === 'favorites') return '我的收藏';
   if (route.name === 'admin') return '管理端';
   if (route.name === 'policy') return '隐私与诚信';
@@ -617,6 +667,90 @@ function postMatches(post: SharedPost, keyword: string) {
     .includes(token);
 }
 
+function wikiImage(fileName: string) {
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=900`;
+}
+
+const housingImageRules: Array<{ keywords: string[]; url: string }> = [
+  { keywords: ['港湾豪庭'], url: wikiImage('Metro Harbour View (revised).jpg') },
+  { keywords: ['叠茵庭一期C座', '叠茵庭'], url: wikiImage('Parkland Villa 201212.jpg') },
+  { keywords: ['大兴花园一期', '大兴花园'], url: wikiImage('Tai Hing Garden 201410.jpg') },
+  { keywords: ['聚康山庄'], url: wikiImage('Beneville 201409.jpg') },
+  { keywords: ['傲云峰'], url: wikiImage('Sky Tower 202004.jpg') },
+  { keywords: ['绿怡居'], url: wikiImage('Botania Villa.jpg') },
+  { keywords: ['豫丰花园'], url: wikiImage('The Sherwood (full view and blue sky).jpg') }
+];
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function getHousingName(post: SharedPost) {
+  const regionParts = (post.region || '').split('/').map((item) => item.trim()).filter(Boolean);
+  const regionName = regionParts.length ? regionParts[regionParts.length - 1] : '';
+  if (regionName) return regionName;
+  const community = post.content.match(/小区[：:]\s*([^\n，,。]+)/)?.[1]?.trim();
+  if (community) return community;
+  return post.title.replace(/\s*(HKD|RMB)\s*\d+.*$/i, '').replace(/租房经验$/, '').trim() || '租房信息';
+}
+
+function makeHousingPlaceholder(post: SharedPost) {
+  const name = escapeSvgText(getHousingName(post));
+  const district = escapeSvgText((post.region || '香港 / 租房参考').split('/').map((item) => item.trim()).filter(Boolean).slice(0, 2).join(' / ') || '租房参考');
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff5e8"/>
+          <stop offset="55%" stop-color="#ffe4dc"/>
+          <stop offset="100%" stop-color="#e9f3e2"/>
+        </linearGradient>
+        <linearGradient id="tower" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f47b5f"/>
+          <stop offset="100%" stop-color="#9c1f32"/>
+        </linearGradient>
+      </defs>
+      <rect width="960" height="540" rx="42" fill="url(#bg)"/>
+      <circle cx="780" cy="96" r="84" fill="#ffd9a8" opacity=".82"/>
+      <path d="M0 382 C150 318 260 366 406 316 C542 270 681 292 960 226 L960 540 L0 540 Z" fill="#dcebd0"/>
+      <g transform="translate(150 126)" opacity=".96">
+        <rect x="0" y="86" width="132" height="276" rx="16" fill="url(#tower)"/>
+        <rect x="158" y="38" width="152" height="324" rx="18" fill="#bb3348"/>
+        <rect x="340" y="116" width="128" height="246" rx="16" fill="#f08b5b"/>
+        ${Array.from({ length: 24 }).map((_, index) => {
+          const x = [24, 72, 190, 246, 370, 418][index % 6];
+          const y = 70 + Math.floor(index / 6) * 56;
+          return `<rect x="${x}" y="${y}" width="24" height="20" rx="4" fill="#fff7ee" opacity=".72"/>`;
+        }).join('')}
+      </g>
+      <rect x="78" y="64" width="356" height="58" rx="29" fill="#fff" opacity=".78"/>
+      <text x="106" y="103" font-family="Arial, 'PingFang SC', sans-serif" font-size="28" font-weight="700" fill="#9c1f32">${district}</text>
+      <text x="82" y="474" font-family="Arial, 'PingFang SC', sans-serif" font-size="54" font-weight="900" fill="#2b2024">${name}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function getPostImage(post: SharedPost) {
+  const manual = post.imageUrls?.find((url) => url.trim());
+  if (manual) return manual;
+  if (post.sectionId !== 'housing') return '';
+  const text = [post.title, post.region || '', post.content].join(' ');
+  const matched = housingImageRules.find((rule) => rule.keywords.some((keyword) => text.includes(keyword)));
+  return matched?.url || makeHousingPlaceholder(post);
+}
+
+function getPostImages(post: SharedPost) {
+  const manual = post.imageUrls?.filter((url) => url.trim()) || [];
+  if (manual.length) return manual;
+  const generated = getPostImage(post);
+  return generated ? [generated] : [];
+}
+
 function getSharedPostText(post: SharedPost) {
   return [post.id, post.title, post.summary || '', post.content, post.region || '', post.tags.join(' ')]
     .join(' ')
@@ -768,6 +902,7 @@ function Header({
         <button onClick={() => go('/courses')}>课程库</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
         <button onClick={() => go('/register')}>注册</button>
+        <button onClick={() => go('/login')}>登录</button>
         <button onClick={() => go('/policy')}>隐私与诚信</button>
         <button onClick={() => go('/admin')}>管理视角</button>
       </nav>
@@ -885,7 +1020,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 已开放邮箱注册和联系作者信箱；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。公开投稿、评论和社区功能不开放。</p>
+              <p>{APP_VERSION} 已开放邮箱注册、登录和联系作者信箱；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。用户反馈不会直接公开，仍由管理员整理后更新。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -1014,6 +1149,66 @@ function RegistrationPage({
           <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '注册中' : '注册并进入 Otter'}</button>
           {error && <p className="form-error">{error}</p>}
           <p className="login-note">后端会检查邮箱格式和邮箱域名是否可用；当前不发送验证码邮件，也不要求邮箱二次验证。</p>
+          <button className="secondary-action" onClick={() => go('/login')}>已有账号，直接登录</button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function LoginPage({ onLoggedIn }: { onLoggedIn: (user: RegisteredUser) => void }) {
+  const [account, setAccount] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    setError('');
+    if (!account.trim()) {
+      setError('请填写邮箱或用户名');
+      return;
+    }
+    if (!password) {
+      setError('请填写密码');
+      return;
+    }
+    setSaving(true);
+    try {
+      const user = await loginUser({ account: account.trim(), password });
+      onLoggedIn(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <main className="registration-shell">
+      <section className="registration-panel">
+        <span className="eyebrow">{APP_NAME} {APP_VERSION}</span>
+        <div className="registration-brand">
+          <img src={APP_LOGO_SRC} alt="Otter logo" />
+        </div>
+        <div className="registration-form">
+          <label className="wide">
+            <span>邮箱或用户名</span>
+            <input value={account} onChange={(event) => setAccount(event.target.value)} placeholder="输入注册邮箱或用户名" autoComplete="username" />
+          </label>
+          <label className="wide">
+            <span>密码</span>
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="输入密码"
+              type="password"
+              autoComplete="current-password"
+              onKeyDown={(event) => { if (event.key === 'Enter') void submit(); }}
+            />
+          </label>
+          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '登录中' : '登录'}</button>
+          {error && <p className="form-error">{error}</p>}
+          <button className="secondary-action" onClick={() => go('/register')}>没有账号，去注册</button>
         </div>
       </section>
     </main>
@@ -1546,23 +1741,31 @@ function PostGrid({ posts, canEdit = false, onEdit }: { posts: SharedPost[]; can
 
   return (
     <div className="post-grid">
-      {posts.map((post) => (
-        <article key={post.id} className="post-card">
-          <button className="post-main" onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}>
-            <span className="pill">{post.authorRole}</span>
-            <h3>{post.title}</h3>
-            <p>{post.summary || post.content.slice(0, 120)}</p>
-            <div className="post-meta">
-              <span>{post.region || '香港'}</span>
-              <span>{post.createdAt}</span>
-            </div>
-            <div className="tag-row">
-              {post.tags.slice(0, 4).map((tag) => <span key={tag}>{tag}</span>)}
-            </div>
-          </button>
-          {canEdit && onEdit && <button className="secondary-action post-edit-action" onClick={() => onEdit(post)}>编辑</button>}
-        </article>
-      ))}
+      {posts.map((post) => {
+        const image = getPostImage(post);
+        return (
+          <article key={post.id} className={`post-card ${image ? 'with-image' : ''}`}>
+            {image && (
+              <button className="post-cover-button" onClick={() => go(`/post/${encodeURIComponent(post.id)}`)} aria-label={`打开 ${post.title}`}>
+                <img className="post-cover" src={image} alt={`${getHousingName(post)}参考图`} loading="lazy" />
+              </button>
+            )}
+            <button className="post-main" onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}>
+              <span className="pill">{post.authorRole}</span>
+              <h3>{post.title}</h3>
+              <p>{post.summary || post.content.slice(0, 120)}</p>
+              <div className="post-meta">
+                <span>{post.region || '香港'}</span>
+                <span>{post.createdAt}</span>
+              </div>
+              <div className="tag-row">
+                {post.tags.slice(0, 4).map((tag) => <span key={tag}>{tag}</span>)}
+              </div>
+            </button>
+            {canEdit && onEdit && <button className="secondary-action post-edit-action" onClick={() => onEdit(post)}>编辑</button>}
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -1748,6 +1951,7 @@ function PostDetailPage({
   const post = getVisibleSharedPosts(activeSchool.id, dynamicPosts).find((item) => item.id === id);
   if (!post) return <EmptyPage title="没有找到这篇内容" />;
   const paragraphs = post.content.split('\n').filter(Boolean);
+  const postImages = getPostImages(post);
 
   return (
     <article className="detail-page">
@@ -1787,9 +1991,9 @@ function PostDetailPage({
           ))}
         </section>
       )}
-      {Boolean(post.imageUrls?.length) && (
+      {Boolean(postImages.length) && (
         <section className="post-image-grid">
-          {post.imageUrls?.map((url) => <img key={url} src={url} alt={post.title} />)}
+          {postImages.map((url) => <img key={url} src={url} alt={post.title} loading="lazy" />)}
         </section>
       )}
       <section className="detail-body">
@@ -1921,18 +2125,24 @@ function buildAnalyticsSummary(events: AnalyticsEvent[]) {
     featureMap.set(leave.feature, item);
   }
   const features = Array.from(featureMap.values()).sort((a, b) => b.views - a.views || b.duration - a.duration);
+  const roleCounts = {
+    guest: pageViews.filter((event) => !event.userRole || event.userRole === 'guest').length,
+    registered: pageViews.filter((event) => event.userRole === 'registered').length,
+    admin: pageViews.filter((event) => event.userRole === 'admin').length
+  };
   return {
     totalViews: pageViews.length,
     totalDuration,
     averageDuration: pageViews.length ? totalDuration / pageViews.length : 0,
     bySchool,
     features,
+    roleCounts,
     recent: events.slice(-12).reverse()
   };
 }
 
 function analyticsToCsv(events: AnalyticsEvent[]) {
-  const header = ['id', 'timestamp', 'type', 'schoolId', 'routeName', 'feature', 'targetId', 'durationSeconds', 'path'];
+  const header = ['id', 'timestamp', 'type', 'schoolId', 'routeName', 'feature', 'userRole', 'username', 'targetId', 'durationSeconds', 'path'];
   const rows = events.map((event) => header.map((key) => {
     const value = String((event as unknown as Record<string, unknown>)[key] ?? '');
     return `"${value.replace(/"/g, '""')}"`;
@@ -1983,7 +2193,9 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
       type: 'export',
       schoolId: activeSchool.id,
       routeName: 'admin',
-      feature: `导出统计 ${format.toUpperCase()}`
+      feature: `导出统计 ${format.toUpperCase()}`,
+      userRole: 'admin',
+      username: 'admin'
     });
     const events = readAnalyticsEvents();
     if (format === 'json') {
@@ -2103,6 +2315,9 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             </div>
             <div className="stats-grid analytics-stats">
               <div><strong>{analytics.totalViews}</strong><span>总浏览量</span></div>
+              <div><strong>{analytics.roleCounts.guest}</strong><span>游客浏览</span></div>
+              <div><strong>{analytics.roleCounts.registered}</strong><span>注册用户浏览</span></div>
+              <div><strong>{analytics.roleCounts.admin}</strong><span>管理员浏览</span></div>
               <div><strong>{formatDuration(analytics.totalDuration)}</strong><span>总停留时间</span></div>
               <div><strong>{formatDuration(analytics.averageDuration)}</strong><span>平均停留</span></div>
               <div><strong>{analytics.features.length}</strong><span>打开过的功能</span></div>
@@ -2130,11 +2345,12 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div className="analytics-card">
               <h3>最近事件</h3>
               <div className="event-table">
-                <div><strong>时间</strong><strong>类型</strong><strong>学校</strong><strong>功能</strong><strong>停留</strong></div>
+                <div><strong>时间</strong><strong>类型</strong><strong>身份</strong><strong>学校</strong><strong>功能</strong><strong>停留</strong></div>
                 {analytics.recent.map((event) => (
                   <div key={event.id}>
                     <span>{new Date(event.timestamp).toLocaleString()}</span>
                     <span>{event.type}</span>
+                    <span>{event.userRole === 'admin' ? '管理员' : event.userRole === 'registered' ? '注册用户' : '游客'}</span>
                     <span>{event.schoolId.toUpperCase()}</span>
                     <span>{event.feature}</span>
                     <span>{event.durationSeconds ? formatDuration(event.durationSeconds) : '-'}</span>
@@ -2389,6 +2605,7 @@ export default function App() {
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
   const [adminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
+  const [adminSession] = useStoredState('student-life-notes:admin-session', false);
   const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
   const activeSchool = getSchool(activeSchoolId);
   const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
@@ -2400,6 +2617,7 @@ export default function App() {
     updatedAt: new Date().toISOString()
   }, [activeSchoolId, currentUser]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
+  const userRole: AnalyticsEvent['userRole'] = adminToken || adminSession ? 'admin' : currentUser ? 'registered' : 'guest';
 
   const updateDynamicPosts = (posts: SharedPost[]) => {
     setDynamicPosts(posts);
@@ -2445,7 +2663,8 @@ export default function App() {
       targetId,
       path: routeKey,
       userId: effectiveUser.id,
-      username: effectiveUser.username
+      username: effectiveUser.username,
+      userRole
     });
     return () => {
       const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
@@ -2458,10 +2677,11 @@ export default function App() {
         durationSeconds,
         path: routeKey,
         userId: effectiveUser.id,
-        username: effectiveUser.username
+        username: effectiveUser.username,
+        userRole
       });
     };
-  }, [activeSchoolId, effectiveUser.id, effectiveUser.username, hasAcceptedAgreement, route, routeKey]);
+  }, [activeSchoolId, effectiveUser.id, effectiveUser.username, hasAcceptedAgreement, route, routeKey, userRole]);
 
   const chooseSchool = (schoolId: SchoolId) => {
     recordAnalyticsEvent({
@@ -2471,7 +2691,8 @@ export default function App() {
       feature: '学校切换',
       targetId: schoolId,
       userId: effectiveUser.id,
-      username: effectiveUser.username
+      username: effectiveUser.username,
+      userRole
     });
     setActiveSchoolId(schoolId);
     if (currentUser) setCurrentUser({ ...currentUser, schoolId, updatedAt: new Date().toISOString() });
@@ -2487,7 +2708,8 @@ export default function App() {
       feature: favoriteCourseIds.includes(id) ? '取消收藏' : '收藏课程',
       targetId: id,
       userId: effectiveUser.id,
-      username: effectiveUser.username
+      username: effectiveUser.username,
+      userRole
     });
     setFavoriteCourseIds(next);
     localStorage.setItem(getStorageKey('favorite-courses', activeSchoolId), JSON.stringify(next));
@@ -2553,6 +2775,15 @@ export default function App() {
           <RegistrationPage
             activeSchoolId={activeSchoolId}
             onRegistered={(user) => {
+              setCurrentUser(user);
+              setActiveSchoolId(user.schoolId);
+              go('/');
+            }}
+          />
+        )}
+        {route.name === 'login' && (
+          <LoginPage
+            onLoggedIn={(user) => {
               setCurrentUser(user);
               setActiveSchoolId(user.schoolId);
               go('/');

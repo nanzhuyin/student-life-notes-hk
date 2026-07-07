@@ -166,6 +166,11 @@ function buildAnalyticsSummary(events) {
     totalDuration,
     averageDuration: pageViews.length ? totalDuration / pageViews.length : 0,
     bySchool,
+    roleCounts: {
+      guest: pageViews.filter((event) => !event.userRole || event.userRole === 'guest').length,
+      registered: pageViews.filter((event) => event.userRole === 'registered').length,
+      admin: pageViews.filter((event) => event.userRole === 'admin').length
+    },
     features: Array.from(featureMap.values()).sort((a, b) => b.views - a.views || b.duration - a.duration),
     recent: events.slice(-20).reverse()
   };
@@ -209,6 +214,8 @@ async function route(req, res) {
     if (!['eduhk', 'lingnan'].includes(schoolId)) throw new Error('请选择学校');
     const passwordHash = hashText(password);
     let user = await storage.findUserByEmail(email);
+    const userWithSameName = await storage.findUserByUsername(username);
+    if (userWithSameName && String(userWithSameName.email || '').toLowerCase() !== email) throw new Error('用户名已被使用，请换一个');
     if (user) {
       if (!safeCompare(user.passwordHash || '', passwordHash)) throw new Error('邮箱或密码不正确');
       user.username = username;
@@ -218,6 +225,19 @@ async function route(req, res) {
       user = { id: createId('user'), email, username, schoolId, passwordHash, createdAt: nowIso(), updatedAt: nowIso() };
     }
     user = await storage.upsertUser(user);
+    const { passwordHash: _, ...publicUser } = user;
+    sendJson(req, res, 200, { user: publicUser });
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/login') {
+    const body = await readJson(req);
+    const account = String(body.account || body.email || '').trim().toLowerCase();
+    const password = String(body.password || '');
+    if (!account) throw new Error('请填写邮箱或用户名');
+    if (!password) throw new Error('请填写密码');
+    let user = account.includes('@') ? await storage.findUserByEmail(account) : await storage.findUserByUsername(account);
+    if (!user || !safeCompare(user.passwordHash || '', hashText(password))) throw new Error('账号或密码不正确');
     const { passwordHash: _, ...publicUser } = user;
     sendJson(req, res, 200, { user: publicUser });
     return;
