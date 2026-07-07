@@ -3829,3 +3829,431 @@ main {
     min-height: 10.8rem;
   }
 }
+
+/* v1.37 final responsive layer: desktop filter alignment and mobile stability. */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.filter-panel {
+  overflow: hidden;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: minmax(8.8rem, 10.5rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-label,
+.filter-row > span,
+.filter-grid label > span {
+  align-self: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  line-height: 1.25;
+  text-align: left;
+  word-break: keep-all;
+}
+
+.filter-chips {
+  min-width: 0;
+  align-items: center;
+}
+
+.filter-chips button {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .app-shell:not(.landing-mode) {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  main {
+    width: 100%;
+    padding: 0.85rem;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.55rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.68rem 0.78rem;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .brand-button {
+    min-width: 3rem;
+  }
+
+  .brand-button > span:last-child {
+    display: none;
+  }
+
+  .brand-avatar {
+    width: 2.85rem;
+    height: 2.85rem;
+    border-radius: 999px;
+  }
+
+  .top-nav,
+  .school-switcher {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.45rem;
+    padding: 0.08rem 0 0.12rem;
+    scrollbar-width: none;
+  }
+
+  .top-nav::-webkit-scrollbar,
+  .school-switcher::-webkit-scrollbar {
+    display: none;
+  }
+
+  .top-nav button,
+  .school-switcher button {
+    flex: 0 0 auto;
+    min-width: max-content;
+    padding: 0.62rem 0.76rem;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    line-height: 1;
+  }
+
+  .hero.school-hero,
+  .hero.school-hero.eduhk,
+  .hero.school-hero.lingnan {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    min-height: auto;
+    padding: 1rem;
+    border-radius: 1.55rem;
+  }
+
+  .hero.school-hero .hero-copy {
+    min-width: 0;
+  }
+
+  .hero.school-hero h1 {
+    max-width: none;
+    margin: 0.5rem 0 0.7rem;
+    font-size: clamp(2rem, 10vw, 3.4rem);
+    line-height: 1.05;
+    text-align: left;
+    writing-mode: horizontal-tb;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .hero.school-hero p,
+  .hero.school-hero .hero-copy > p {
+    max-width: none;
+    font-size: 0.94rem;
+    line-height: 1.68;
+  }
+
+  .hero.school-hero .eyebrow {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .hero.school-hero .search-box {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.45rem;
+    border-radius: 999px;
+  }
+
+  .hero.school-hero .search-box input {
+    min-width: 0;
+    font-size: 0.92rem;
+  }
+
+  .hero.school-hero .search-box button {
+    padding: 0.64rem 0.78rem;
+  }
+
+  .hero.school-hero .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .hero.school-hero .hero-stats span {
+    min-width: 0;
+    padding: 0.7rem;
+    border-radius: 0.9rem;
+    font-size: 0.75rem;
+  }
+
+  .hero.school-hero .hero-stats strong {
+    font-size: 1.18rem;
+  }
+
+  .hero-live-panel.guide-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 0.95rem;
+    border-radius: 1.35rem;
+  }
+
+  .hero-live-panel.guide-panel::before,
+  .hero-live-panel.guide-panel::after {
+    content: none;
+  }
+
+  .guide-feature-card {
+    padding: 0.85rem;
+    border-radius: 1rem;
+  }
+
+  .guide-panel .live-metric-list {
+    gap: 0.55rem;
+  }
+
+  .guide-panel .live-metric-list div {
+    grid-template-columns: 2.45rem 1fr;
+    padding: 0.78rem;
+    border-radius: 1rem;
+  }
+
+  .guide-panel .live-metric-list span {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 0.72rem;
+    font-size: 0.86rem;
+  }
+
+  .category-grid,
+  .post-grid,
+  .course-list,
+  .programme-grid,
+  .stats-grid,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-card,
+  .category-card:nth-child(1),
+  .category-card:nth-child(2),
+  .category-card:nth-child(3),
+  .category-card:nth-child(n + 4) {
+    min-height: 9.8rem;
+    padding: 1.05rem;
+    border-radius: 1.45rem;
+  }
+
+  .category-card span {
+    max-width: none;
+    font-size: 1.35rem;
+  }
+
+  .page-title-block.centered {
+    padding: 1.2rem 1rem;
+    border-radius: 1.35rem;
+  }
+
+  .page-title-block.centered h1 {
+    font-size: clamp(2rem, 10vw, 3.25rem);
+    line-height: 1.08;
+  }
+
+  .filter-panel {
+    padding: 0.95rem;
+    border-radius: 1.2rem;
+  }
+
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    align-items: stretch;
+  }
+
+  .filter-row + .filter-row {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(143, 29, 44, 0.08);
+  }
+
+  .filter-label,
+  .filter-row > span,
+  .filter-grid label > span {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: #9f1f36;
+    background: transparent;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .filter-chips {
+    width: 100%;
+    gap: 0.45rem;
+  }
+
+  .filter-chips button {
+    min-height: 2rem;
+    padding: 0.44rem 0.68rem;
+    font-size: 0.84rem;
+  }
+
+  .floating-ticket-button {
+    right: 0.85rem;
+    bottom: 1rem;
+    width: 4.7rem;
+    height: 4.7rem;
+    font-size: 0.82rem;
+  }
+
+  .floating-ticket-button strong {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 620px) {
+  body {
+    background: #211a2a;
+  }
+
+  .landing-shell {
+    min-height: 100svh;
+    background: #211a2a;
+  }
+
+  .landing-page {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100svh;
+    align-content: start;
+    gap: 0.85rem;
+    padding: 0.85rem;
+  }
+
+  .hk-sketch,
+  .landing-shade {
+    position: fixed;
+    inset: 0;
+  }
+
+  .hk-sketch {
+    opacity: 0.22;
+    filter: blur(1px);
+  }
+
+  .landing-shade {
+    background: linear-gradient(180deg, rgba(24, 18, 31, 0.82), rgba(24, 18, 31, 0.94));
+  }
+
+  .landing-overlay {
+    padding: 1rem;
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.92);
+    color: #2d2437;
+    backdrop-filter: blur(14px);
+  }
+
+  .landing-kicker {
+    margin-bottom: 0.7rem;
+    color: #3b3047;
+    background: #eadff5;
+  }
+
+  .landing-overlay h1,
+  .agreement-panel h1 {
+    max-width: none;
+    margin: 0 0 0.75rem;
+    color: #2d2437;
+    font-size: clamp(1.8rem, 10vw, 2.7rem);
+    line-height: 1.08;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-overlay p,
+  .agreement-list p,
+  .landing-policy-note span {
+    color: #6b6170;
+    font-size: 0.94rem;
+    line-height: 1.68;
+  }
+
+  .landing-feature-grid,
+  .agreement-list {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-feature-grid span,
+  .agreement-list div,
+  .landing-policy-note {
+    border-color: rgba(59, 48, 71, 0.1);
+    color: #3b3047;
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  .intro-panel,
+  .agreement-panel {
+    width: 100%;
+  }
+
+  .agreement-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .hero.school-hero h1 {
+    font-size: clamp(1.75rem, 9vw, 2.65rem);
+  }
+
+  .hero.school-hero .hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hero.school-hero .search-box {
+    grid-template-columns: 1fr;
+    border-radius: 1.15rem;
+  }
+
+  .hero.school-hero .search-box button {
+    width: 100%;
+  }
+
+  .page-panel,
+  .section,
+  .detail-body,
+  .analytics-panel {
+    min-width: 0;
+  }
+
+  .course-result,
+  .post-card,
+  .programme-card {
+    border-radius: 1.2rem;
+  }
+}
