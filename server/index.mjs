@@ -1,13 +1,21 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { resolveMx } from 'node:dns/promises';
+import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  RecommendationError,
+  callDeepSeekRecommendation,
+  findProgrammeCandidates,
+  validateStudentProfile
+} from './programme-recommender.mjs';
 import { createStorage } from './storage.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
+const PROGRAMMES_JSON_FILE = process.env.PROGRAMMES_JSON_FILE || join(__dirname, '..', 'src', 'data', 'programmes.json');
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({
   dbFile: DB_FILE,
@@ -117,6 +125,14 @@ function sendJson(req, res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+function sendApiError(req, res, error) {
+  if (error instanceof RecommendationError) {
+    sendJson(req, res, error.status || 400, { ok: false, message: error.message, code: error.code });
+    return;
+  }
+  sendJson(req, res, 500, { ok: false, message: error instanceof Error ? error.message : 'Internal error', code: 'INTERNAL_ERROR' });
+}
+
 async function readJson(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
@@ -127,6 +143,16 @@ async function readJson(req) {
 function requireAdmin(req) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   return token && adminTokens.has(token);
+}
+
+async function loadBundledProgrammes() {
+  return JSON.parse(await readFile(PROGRAMMES_JSON_FILE, 'utf8'));
+}
+
+async function listProgrammeKnowledgeBase() {
+  const rows = await storage.listProgrammes();
+  if (rows.length) return rows;
+  return loadBundledProgrammes();
 }
 
 function buildAnalyticsSummary(events) {
@@ -284,6 +310,43 @@ async function route(req, res) {
     return;
   }
 
+  if (req.method === 'POST' && url.pathname === '/api/recommend-programmes') {
+    try {
+      const profile = validateStudentProfile(await readJson(req));
+      const programmes = await listProgrammeKnowledgeBase();
+      const candidates = findProgrammeCandidates(programmes, profile, 5).map((candidate) => candidate.programme);
+      if (!candidates.length) throw new RecommendationError('NO_CANDIDATE_PROGRAMMES', 'No candidate programmes were found.', 404);
+      const data = await callDeepSeekRecommendation({
+        apiKey: process.env.DEEPSEEK_API_KEY || '',
+        baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+        profile,
+        candidates
+      });
+      await storage.insertRecommendationLog({
+        hasChosenProgramme: profile.hasChosenProgramme,
+        selectedProgrammeId: profile.selectedProgrammeId,
+        selectedProgrammeName: profile.selectedProgrammeName,
+        undergraduateMajor: profile.undergraduateMajor,
+        mainCourses: profile.mainCourses,
+        skills: profile.skills,
+        interests: profile.interests,
+        careerGoals: profile.careerGoals,
+        preferredDirections: profile.preferredDirections,
+        targetDegreeLevels: profile.targetDegreeLevels,
+        studyPreferences: profile.studyPreferences,
+        concerns: profile.concerns,
+        workExperience: profile.workExperience,
+        retrievedProgrammeIds: candidates.map((programme) => programme.id),
+        modelOutput: data
+      });
+      sendJson(req, res, 200, { ok: true, data });
+    } catch (error) {
+      sendApiError(req, res, error);
+    }
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/admin/login') {
     const body = await readJson(req);
     const inputUsername = String(body.username || '').trim();
@@ -311,6 +374,22 @@ async function route(req, res) {
       analytics: buildAnalyticsSummary(db.analyticsEvents),
       supportTickets: db.supportTickets.slice().reverse(),
       posts: (db.posts || []).slice().sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)))
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/admin/programmes/import-bundled') {
+    if (!requireAdmin(req)) {
+      sendJson(req, res, 401, { error: '需要管理员登录' });
+      return;
+    }
+    const programmes = await loadBundledProgrammes();
+    const saved = await storage.upsertProgrammes(programmes);
+    sendJson(req, res, 200, {
+      ok: true,
+      count: saved.length,
+      withCourseInformation: saved.filter((programme) => (programme.courseDescriptions || []).length > 0).length,
+      withoutCourseInformation: saved.filter((programme) => !(programme.courseDescriptions || []).length).length
     });
     return;
   }

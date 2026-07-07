@@ -5,7 +5,9 @@ const defaultDb = {
   users: [],
   analyticsEvents: [],
   supportTickets: [],
-  posts: []
+  posts: [],
+  programmes: [],
+  recommendationLogs: []
 };
 
 function cloneDefaultDb() {
@@ -173,6 +175,89 @@ function fromPostRow(row) {
     metadata: row.metadata || {},
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function nullableTimestamp(value) {
+  if (!value) return null;
+  const timestamp = new Date(value);
+  return Number.isNaN(timestamp.getTime()) ? null : timestamp.toISOString();
+}
+
+function toProgrammeRow(programme) {
+  return {
+    id: programme.id,
+    programme_name: programme.programmeName,
+    degree_level: programme.degreeLevel,
+    school: programme.school,
+    department: programme.department,
+    official_url: programme.officialUrl,
+    summary: programme.summary,
+    keywords: programme.keywords || [],
+    suitable_backgrounds: programme.suitableBackgrounds || [],
+    learning_objectives: programme.learningObjectives || [],
+    core_courses: programme.coreCourses || [],
+    course_descriptions: programme.courseDescriptions || [],
+    important_courses: programme.importantCourses || [],
+    skills_developed: programme.skillsDeveloped || [],
+    career_directions: programme.careerDirections || [],
+    admission_notes: programme.admissionNotes || '',
+    information_insufficient: Boolean(programme.informationInsufficient),
+    information_limits: programme.informationLimits || [],
+    source_text: programme.sourceText || '',
+    source_urls: programme.sourceUrls || [],
+    source_hash: programme.sourceHash || '',
+    source_updated_at: nullableTimestamp(programme.sourceUpdatedAt),
+    last_updated_at: nullableTimestamp(programme.lastUpdatedAt),
+    updated_at: new Date().toISOString()
+  };
+}
+
+function fromProgrammeRow(row) {
+  return {
+    id: row.id,
+    programmeName: row.programme_name,
+    degreeLevel: row.degree_level || 'Other',
+    school: row.school || '',
+    department: row.department || '',
+    officialUrl: row.official_url || '',
+    summary: row.summary || '',
+    keywords: row.keywords || [],
+    suitableBackgrounds: row.suitable_backgrounds || [],
+    learningObjectives: row.learning_objectives || [],
+    coreCourses: row.core_courses || [],
+    courseDescriptions: row.course_descriptions || [],
+    importantCourses: row.important_courses || [],
+    skillsDeveloped: row.skills_developed || [],
+    careerDirections: row.career_directions || [],
+    admissionNotes: row.admission_notes || '',
+    informationInsufficient: Boolean(row.information_insufficient),
+    informationLimits: row.information_limits || [],
+    sourceText: row.source_text || '',
+    sourceUrls: row.source_urls || [],
+    sourceHash: row.source_hash || '',
+    sourceUpdatedAt: row.source_updated_at || '',
+    lastUpdatedAt: row.last_updated_at || ''
+  };
+}
+
+function toRecommendationLogRow(log) {
+  return {
+    has_chosen_programme: Boolean(log.hasChosenProgramme),
+    selected_programme_id: log.selectedProgrammeId || '',
+    selected_programme_name: log.selectedProgrammeName || '',
+    undergraduate_major: log.undergraduateMajor || '',
+    main_courses: log.mainCourses || [],
+    skills: log.skills || [],
+    interests: log.interests || [],
+    career_goals: log.careerGoals || [],
+    preferred_directions: log.preferredDirections || [],
+    target_degree_levels: log.targetDegreeLevels || [],
+    study_preferences: log.studyPreferences || [],
+    concerns: log.concerns || [],
+    work_experience: log.workExperience || [],
+    retrieved_programme_ids: log.retrievedProgrammeIds || [],
+    model_output: log.modelOutput || null
   };
 }
 
@@ -372,6 +457,43 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
       }
       const [row] = await upsertRows('otter_posts', [toPostRow(post)]);
       return fromPostRow(row);
+    },
+
+    async listProgrammes() {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        return db.programmes || [];
+      }
+      const rows = await selectRows('programmes', 'select=*&order=programme_name.asc').catch(() => []);
+      return rows.map(fromProgrammeRow);
+    },
+
+    async upsertProgrammes(programmes) {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        db.programmes = programmes;
+        await writeLocalDb(db);
+        return programmes;
+      }
+      const rows = await upsertRows('programmes', programmes.map(toProgrammeRow));
+      return rows.map(fromProgrammeRow);
+    },
+
+    async insertRecommendationLog(log) {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        const item = { id: `recommendation_${Date.now()}`, ...log, createdAt: new Date().toISOString() };
+        db.recommendationLogs.push(item);
+        db.recommendationLogs = db.recommendationLogs.slice(-2000);
+        await writeLocalDb(db);
+        return item;
+      }
+      const [row] = await supabaseRequest('/recommendation_logs?select=*', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(toRecommendationLogRow(log))
+      });
+      return row;
     }
   };
 }

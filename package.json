@@ -9,6 +9,8 @@
     "start:api": "node server/index.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "crawl:programmes": "node scripts/crawl-lingnan-programmes.mjs",
+    "import:programmes": "node scripts/import-programmes-to-supabase.mjs",
     "validate:courses": "node scripts/validate-course-data.mjs --write-report"
   },
   "dependencies": {
