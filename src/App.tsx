@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.29';
+const APP_VERSION = 'v1.30';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -614,9 +614,31 @@ function useStoredState<T>(key: string, fallback: T) {
     }
   });
 
+  useEffect(() => {
+    const onLocalStorageChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key: string; value: T }>;
+      if (customEvent.detail?.key === key) setValue(customEvent.detail.value);
+    };
+    const onBrowserStorageChange = (event: StorageEvent) => {
+      if (event.key !== key) return;
+      try {
+        setValue(event.newValue ? (JSON.parse(event.newValue) as T) : fallback);
+      } catch {
+        setValue(fallback);
+      }
+    };
+    window.addEventListener('otter-storage-change', onLocalStorageChange);
+    window.addEventListener('storage', onBrowserStorageChange);
+    return () => {
+      window.removeEventListener('otter-storage-change', onLocalStorageChange);
+      window.removeEventListener('storage', onBrowserStorageChange);
+    };
+  }, [fallback, key]);
+
   const save = (next: T) => {
     setValue(next);
     localStorage.setItem(key, JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent('otter-storage-change', { detail: { key, value: next } }));
   };
 
   return [value, save] as const;
@@ -1040,11 +1062,13 @@ function SearchBox({ initialValue = '' }: { initialValue?: string }) {
 function LandingPage({
   accepted,
   onAcceptedChange,
-  onEnter
+  onGuestEnter,
+  onAccountEnter
 }: {
   accepted: boolean;
   onAcceptedChange: (accepted: boolean) => void;
-  onEnter: () => void;
+  onGuestEnter: () => void;
+  onAccountEnter: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -1086,7 +1110,7 @@ function LandingPage({
             <span className="landing-kicker">{APP_NAME} {APP_VERSION}</span>
             <h1>选课、租房、通勤和新生事项，一个入口先看清楚</h1>
             <p>
-              当前支持香港教育大学和岭南大学。可以按学校查看课程清单并收藏；
+              当前支持香港教育大学和岭南大学。可以按学校查看课程清单；
               租房、通勤、美食、出行等生活内容会按当前学校分别显示。所有课程字段都保留来源和核对日期。
             </p>
             <div className="landing-feature-grid">
@@ -1106,14 +1130,14 @@ function LandingPage({
           <span className="landing-kicker">进入前确认</span>
           <h1>隐私政策与学术诚信</h1>
           <p>
-            进入前需要先注册或登录账号。请确认你理解：本工具是非官方学生信息整理工具，
-            不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明；登录后才可以查看课程、收藏和生活内容。
+            游客可以先浏览课程和生活内容；注册用户才可以发送内容纠错、补充资料和联系作者信息。
+            请确认你理解：本工具是非官方学生信息整理工具，不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明。
           </p>
 
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 已开放邮箱注册、登录和联系作者信箱；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。用户反馈不会直接公开，仍由管理员整理后更新。</p>
+              <p>{APP_VERSION} 已开放邮箱注册、登录和联系作者信箱；游客可浏览，注册用户才可发送建议或联系作者。用户反馈不会直接公开，仍由管理员整理后更新。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -1139,7 +1163,7 @@ function LandingPage({
           </label>
 
           <button className="enter-app-button" disabled={!accepted} onClick={() => setConfirmOpen(true)}>
-            确认并登录 / 注册
+            确认并继续
           </button>
 
         </div>
@@ -1151,7 +1175,7 @@ function LandingPage({
               <h2 id="confirm-title">{accepted ? '是否确认继续？' : '请先勾选协议'}</h2>
               <p>
                 {accepted
-                  ? '请确认你已经阅读并同意隐私与学术诚信协议。下一步需要登录或注册，成功后才可以进入内容页面。'
+                  ? '请确认你已经阅读并同意隐私与学术诚信协议。你可以先以游客身份浏览；需要发送建议或联系作者时再注册登录。'
                   : '进入前需要先勾选“我已阅读并同意以上隐私与学术诚信协议”。'}
               </p>
               <div className="confirm-actions">
@@ -1159,8 +1183,13 @@ function LandingPage({
                   {accepted ? '再看看' : '我知道了'}
                 </button>
                 {accepted && (
-                  <button className="primary-action" onClick={onEnter}>
-                    继续
+                  <button className="secondary-action" onClick={onGuestEnter}>
+                    游客访问
+                  </button>
+                )}
+                {accepted && (
+                  <button className="primary-action" onClick={onAccountEnter}>
+                    登录 / 注册
                   </button>
                 )}
               </div>
@@ -2895,8 +2924,7 @@ export default function App() {
   }, [activeSchoolId, currentUser, isAdminAuthenticated]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
   const userRole: AnalyticsEvent['userRole'] = isAdminAuthenticated ? 'admin' : currentUser ? 'registered' : 'guest';
-  const isPublicRoute = route.name === 'register' || route.name === 'login' || route.name === 'admin' || route.name === 'about' || route.name === 'policy';
-  const shouldBlockForAuth = !currentUser && !isAdminAuthenticated && !isPublicRoute;
+  const shouldBlockForAuth = false;
   const shouldBypassAgreementForLocalAdmin = route.name === 'admin' && isLocalPreviewHost();
   const shouldUseLocalDebugUser = isLocalPreviewHost() && route.name !== 'admin';
   const shouldBypassAgreementForLocalUser = shouldUseLocalDebugUser && route.name !== 'register' && route.name !== 'login';
@@ -3015,10 +3043,15 @@ export default function App() {
         <LandingPage
           accepted={agreementChecked}
           onAcceptedChange={setAgreementChecked}
-          onEnter={() => {
+          onGuestEnter={() => {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
-            go(currentUser || isAdminAuthenticated ? '/' : '/register');
+            go('/');
+          }}
+          onAccountEnter={() => {
+            if (!agreementChecked) return;
+            setHasAcceptedAgreement(true);
+            go(currentUser || isAdminAuthenticated ? '/' : '/login');
           }}
         />
       </div>
