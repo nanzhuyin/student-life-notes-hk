@@ -15,8 +15,8 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.19';
-const BETA_NOTICE = '内测版本：站内信箱、在线投稿处理、用户注册和服务端统计暂未开放；如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
+const APP_VERSION = 'v1.20';
+const BETA_NOTICE = '内测版本：邮箱注册已开放，不要求邮箱二次验证；站内信箱和在线投稿处理仍在灰度测试，如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -78,6 +78,7 @@ type Route =
   | { name: 'section'; id: string }
   | { name: 'post'; id: string }
   | { name: 'search'; keyword: string }
+  | { name: 'register' }
   | { name: 'favorites' }
   | { name: 'admin' }
   | { name: 'about' }
@@ -159,6 +160,7 @@ function getRoute(): Route {
   if (path === 'category' && rest[0]) return { name: 'section', id: sectionIdByCategory[rest[0] as CategoryKey] || rest[0] };
   if (path === 'post' && rest[0]) return { name: 'post', id: decodeURIComponent(rest[0]) };
   if (path === 'search') return { name: 'search', keyword: new URLSearchParams(queryPart).get('q') || '' };
+  if (path === 'register') return { name: 'register' };
   if (path === 'plan' || path === 'favorites') return { name: 'favorites' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
@@ -330,6 +332,7 @@ function routeFeature(route: Route) {
   if (route.name === 'section') return '生活分区';
   if (route.name === 'post') return '生活内容详情';
   if (route.name === 'search') return '搜索';
+  if (route.name === 'register') return '注册';
   if (route.name === 'favorites') return '我的收藏';
   if (route.name === 'admin') return '管理端';
   if (route.name === 'policy') return '隐私与诚信';
@@ -673,6 +676,7 @@ function Header({
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
+        <button onClick={() => go('/register')}>注册</button>
         <button onClick={() => go('/policy')}>隐私与诚信</button>
         <button onClick={() => go('/admin')}>管理视角</button>
       </nav>
@@ -790,7 +794,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 为静态内测版本，暂不开放注册、站内信箱、在线投稿处理和服务端统计；反馈请通过微信群联系管理人员。</p>
+              <p>{APP_VERSION} 已开放邮箱注册；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。站内信箱和在线投稿处理仍在灰度测试，反馈请通过微信群联系管理人员。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -898,7 +902,7 @@ function RegistrationPage({
         <div className="registration-form">
           <label>
             <span>邮箱</span>
-            <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="推荐填写常用邮箱" type="email" autoComplete="email" />
+            <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="填写可用邮箱，不需要验证码" type="email" autoComplete="email" />
           </label>
           <label>
             <span>用户名</span>
@@ -916,8 +920,9 @@ function RegistrationPage({
               ))}
             </select>
           </label>
-          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '进入 Otter'}</button>
+          <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '注册中' : '注册并进入 Otter'}</button>
           {error && <p className="form-error">{error}</p>}
+          <p className="login-note">后端会检查邮箱格式和邮箱域名是否可用；当前不发送验证码邮件，也不要求邮箱二次验证。</p>
         </div>
       </section>
     </main>
@@ -2060,6 +2065,16 @@ export default function App() {
         {route.name === 'section' && <SectionPage sectionId={route.id} activeSchool={activeSchool} />}
         {route.name === 'post' && <PostDetailPage id={route.id} activeSchool={activeSchool} />}
         {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} />}
+        {route.name === 'register' && (
+          <RegistrationPage
+            activeSchoolId={activeSchoolId}
+            onRegistered={(user) => {
+              setCurrentUser(user);
+              setActiveSchoolId(user.schoolId);
+              go('/');
+            }}
+          />
+        )}
         {route.name === 'favorites' && (
           <FavoritesPage
             activeSchool={activeSchool}
