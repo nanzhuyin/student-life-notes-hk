@@ -15,7 +15,8 @@
 - 上一次版本：`v1.38`
 - 上一次样式清理版本：`v1.38`
 - 本次移动端确认页颜色与性能修复版本：`v1.39`
-- 下一次修改：`v1.40`
+- 本次专业推荐助手后端与数据库版本：`v1.40`
+- 下一次修改：`v1.41`
 
 每次版本递增时至少同步这些位置：
 
@@ -68,6 +69,23 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.40
+
+日期：2026-07-08
+
+改动范围：
+
+- 新增岭南大学专业推荐助手官网知识库、Supabase programmes / programme_sync_logs / recommendation_logs 表。
+- 新增后端 `/api/recommend-programmes` DeepSeek 代理，API Key 仅从后端环境变量读取。
+- DeepSeek 只分析后端检索出的候选专业数据，不在前端直接调用，不搜索网页，不编造专业或课程。
+- 同步本次部署版本号为 `v1.40`。
+
+测试：
+
+- `node --test server/programme-recommender.test.mjs` 通过。
+- `node --check server/index.mjs`、`node --check server/storage.mjs`、`node --check server/programme-recommender.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.39
 
