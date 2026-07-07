@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.34';
+const APP_VERSION = 'v1.35';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -27,7 +27,6 @@ const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const USER_STORAGE_KEY = 'student-life-notes:user';
 const LOCAL_USERS_STORAGE_KEY = 'student-life-notes:local-users';
 const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
-const LIVE_VISIT_STORAGE_KEY = 'student-life-notes:live-visits';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -259,25 +258,6 @@ function readSupportTickets(): SupportTicket[] {
     return raw ? JSON.parse(raw) as SupportTicket[] : [];
   } catch {
     return [];
-  }
-}
-
-function readLiveVisits() {
-  try {
-    const saved = Number(localStorage.getItem(LIVE_VISIT_STORAGE_KEY) || '');
-    if (Number.isFinite(saved) && saved > 0) return saved;
-  } catch {
-    // Ignore storage failures.
-  }
-  const pageViews = readAnalyticsEvents().filter((event) => event.type === 'page_view').length;
-  return Math.max(96, pageViews + 96);
-}
-
-function writeLiveVisits(value: number) {
-  try {
-    localStorage.setItem(LIVE_VISIT_STORAGE_KEY, String(value));
-  } catch {
-    // Ignore storage failures.
   }
 }
 
@@ -1395,27 +1375,6 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
-  const [liveVisits, setLiveVisits] = useState(() => readLiveVisits());
-  const supportCount = Math.max(12, readSupportTickets().length + 12);
-  const forumCount = Math.max(28, visibleSharedPosts.length + 8);
-
-  useEffect(() => {
-    let timer = 0;
-    const schedule = () => {
-      const delay = 30000 + Math.floor(Math.random() * 30000);
-      timer = window.setTimeout(() => {
-        setLiveVisits((current) => {
-          const next = current + 1;
-          writeLiveVisits(next);
-          return next;
-        });
-        schedule();
-      }, delay);
-    };
-    writeLiveVisits(liveVisits);
-    schedule();
-    return () => window.clearTimeout(timer);
-  }, []);
 
   return (
     <>
@@ -1431,30 +1390,30 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
             <span><strong>{courses.length}</strong> 当前学校课程</span>
           </div>
         </div>
-        <div className="hero-live-panel" aria-label="实时访问与互动概览">
+        <div className="hero-live-panel guide-panel" aria-label="站内使用路线">
           <div className="live-panel-head">
-            <span className="eyebrow">Live</span>
-            <strong>实时访问</strong>
+            <span className="eyebrow">Guide</span>
+            <strong>怎么使用</strong>
           </div>
-          <div className="live-visit-count">
-            <strong>{liveVisits.toLocaleString()}</strong>
-            <span>累计访问量</span>
+          <div className="guide-feature-card">
+            <strong>先选学校，再看内容。</strong>
+            <span>课程清单、生活条目和收藏会跟随当前学校切换；共享资料会在两个学校都显示。</span>
           </div>
           <div className="live-metric-list">
             <div>
-              <span>收到建议</span>
-              <strong>{supportCount}</strong>
-              <small>最近更新：12 分钟前</small>
+              <span>01</span>
+              <strong>查生活信息</strong>
+              <small>租房、通勤、入学、饮食和出行按板块浏览。</small>
             </div>
             <div>
-              <span>生活条目</span>
-              <strong>{forumCount}</strong>
-              <small>最近更新：38 分钟前</small>
+              <span>02</span>
+              <strong>看课程清单</strong>
+              <small>从“专业课程知识库”进入，按学历、学院和项目筛选。</small>
             </div>
             <div>
-              <span>当前内容</span>
-              <strong>{visibleSharedPosts.length}</strong>
-              <small>{schoolAbbreviation(activeSchool)} 生活条目</small>
+              <span>03</span>
+              <strong>保存常用内容</strong>
+              <small>把常看的课程和生活条目加入收藏，之后快速返回。</small>
             </div>
           </div>
         </div>
