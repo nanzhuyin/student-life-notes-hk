@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.18';
+const APP_VERSION = 'v1.19';
 const BETA_NOTICE = '内测版本：站内信箱、在线投稿处理、用户注册和服务端统计暂未开放；如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -542,7 +542,11 @@ function isEduhkSharedPost(post: SharedPost) {
 }
 
 function getVisibleSharedPosts(schoolId: SchoolId) {
-  return platformData.sharedPosts.filter((post) => (schoolId === 'eduhk' ? isEduhkSharedPost(post) : !isEduhkSharedPost(post)));
+  return platformData.sharedPosts.filter((post) => {
+    if (post.schoolId === 'shared') return true;
+    if (post.schoolId) return post.schoolId === schoolId;
+    return schoolId === 'eduhk' ? isEduhkSharedPost(post) : !isEduhkSharedPost(post);
+  });
 }
 
 function uniqueCompact(values: Array<string | undefined | null>) {

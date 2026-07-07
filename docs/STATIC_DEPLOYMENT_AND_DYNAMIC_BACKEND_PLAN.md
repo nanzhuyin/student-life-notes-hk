@@ -4,7 +4,7 @@
 
 ## 当前线上状态
 
-- 当前版本：`v1.17`
+- 当前版本：`v1.19`
 - 线上地址：https://nanzhuyin.github.io/student-life-notes-hk/#/
 - 部署方式：GitHub Pages + GitHub Actions
 - 当前模式：内测静态前端模式
