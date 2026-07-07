@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import postsData from './data/posts.json';
 import platformDataJson from './data/platformData.json';
+import ProgrammeRecommenderPage from './pages/ProgrammeRecommenderPage';
 import type {
   CategoryKey,
   CategoryMeta,
@@ -16,7 +17,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.33';
+const APP_VERSION = 'v1.34';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -103,6 +104,7 @@ const courseTypeOptions: Array<{ key: CourseTypeKey | 'all'; label: string }> = 
 type Route =
   | { name: 'home' }
   | { name: 'courses' }
+  | { name: 'programmeRecommender' }
   | { name: 'course'; id: string }
   | { name: 'section'; id: string }
   | { name: 'post'; id: string }
@@ -186,6 +188,7 @@ function getRoute(): Route {
 
   if (!path) return { name: 'home' };
   if (path === 'courses') return { name: 'courses' };
+  if (path === 'programme-recommender') return { name: 'programmeRecommender' };
   if (path === 'course' && rest[0]) return { name: 'course', id: decodeURIComponent(rest[0]) };
   if (path === 'section' && rest[0]) return { name: 'section', id: rest[0] };
   if (path === 'category' && rest[0]) return { name: 'section', id: sectionIdByCategory[rest[0] as CategoryKey] || rest[0] };
@@ -485,6 +488,7 @@ async function saveAdminPost(post: SharedPost, adminToken: string) {
 function routeFeature(route: Route) {
   if (route.name === 'home') return '首页';
   if (route.name === 'courses') return '课程库';
+  if (route.name === 'programmeRecommender') return '专业推荐助手';
   if (route.name === 'course') return '课程详情';
   if (route.name === 'section') return '生活分区';
   if (route.name === 'post') return '生活内容详情';
@@ -1016,6 +1020,7 @@ function Header({
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
+        <button onClick={() => go('/programme-recommender')}>专业推荐</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
         {!isLoggedIn && <button onClick={() => go('/login')}>登录</button>}
         <button onClick={() => go('/policy')}>隐私与诚信</button>
@@ -1393,7 +1398,6 @@ function SchoolPanel({
 
 function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void; dynamicPosts: SharedPost[] }) {
   const programmes = getProgrammes(activeSchool.id);
-  const displayProgrammes = useMemo(() => getDisplayProgrammes(programmes), [programmes]);
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
@@ -1449,7 +1453,7 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
               <small>最近更新：12 分钟前</small>
             </div>
             <div>
-              <span>论坛发表</span>
+              <span>生活条目</span>
               <strong>{forumCount}</strong>
               <small>最近更新：38 分钟前</small>
             </div>
@@ -1477,28 +1481,6 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
             >
               <span>{category.name}</span>
               <small>{category.description}</small>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>{activeSchool.shortName}课程入口</h2>
-          <p>先从当前学校的项目开始看。</p>
-        </div>
-        <div className="programme-grid">
-          {displayProgrammes.slice(0, 4).map((programme) => (
-            <button key={programme.id} className="programme-card" onClick={() => go(`/courses?programme=${encodeURIComponent(programme.id)}`)}>
-              <div className="medium-badge-row">
-                {getProgrammeMediumBadges(programme, programmes).map((medium) => (
-                  <span key={medium} className={`medium-badge ${getMediumTone(medium)}`}>{medium}</span>
-                ))}
-              </div>
-              <strong>{getProgrammeTitle(programme)}</strong>
-              {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
-              <span>{getProgrammeMetricText(programme)}</span>
-              <small>{programme.schoolId === 'eduhk' ? getUnitText(programme) : `${formatFacultyName(programme.faculty)} · 课程资料`}</small>
             </button>
           ))}
         </div>
@@ -3359,6 +3341,7 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
+        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage />}
         {!shouldBlockForAuth && route.name === 'course' && (
           <CourseDetailPage
             id={route.id}

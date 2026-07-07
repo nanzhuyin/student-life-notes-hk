@@ -3129,3 +3129,299 @@ footer {
     margin-top: 0.8rem;
   }
 }
+
+/* v1.34 readability and content-dashboard refinement. */
+.hero.school-hero,
+.hero.school-hero.eduhk,
+.hero.school-hero.lingnan {
+  grid-template-columns: minmax(0, 1.18fr) minmax(22rem, 0.82fr);
+  align-items: stretch;
+  min-height: auto;
+  padding: clamp(1.35rem, 3.2vw, 2.8rem);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.16), transparent 18rem),
+    radial-gradient(circle at 90% 76%, rgba(245, 213, 168, 0.34), transparent 20rem),
+    linear-gradient(135deg, #3b3047 0%, #261f30 52%, #493b55 100%) !important;
+}
+
+.hero.school-hero::before {
+  opacity: 0.16;
+}
+
+.hero.school-hero h1 {
+  max-width: 8.4em;
+  color: #ffffff !important;
+  font-size: clamp(2.8rem, 6.2vw, 6.4rem);
+  line-height: 0.96;
+}
+
+.hero.school-hero p,
+.hero.school-hero .hero-copy > p {
+  max-width: 48rem;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.hero.school-hero .eyebrow {
+  color: #493657;
+  background: #e5d9f3;
+}
+
+.hero.school-hero .search-box {
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.94), rgba(246, 218, 178, 0.82)) !important;
+}
+
+.hero.school-hero .search-box input {
+  color: #2c2434 !important;
+}
+
+.hero.school-hero .search-box input::placeholder {
+  color: #756a80 !important;
+}
+
+.hero.school-hero .search-box button {
+  color: #2c2434;
+  background: #ffffff;
+}
+
+.hero.school-hero .hero-stats span {
+  color: #746b79 !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+.hero.school-hero .hero-stats strong,
+.live-visit-count strong,
+.live-metric-list strong {
+  color: #a11e35 !important;
+}
+
+.hero-live-panel {
+  min-height: 100%;
+  border-radius: 2.2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(238, 223, 205, 0.78)) !important;
+}
+
+.live-panel-head,
+.live-visit-count,
+.live-metric-list div {
+  color: #2c2434;
+}
+
+.live-panel-head strong,
+.live-metric-list span,
+.live-visit-count span {
+  color: #2c2434 !important;
+}
+
+.live-metric-list small {
+  color: #766c76 !important;
+}
+
+.school-panel {
+  grid-template-columns: minmax(18rem, 0.88fr) minmax(0, 1.12fr);
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 8% 20%, rgba(255, 255, 255, 0.13), transparent 16rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+}
+
+.school-panel h2,
+.school-panel p {
+  color: #ffffff;
+}
+
+.school-panel .school-card {
+  color: #2c2434;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(244, 237, 247, 0.82));
+}
+
+.category-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.category-card {
+  position: relative;
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.15rem;
+  overflow: hidden;
+  color: #2c2434 !important;
+}
+
+.category-card::after {
+  content: "";
+  width: 3.3rem;
+  height: 3.3rem;
+  align-self: flex-end;
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.78), transparent 35%),
+    rgba(47, 38, 58, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(47, 38, 58, 0.08);
+}
+
+.category-card:nth-child(1) {
+  grid-column: span 2;
+  min-height: 16rem;
+  background: linear-gradient(135deg, #eee6fb 0%, #fff4e6 100%) !important;
+}
+
+.category-card:nth-child(2) {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #fff2df 0%, #f3d5bb 100%) !important;
+}
+
+.category-card:nth-child(3) {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #e9f7ef 0%, #cde8dc 100%) !important;
+}
+
+.category-card:nth-child(n + 4) {
+  grid-column: span 2;
+}
+
+.category-card.red,
+.category-card.warm,
+.category-card.green,
+.category-card.orange,
+.category-card.blue,
+.category-card.mint {
+  color: #2c2434 !important;
+}
+
+.category-card span {
+  color: #2c2434 !important;
+  font-size: clamp(1.16rem, 2vw, 1.58rem);
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.category-card small {
+  color: #5f5666 !important;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.section {
+  margin-top: 1.35rem;
+}
+
+.section-head {
+  align-items: end;
+  padding: 0 0.25rem;
+}
+
+.section-head h2 {
+  color: #ffffff;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+}
+
+.section-head p {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.page-panel {
+  padding: clamp(1rem, 2vw, 1.6rem);
+}
+
+.page-title-block.centered {
+  color: #2c2434;
+  background:
+    radial-gradient(circle at top right, rgba(246, 218, 178, 0.42), transparent 18rem),
+    linear-gradient(135deg, #f8f2fb 0%, #fff8ef 100%);
+}
+
+.page-title-block.centered h1 {
+  color: #2c2434;
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+}
+
+.page-title-block.centered p {
+  color: #665e6d;
+}
+
+.filter-panel {
+  color: #2c2434;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.filter-row > span {
+  color: #9f1f36;
+}
+
+.filter-panel input,
+.filter-panel select {
+  color: #2c2434;
+  background: #ffffff;
+  border: 1px solid rgba(47, 38, 58, 0.18);
+}
+
+.programme-module {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.07));
+}
+
+.programme-module-head strong {
+  color: #ffffff;
+}
+
+.programme-module-head span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.programme-card,
+.course-card,
+.post-card {
+  color: #2c2434 !important;
+  background: linear-gradient(145deg, #f8f5fb 0%, #ddd4e5 100%) !important;
+}
+
+.programme-card strong,
+.course-card strong,
+.post-card h3 {
+  color: #2c2434 !important;
+}
+
+.programme-card span,
+.programme-card small,
+.course-card p,
+.course-card small,
+.post-card p,
+.post-card small {
+  color: #695f70 !important;
+}
+
+@media (max-width: 1100px) {
+  .hero.school-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .category-card,
+  .category-card:nth-child(n) {
+    grid-column: span 1;
+  }
+
+  .school-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero.school-hero h1 {
+    font-size: 2.55rem;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+}
