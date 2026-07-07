@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.30';
+const APP_VERSION = 'v1.31';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -995,12 +995,14 @@ function Header({
   activeSchool,
   onChooseSchool,
   isAdmin,
-  onAdminLogout
+  isLoggedIn,
+  onLogout
 }: {
   activeSchool: School;
   onChooseSchool: (schoolId: SchoolId) => void;
   isAdmin: boolean;
-  onAdminLogout: () => void;
+  isLoggedIn: boolean;
+  onLogout: () => void;
 }) {
   return (
     <header className="site-header">
@@ -1015,11 +1017,10 @@ function Header({
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/courses')}>课程库</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
-        <button onClick={() => go('/register')}>注册</button>
-        <button onClick={() => go('/login')}>登录</button>
+        {!isLoggedIn && <button onClick={() => go('/login')}>登录</button>}
         <button onClick={() => go('/policy')}>隐私与诚信</button>
         {isAdmin && <button onClick={() => go('/admin')}>管理视角</button>}
-        {isAdmin && <button onClick={onAdminLogout}>退出管理</button>}
+        {isLoggedIn && <button onClick={onLogout}>退出</button>}
       </nav>
       <div className="school-switcher">
         {platformData.schools.map((school) => (
@@ -3064,10 +3065,12 @@ export default function App() {
         activeSchool={activeSchool}
         onChooseSchool={chooseSchool}
         isAdmin={userRole === 'admin'}
-        onAdminLogout={() => {
+        isLoggedIn={Boolean(currentUser || isAdminAuthenticated)}
+        onLogout={() => {
+          setCurrentUser(null);
           setAdminToken('');
           setAdminSession(false);
-          if (route.name === 'admin') go('/');
+          if (route.name === 'admin' || route.name === 'login' || route.name === 'register') go('/');
         }}
       />
       <section className="beta-banner">
