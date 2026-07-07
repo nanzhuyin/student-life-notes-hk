@@ -2686,3 +2686,446 @@ footer {
     flex-direction: column;
   }
 }
+
+/* v1.33 dashboard skin: inspired by rounded dark collector dashboards, without reusing assets or content. */
+:root {
+  --ui-bg: #c9bdd8;
+  --ui-shell: #2f263a;
+  --ui-shell-2: #3b3047;
+  --ui-panel: #f3eef8;
+  --ui-panel-2: #eee7f5;
+  --ui-card: rgba(255, 255, 255, 0.82);
+  --ui-card-strong: #fffaf3;
+  --ui-text: #27222c;
+  --ui-muted: #786f83;
+  --ui-purple: #6f607f;
+  --ui-lavender: #dcd3ec;
+  --ui-cream: #f4d5a7;
+  --ui-gold: #b9854d;
+  --ui-green: #a9d8ca;
+  --ui-rose: #d9c1d8;
+  --ui-shadow: 0 28px 80px rgba(27, 20, 34, 0.32);
+  --ui-soft-shadow: 0 18px 45px rgba(45, 34, 55, 0.14);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.18), transparent 24rem),
+    radial-gradient(circle at 88% 90%, rgba(236, 214, 180, 0.32), transparent 28rem),
+    var(--ui-bg);
+}
+
+.app-shell:not(.landing-mode) {
+  display: grid;
+  grid-template-columns: 7.4rem minmax(0, 1fr);
+  gap: 1.35rem;
+  width: min(1640px, calc(100% - 3rem));
+  min-height: calc(100vh - 4rem);
+  margin: 2rem auto;
+  padding: clamp(1rem, 2vw, 1.6rem);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: clamp(1.8rem, 4vw, 3.2rem);
+  color: rgba(255, 255, 255, 0.86);
+  background:
+    radial-gradient(circle at 78% 12%, rgba(217, 193, 216, 0.2), transparent 22rem),
+    linear-gradient(135deg, #33283e, #292033 72%);
+  box-shadow: var(--ui-shadow);
+}
+
+.site-header {
+  position: sticky;
+  top: 1.25rem;
+  z-index: 35;
+  display: flex;
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  flex-direction: column;
+  gap: 1.1rem;
+  align-self: start;
+  min-height: calc(100vh - 6.6rem);
+  padding: 0.8rem 0.45rem;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.brand-button {
+  justify-content: center;
+  color: #fff;
+}
+
+.brand-button > span:last-child {
+  display: none;
+}
+
+.brand-avatar {
+  width: 4.4rem;
+  height: 4.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.24);
+}
+
+.top-nav,
+.school-switcher {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.top-nav {
+  flex: 1;
+  padding-top: 0.75rem;
+}
+
+.top-nav button,
+.school-switcher button {
+  width: 5.6rem;
+  min-height: 3.2rem;
+  border: 0;
+  border-radius: 1.2rem;
+  padding: 0.55rem 0.6rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.top-nav button:hover,
+.school-switcher button:hover,
+.school-switcher button.active {
+  color: #241d2d;
+  background: #fff;
+}
+
+.school-switcher button.active {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+}
+
+.beta-banner,
+main,
+footer {
+  grid-column: 2;
+}
+
+.beta-banner {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 1.5rem;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+main {
+  width: 100%;
+  padding: 0 0 1rem;
+}
+
+footer {
+  width: 100%;
+  margin: 0;
+  padding: 1rem 0.3rem 0;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.hero,
+.school-panel,
+.page-panel,
+.analytics-panel,
+.programme-summary,
+.detail-head,
+.detail-body,
+.source-card,
+.about-card,
+.policy-card,
+.post-card,
+.course-card,
+.empty-state,
+.login-panel,
+.registration-panel,
+.admin-post-editor,
+.mailbox-panel,
+.ticket-card,
+.programme-module,
+.hero-live-panel {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 2rem;
+  color: var(--ui-text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 239, 250, 0.74)),
+    var(--ui-panel);
+  box-shadow: var(--ui-soft-shadow);
+}
+
+.hero,
+.school-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.4rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at 80% 18%, rgba(244, 213, 167, 0.28), transparent 20rem),
+    linear-gradient(135deg, #463951 0%, #33283e 58%, #c7a87f 160%);
+}
+
+.hero::before,
+.school-hero::before {
+  content: "";
+  position: absolute;
+  inset: 1rem;
+  pointer-events: none;
+  border-radius: 1.7rem;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.42) 0 0.18rem, transparent 0.2rem);
+  background-size: 3.5rem 3.5rem;
+  opacity: 0.38;
+}
+
+.hero-copy,
+.hero-live-panel,
+.hero-visual {
+  position: relative;
+  z-index: 1;
+}
+
+.school-hero h1,
+.hero h1 {
+  color: #fff;
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.school-hero p,
+.school-hero .hero-copy > p,
+.hero p {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.hero-live-panel,
+.hero-visual,
+.school-hero .search-box {
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(244, 238, 252, 0.9), rgba(243, 220, 190, 0.72));
+}
+
+.search-box {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.search-box input {
+  color: #fff;
+  background: transparent;
+}
+
+.school-hero .search-box input,
+.page-panel .search-box input {
+  color: var(--ui-text);
+}
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.school-hero .search-box input::placeholder,
+.page-panel .search-box input::placeholder {
+  color: var(--ui-muted);
+}
+
+.search-box button,
+.primary-action,
+.login-panel button {
+  border-radius: 999px;
+  color: #2a2032;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(45, 34, 55, 0.16);
+}
+
+.primary-action,
+.login-panel button {
+  color: #fff;
+  background: linear-gradient(135deg, #7b5f8c, #bb8f65);
+}
+
+.secondary-action,
+.back-button,
+.inline-actions button,
+.ticket-filter-row button,
+.ticket-stats button {
+  border-color: rgba(72, 58, 85, 0.12);
+  border-radius: 999px;
+  color: #4b4156;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.eyebrow,
+.tag,
+.tag-pill,
+.course-tag,
+.post-card .eyebrow {
+  border-radius: 999px;
+  color: #4c3d5e;
+  background: rgba(220, 211, 236, 0.78);
+}
+
+.category-grid,
+.post-grid,
+.course-list,
+.programme-grid {
+  gap: 1rem;
+}
+
+.category-card,
+.programme-card,
+.course-card,
+.post-card,
+.school-card,
+.stats-grid div,
+.stats-grid button {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 1.6rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 232, 248, 0.72));
+  box-shadow: 0 16px 34px rgba(27, 20, 34, 0.12);
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.category-card:nth-child(3n + 1),
+.post-card:nth-child(3n + 1),
+.course-card:nth-child(3n + 1) {
+  background:
+    linear-gradient(180deg, rgba(235, 248, 242, 0.96), rgba(214, 233, 226, 0.74));
+}
+
+.category-card:nth-child(3n + 2),
+.post-card:nth-child(3n + 2),
+.course-card:nth-child(3n + 2) {
+  background:
+    linear-gradient(180deg, rgba(253, 246, 224, 0.96), rgba(235, 206, 162, 0.72));
+}
+
+.category-card:hover,
+.programme-card:hover,
+.course-card:hover,
+.post-card:hover,
+.school-card:hover {
+  transform: translateY(-4px) rotate(-0.35deg);
+  box-shadow: 0 24px 52px rgba(27, 20, 34, 0.18);
+}
+
+.section-head,
+.page-title-block,
+.course-list-head {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.page-panel .section-head,
+.page-panel .page-title-block,
+.detail-body .section-head,
+.analytics-panel .section-head,
+.analytics-head,
+.programme-summary,
+.detail-head,
+.source-card {
+  color: var(--ui-text);
+}
+
+.page-title-block.centered {
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(239, 230, 247, 0.62));
+}
+
+.filter-panel,
+.filter-row,
+.info-list div,
+.mailbox-card,
+.ticket-detail-body article,
+.ticket-detail-meta span {
+  border-color: rgba(72, 58, 85, 0.12);
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.floating-support-button {
+  right: max(1.2rem, env(safe-area-inset-right));
+  border: 4px solid rgba(255, 255, 255, 0.78);
+  background: linear-gradient(135deg, #7b5f8c, #c39a66);
+  box-shadow: 0 22px 48px rgba(27, 20, 34, 0.32);
+}
+
+.floating-support-panel,
+.ticket-detail-modal,
+.confirm-dialog {
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 232, 248, 0.92));
+}
+
+.landing-shell {
+  background: var(--ui-bg);
+}
+
+.landing-overlay,
+.confirm-dialog {
+  border-radius: 2.2rem;
+  background:
+    radial-gradient(circle at top right, rgba(244, 213, 167, 0.22), transparent 18rem),
+    linear-gradient(135deg, #3b3047, #2d2438);
+}
+
+.landing-kicker,
+.enter-app-button {
+  border-radius: 999px;
+  background: #fff;
+  color: #2d2438;
+}
+
+@media (max-width: 980px) {
+  .app-shell:not(.landing-mode) {
+    display: block;
+    width: min(100% - 1rem, 1640px);
+    margin: 0.5rem auto;
+    border-radius: 1.8rem;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0.5rem;
+    flex-direction: row;
+    min-height: 0;
+    padding: 0.5rem;
+    overflow-x: auto;
+    border-radius: 1.4rem;
+    background: rgba(47, 38, 58, 0.92);
+  }
+
+  .brand-avatar {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  .top-nav,
+  .school-switcher {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .top-nav button,
+  .school-switcher button {
+    width: auto;
+    min-width: max-content;
+  }
+
+  .beta-banner,
+  main,
+  footer {
+    width: 100%;
+    margin-top: 0.8rem;
+  }
+}
