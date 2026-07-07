@@ -15,17 +15,10 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.24';
+const APP_VERSION = 'v1.25';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
-const ADMIN_USERNAME = 'nanzhuyin-admin';
-const ADMIN_PASSWORD_HASH = 'b9b766c518d863ccc5d940e87b0845eeddb95eb67cd96b6a4a3ff1d7092e5b5b';
-const DEFAULT_ADMIN_ACCOUNTS = [
-  { username: 'otter-admin', passwordHash: 'aee6f0ecf531724f671db225e30f91d3cf21e89bb0ab639431ad237e9174caa3', role: 'owner' },
-  { username: 'content-reviewer', passwordHash: '389ebe877a1ed402f4cf8e6efd08d8f0dae2a3153ef2e57136f5ac1a591dcf42', role: 'editor' },
-  { username: 'support-desk', passwordHash: '2639c55742f526036b0ecc605e00b6fad2df03b81cdfbd72cdf3ec3f0c6aaba8', role: 'support' }
-];
 const FILTER_STORAGE_PREFIX = 'student-life-notes:filters:';
 const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
@@ -667,18 +660,18 @@ function postMatches(post: SharedPost, keyword: string) {
     .includes(token);
 }
 
-function wikiImage(fileName: string) {
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=900`;
+function propertyImage(fileName: string) {
+  return `${APP_BASE_URL}images/properties/${fileName}`;
 }
 
 const housingImageRules: Array<{ keywords: string[]; url: string }> = [
-  { keywords: ['港湾豪庭'], url: wikiImage('Metro Harbour View (revised).jpg') },
-  { keywords: ['叠茵庭一期C座', '叠茵庭'], url: wikiImage('Parkland Villa 201212.jpg') },
-  { keywords: ['大兴花园一期', '大兴花园'], url: wikiImage('Tai Hing Garden 201410.jpg') },
-  { keywords: ['聚康山庄'], url: wikiImage('Beneville 201409.jpg') },
-  { keywords: ['傲云峰'], url: wikiImage('Sky Tower 202004.jpg') },
-  { keywords: ['绿怡居'], url: wikiImage('Botania Villa.jpg') },
-  { keywords: ['豫丰花园'], url: wikiImage('The Sherwood (full view and blue sky).jpg') }
+  { keywords: ['港湾豪庭'], url: propertyImage('metro-harbour-view.jpg') },
+  { keywords: ['叠茵庭一期C座', '叠茵庭'], url: propertyImage('parkland-villas.jpg') },
+  { keywords: ['大兴花园一期', '大兴花园'], url: propertyImage('tai-hing-garden.jpg') },
+  { keywords: ['聚康山庄'], url: propertyImage('beneville.jpg') },
+  { keywords: ['傲云峰'], url: propertyImage('sky-tower.jpg') },
+  { keywords: ['绿怡居'], url: propertyImage('botania-villa.jpg') },
+  { keywords: ['豫丰花园'], url: propertyImage('the-sherwood.jpg') }
 ];
 
 function escapeSvgText(value: string) {
@@ -736,15 +729,20 @@ function makeHousingPlaceholder(post: SharedPost) {
 }
 
 function getPostImage(post: SharedPost) {
+  const isPropertySection = ['housing', 'commute'].includes(post.sectionId);
   const manual = post.imageUrls?.find((url) => url.trim());
-  if (manual) return manual;
-  if (post.sectionId !== 'housing') return '';
+  if (!isPropertySection && manual) return manual;
+  if (!isPropertySection) return '';
   const text = [post.title, post.region || '', post.content].join(' ');
   const matched = housingImageRules.find((rule) => rule.keywords.some((keyword) => text.includes(keyword)));
   return matched?.url || makeHousingPlaceholder(post);
 }
 
 function getPostImages(post: SharedPost) {
+  if (['housing', 'commute'].includes(post.sectionId)) {
+    const generated = getPostImage(post);
+    return generated ? [generated] : [];
+  }
   const manual = post.imageUrls?.filter((url) => url.trim()) || [];
   if (manual.length) return manual;
   const generated = getPostImage(post);
@@ -2223,17 +2221,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
         setPassword('');
         return;
       }
-      const passwordHash = await hashText(password);
-      if (
-        (username.trim() === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) ||
-        DEFAULT_ADMIN_ACCOUNTS.some((account) => account.username === username.trim() && account.passwordHash === passwordHash)
-      ) {
-        setEntered(true);
-        setLoginError('');
-        setPassword('');
-        return;
-      }
-      setLoginError('账号或密码不正确');
+      setLoginError('未配置后端地址时不能进入管理端。请先启动后端并配置 VITE_API_BASE_URL。');
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : '账号或密码不正确');
     }
@@ -2286,7 +2274,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
           </label>
           <button onClick={login}>进入管理端</button>
           {loginError && <p className="form-error">{loginError}</p>}
-          <p className="login-note">{API_BASE_URL ? '默认测试管理员：otter-admin / content-reviewer / support-desk。正式部署请用 ADMIN_ACCOUNTS_JSON 覆盖。' : '配置 VITE_API_BASE_URL 后可启用服务端真实统计。'}</p>
+          <p className="login-note">{API_BASE_URL ? '请使用 Render 环境变量 ADMIN_ACCOUNTS_JSON 中配置的正式管理员账号。' : '配置 VITE_API_BASE_URL 后可启用服务端管理端。'}</p>
         </div>
       )}
 
@@ -2541,7 +2529,7 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
       </div>
       <div className="support-disabled-note">
         <strong>{schoolAbbreviation(activeSchool)} 私信反馈</strong>
-        <span>这里用于纠错、补充资料和联系作者；内容不会直接公开，管理员确认后再整理更新到页面。</span>
+        <span>这里用于纠错、补充资料和联系作者；内容不会直接公开，也不会自动发送邮件，管理员会在后台信箱查看后整理更新。</span>
       </div>
       <div className="support-workspace">
         <div className="support-form">
