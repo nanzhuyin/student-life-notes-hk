@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import postsData from './data/posts.json';
 import platformDataJson from './data/platformData.json';
-import ProgrammeRecommenderPage from './pages/ProgrammeRecommenderPage';
 import type {
   CategoryKey,
   CategoryMeta,
@@ -104,7 +103,6 @@ const courseTypeOptions: Array<{ key: CourseTypeKey | 'all'; label: string }> = 
 type Route =
   | { name: 'home' }
   | { name: 'courses' }
-  | { name: 'programmeRecommender' }
   | { name: 'course'; id: string }
   | { name: 'section'; id: string }
   | { name: 'post'; id: string }
@@ -188,7 +186,6 @@ function getRoute(): Route {
 
   if (!path) return { name: 'home' };
   if (path === 'courses') return { name: 'courses' };
-  if (path === 'programme-recommender') return { name: 'programmeRecommender' };
   if (path === 'course' && rest[0]) return { name: 'course', id: decodeURIComponent(rest[0]) };
   if (path === 'section' && rest[0]) return { name: 'section', id: rest[0] };
   if (path === 'category' && rest[0]) return { name: 'section', id: sectionIdByCategory[rest[0] as CategoryKey] || rest[0] };
@@ -488,7 +485,6 @@ async function saveAdminPost(post: SharedPost, adminToken: string) {
 function routeFeature(route: Route) {
   if (route.name === 'home') return '首页';
   if (route.name === 'courses') return '课程库';
-  if (route.name === 'programmeRecommender') return '专业推荐助手';
   if (route.name === 'course') return '课程详情';
   if (route.name === 'section') return '生活分区';
   if (route.name === 'post') return '生活内容详情';
@@ -1019,8 +1015,6 @@ function Header({
       </button>
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
-        <button onClick={() => go('/courses')}>课程库</button>
-        <button onClick={() => go('/programme-recommender')}>专业推荐</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
         {!isLoggedIn && <button onClick={() => go('/login')}>登录</button>}
         <button onClick={() => go('/policy')}>隐私与诚信</button>
@@ -3341,7 +3335,6 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage />}
         {!shouldBlockForAuth && route.name === 'course' && (
           <CourseDetailPage
             id={route.id}
