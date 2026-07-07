@@ -15,8 +15,8 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.20';
-const BETA_NOTICE = '内测版本：邮箱注册已开放，不要求邮箱二次验证；站内信箱和在线投稿处理仍在灰度测试，如需反馈、投稿或联系管理人员，请先通过微信群沟通。';
+const APP_VERSION = 'v1.21';
+const BETA_NOTICE = '内测版本：邮箱注册和联系作者信箱已开放；公开投稿、评论和社区功能不开放，内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
 const ADMIN_USERNAME = 'nanzhuyin-admin';
@@ -285,13 +285,17 @@ async function registerUser(input: { email: string; username: string; password: 
 }
 
 async function fetchMailbox(user: RegisteredUser) {
+  const email = user.email.trim().toLowerCase();
+  const userId = user.id && user.id !== 'guest-browser' ? user.id : '';
   if (!API_BASE_URL) {
     return readSupportTickets()
-      .filter((ticket) => ticket.userId === user.id || ticket.contact.toLowerCase() === user.email.toLowerCase())
+      .filter((ticket) => (userId && ticket.userId === userId) || (email && ticket.contact.toLowerCase() === email))
       .slice()
       .reverse();
   }
-  const params = new URLSearchParams({ userId: user.id, email: user.email });
+  const params = new URLSearchParams();
+  if (userId) params.set('userId', userId);
+  if (email) params.set('email', email);
   const data = await apiRequest<{ tickets: SupportTicket[] }>(`/api/mailbox?${params.toString()}`);
   return data.tickets || [];
 }
@@ -794,7 +798,7 @@ function LandingPage({
           <div className="agreement-list">
             <div>
               <strong>隐私政策</strong>
-              <p>{APP_VERSION} 已开放邮箱注册；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。站内信箱和在线投稿处理仍在灰度测试，反馈请通过微信群联系管理人员。</p>
+              <p>{APP_VERSION} 已开放邮箱注册和联系作者信箱；注册只用于保存用户身份和后续服务端统计，不要求邮箱二次验证。公开投稿、评论和社区功能不开放。</p>
             </div>
             <div>
               <strong>避免学术不端</strong>
@@ -1902,17 +1906,132 @@ function PolicyPage() {
   );
 }
 
-function SupportPanel({ activeSchool }: { user: RegisteredUser; activeSchool: School }) {
+function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeSchool: School }) {
+  const [type, setType] = useState('联系作者');
+  const [contact, setContact] = useState(user.email || '');
+  const [message, setMessage] = useState('');
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user.email && !contact) setContact(user.email);
+  }, [contact, user.email]);
+
+  const lookupMailbox = async (lookupContact = contact) => {
+    const email = lookupContact.trim().toLowerCase();
+    setError('');
+    setNotice('');
+    if (!isValidEmailShape(email)) {
+      setError('查看信箱需要填写邮箱。微信或其他联系方式可以提交留言，但无法自动查看回执。');
+      return;
+    }
+    setLoading(true);
+    try {
+      const list = await fetchMailbox({ ...user, email });
+      setTickets(list);
+      setNotice(list.length ? `已找到 ${list.length} 条回执记录。` : '暂时没有回执记录。');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '信箱读取失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submit = async () => {
+    const trimmedContact = contact.trim();
+    const trimmedMessage = message.trim();
+    setError('');
+    setNotice('');
+    if (trimmedContact.length < 2) {
+      setError('请填写邮箱或其他联系方式。');
+      return;
+    }
+    if (trimmedMessage.length < 5) {
+      setError('内容至少写 5 个字，方便作者判断要处理什么。');
+      return;
+    }
+    setLoading(true);
+    try {
+      const ticket = await submitSupportTicket({
+        userId: user.id === 'guest-browser' ? '' : user.id,
+        username: user.username,
+        schoolId: activeSchool.id,
+        type,
+        contact: trimmedContact,
+        message: trimmedMessage
+      });
+      setMessage('');
+      setNotice('已提交给作者。管理员处理后，如果你填写的是邮箱，可以在这里查看回执。');
+      if (isValidEmailShape(trimmedContact)) {
+        await lookupMailbox(trimmedContact);
+      } else {
+        setTickets((items) => [ticket, ...items]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '提交失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user.email) void lookupMailbox(user.email);
+  }, [user.email]);
+
   return (
     <section className="support-panel">
       <div>
-        <span className="eyebrow">Internal Beta</span>
-        <h2>内测版本</h2>
+        <span className="eyebrow">Contact</span>
+        <h2>联系作者信箱</h2>
         <p>{BETA_NOTICE}</p>
       </div>
       <div className="support-disabled-note">
-        <strong>{schoolAbbreviation(activeSchool)} 当前反馈方式</strong>
-        <span>站内信箱、在线投稿、处理状态回执暂不开放。请在微信群联系管理人员，并说明学校、项目、问题位置和建议内容。</span>
+        <strong>{schoolAbbreviation(activeSchool)} 私信反馈</strong>
+        <span>这里用于纠错、补充资料和联系作者；内容不会直接公开，管理员确认后再整理更新到页面。</span>
+      </div>
+      <div className="support-workspace">
+        <div className="support-form">
+          <label>
+            <span>类型</span>
+            <select value={type} onChange={(event) => setType(event.target.value)}>
+              <option value="联系作者">联系作者</option>
+              <option value="内容纠错">内容纠错</option>
+              <option value="资料补充">资料补充</option>
+              <option value="使用问题">使用问题</option>
+            </select>
+          </label>
+          <label>
+            <span>联系方式</span>
+            <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，方便查看回执" type="text" />
+          </label>
+          <label className="wide">
+            <span>内容</span>
+            <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写清楚页面、学校、项目或具体问题。" rows={4}></textarea>
+          </label>
+          <button className="primary-action" onClick={submit} disabled={loading}>{loading ? '处理中' : '发送给作者'}</button>
+          {error && <p className="form-error">{error}</p>}
+          {notice && <p className="form-success">{notice}</p>}
+        </div>
+        <div className="mailbox-panel">
+          <div className="section-head compact">
+            <div>
+              <span className="eyebrow">Mailbox</span>
+              <h3>我的回执</h3>
+            </div>
+            <button className="secondary-action" onClick={() => void lookupMailbox()} disabled={loading}>刷新</button>
+          </div>
+          {tickets.length === 0 && <div className="empty-state"><strong>暂无回执</strong><span>填写邮箱提交后，可以在这里查看处理状态。</span></div>}
+          {tickets.map((ticket) => (
+            <article className="mailbox-card" key={ticket.id}>
+              <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
+              <span>{ticket.schoolId || activeSchool.id} · {new Date(ticket.createdAt).toLocaleString()}</span>
+              <p>{ticket.message}</p>
+              {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
