@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.28';
+const APP_VERSION = 'v1.29';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -972,11 +972,13 @@ function schoolAbbreviation(school: School) {
 function Header({
   activeSchool,
   onChooseSchool,
-  isAdmin
+  isAdmin,
+  onAdminLogout
 }: {
   activeSchool: School;
   onChooseSchool: (schoolId: SchoolId) => void;
   isAdmin: boolean;
+  onAdminLogout: () => void;
 }) {
   return (
     <header className="site-header">
@@ -995,6 +997,7 @@ function Header({
         <button onClick={() => go('/login')}>登录</button>
         <button onClick={() => go('/policy')}>隐私与诚信</button>
         {isAdmin && <button onClick={() => go('/admin')}>管理视角</button>}
+        {isAdmin && <button onClick={onAdminLogout}>退出管理</button>}
       </nav>
       <div className="school-switcher">
         {platformData.schools.map((school) => (
@@ -1298,6 +1301,8 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: RegisteredUser) => void 
           </label>
           <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '登录中' : '登录'}</button>
           {error && <p className="form-error">{error}</p>}
+          <p className="login-note">管理员账号不能在普通登录页登录；请使用管理端入口。</p>
+          <button className="secondary-action" onClick={() => go('/admin')}>管理员登录</button>
           <button className="secondary-action" onClick={() => go('/register')}>没有账号，去注册</button>
         </div>
       </section>
@@ -2875,22 +2880,23 @@ export default function App() {
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
-  const [adminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
-  const [adminSession] = useStoredState('student-life-notes:admin-session', false);
+  const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
+  const [adminSession, setAdminSession] = useStoredState('student-life-notes:admin-session', false);
   const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
   const activeSchool = getSchool(activeSchoolId);
+  const isAdminAuthenticated = Boolean(adminToken || adminSession);
   const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
-    id: 'guest-browser',
+    id: isAdminAuthenticated ? 'admin-browser' : 'guest-browser',
     email: '',
-    username: '访客',
+    username: isAdminAuthenticated ? '管理员' : '访客',
     schoolId: activeSchoolId,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
-  }, [activeSchoolId, currentUser]);
+  }, [activeSchoolId, currentUser, isAdminAuthenticated]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
-  const userRole: AnalyticsEvent['userRole'] = adminToken || adminSession ? 'admin' : currentUser ? 'registered' : 'guest';
+  const userRole: AnalyticsEvent['userRole'] = isAdminAuthenticated ? 'admin' : currentUser ? 'registered' : 'guest';
   const isPublicRoute = route.name === 'register' || route.name === 'login' || route.name === 'admin' || route.name === 'about' || route.name === 'policy';
-  const shouldBlockForAuth = !currentUser && !isPublicRoute;
+  const shouldBlockForAuth = !currentUser && !isAdminAuthenticated && !isPublicRoute;
   const shouldBypassAgreementForLocalAdmin = route.name === 'admin' && isLocalPreviewHost();
   const shouldUseLocalDebugUser = isLocalPreviewHost() && route.name !== 'admin';
   const shouldBypassAgreementForLocalUser = shouldUseLocalDebugUser && route.name !== 'register' && route.name !== 'login';
@@ -3012,7 +3018,7 @@ export default function App() {
           onEnter={() => {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
-            go(currentUser ? '/' : '/register');
+            go(currentUser || isAdminAuthenticated ? '/' : '/register');
           }}
         />
       </div>
@@ -3021,7 +3027,16 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header activeSchool={activeSchool} onChooseSchool={chooseSchool} isAdmin={userRole === 'admin'} />
+      <Header
+        activeSchool={activeSchool}
+        onChooseSchool={chooseSchool}
+        isAdmin={userRole === 'admin'}
+        onAdminLogout={() => {
+          setAdminToken('');
+          setAdminSession(false);
+          if (route.name === 'admin') go('/');
+        }}
+      />
       <section className="beta-banner">
         <strong>内测版本</strong>
         <span>{BETA_NOTICE}</span>
