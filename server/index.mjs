@@ -40,6 +40,51 @@ function createId(prefix) {
   return `${prefix}_${Date.now()}_${randomBytes(6).toString('hex')}`;
 }
 
+function slugify(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || randomBytes(4).toString('hex');
+}
+
+function normalizePost(body, existing = null) {
+  const now = nowIso();
+  const sectionId = String(body.sectionId || existing?.sectionId || '').trim();
+  const title = String(body.title || existing?.title || '').trim();
+  const content = String(body.content || existing?.content || '').trim();
+  if (!sectionId) throw new Error('缺少板块');
+  if (title.length < 2) throw new Error('标题至少 2 个字符');
+  if (content.length < 5) throw new Error('正文至少 5 个字符');
+  const schoolId = String(body.schoolId || existing?.schoolId || 'shared').trim();
+  if (!['eduhk', 'lingnan', 'shared'].includes(schoolId)) throw new Error('学校可见范围不正确');
+  const status = String(body.status || existing?.status || 'published').trim();
+  if (!['published', 'draft', 'deleted', 'archived'].includes(status)) throw new Error('状态不正确');
+  const tags = Array.isArray(body.tags) ? body.tags : existing?.tags || [];
+  const imageUrls = Array.isArray(body.imageUrls) ? body.imageUrls : existing?.imageUrls || [];
+  return {
+    id: String(body.id || existing?.id || `post_${sectionId}_${slugify(title)}_${Date.now()}`),
+    sectionId,
+    title,
+    summary: String(body.summary ?? existing?.summary ?? '').trim(),
+    content,
+    tags: tags.map((item) => String(item).trim()).filter(Boolean).slice(0, 20),
+    region: String(body.region ?? existing?.region ?? '').trim(),
+    source: String(body.source ?? existing?.source ?? '').trim(),
+    authorRole: String(body.authorRole ?? existing?.authorRole ?? '管理员').trim() || '管理员',
+    status,
+    shared: Boolean(body.shared ?? existing?.shared ?? schoolId === 'shared'),
+    recommended: Boolean(body.recommended ?? existing?.recommended ?? false),
+    ownerId: String(body.ownerId ?? existing?.ownerId ?? '').trim(),
+    schoolId,
+    imageUrls: imageUrls.map((item) => String(item).trim()).filter(Boolean).slice(0, 12),
+    metadata: typeof body.metadata === 'object' && body.metadata ? body.metadata : existing?.metadata || {},
+    createdAt: existing?.createdAt || body.createdAt || now,
+    updatedAt: now
+  };
+}
+
 function isValidEmailShape(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && !email.includes('..');
 }
@@ -64,7 +109,7 @@ function corsHeaders(req) {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, OPTIONS',
     'Vary': 'Origin'
   };
 }
@@ -137,6 +182,17 @@ async function route(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
     sendJson(req, res, 200, { ok: true, name: 'Otter API', storage: storage.type, time: nowIso() });
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/posts') {
+    try {
+      const includeDrafts = Boolean(requireAdmin(req) && url.searchParams.get('includeDrafts') === '1');
+      const posts = await storage.listPosts({ includeDrafts });
+      sendJson(req, res, 200, { posts });
+    } catch {
+      sendJson(req, res, 200, { posts: [] });
+    }
     return;
   }
 
@@ -237,8 +293,33 @@ async function route(req, res) {
       users: db.users.slice(-100).reverse().map(({ passwordHash, ...user }) => user),
       analyticsEvents: db.analyticsEvents,
       analytics: buildAnalyticsSummary(db.analyticsEvents),
-      supportTickets: db.supportTickets.slice().reverse()
+      supportTickets: db.supportTickets.slice().reverse(),
+      posts: (db.posts || []).slice().sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)))
     });
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/admin/posts') {
+    if (!requireAdmin(req)) {
+      sendJson(req, res, 401, { error: '需要管理员登录' });
+      return;
+    }
+    const body = await readJson(req);
+    const post = await storage.upsertPost(normalizePost(body));
+    sendJson(req, res, 200, { post });
+    return;
+  }
+
+  const postMatch = url.pathname.match(/^\/api\/admin\/posts\/([^/]+)$/);
+  if (req.method === 'PUT' && postMatch) {
+    if (!requireAdmin(req)) {
+      sendJson(req, res, 401, { error: '需要管理员登录' });
+      return;
+    }
+    const body = await readJson(req);
+    const existing = (await storage.listPosts({ includeDrafts: true })).find((post) => post.id === decodeURIComponent(postMatch[1]));
+    const post = await storage.upsertPost(normalizePost({ ...body, id: decodeURIComponent(postMatch[1]) }, existing));
+    sendJson(req, res, 200, { post });
     return;
   }
 

@@ -122,6 +122,8 @@ export interface SharedPost {
   recommended?: boolean;
   ownerId?: string;
   schoolId?: SchoolId | 'shared';
+  imageUrls?: string[];
+  metadata?: Record<string, string>;
 }
 
 export interface PlatformData {

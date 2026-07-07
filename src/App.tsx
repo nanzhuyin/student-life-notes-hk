@@ -15,7 +15,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.21';
+const APP_VERSION = 'v1.22';
 const BETA_NOTICE = '内测版本：邮箱注册和联系作者信箱已开放；公开投稿、评论和社区功能不开放，内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -33,6 +33,7 @@ const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const USER_STORAGE_KEY = 'student-life-notes:user';
 const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
+const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
@@ -61,6 +62,34 @@ const categoryBySectionId: Record<string, CategoryKey> = {
   'new-student': 'hk_life',
   food: 'nearby_food',
   travel: 'transport_spots'
+};
+
+const postEditorConfig: Record<string, { tags: string[]; metadata: string[]; regionLabel: string }> = {
+  housing: {
+    regionLabel: '地区 / 小区',
+    tags: ['租房', '新界', '九龙', '港岛', '深圳', '单人', '合租', '整租', '预算', '近交通', '有定位'],
+    metadata: ['预算', '房型', '居住人数', '地图地址']
+  },
+  commute: {
+    regionLabel: '路线 / 口岸',
+    tags: ['港深通勤', '深圳湾口岸', '福田口岸', '落马洲', '巴士', '地铁', '打车', '预算', '适合新生'],
+    metadata: ['出发地', '目的地', '口岸', '预计时间', '预计费用']
+  },
+  'new-student': {
+    regionLabel: '主题 / 适用范围',
+    tags: ['新生入学指导', '到达路线', '电话卡', '银行卡', '八达通', '签证', '缴费', '生活办理'],
+    metadata: ['主题类型', '适用阶段', '办理渠道']
+  },
+  food: {
+    regionLabel: '校内外 / 地区',
+    tags: ['附近美食', '校内', '校外', '日常吃饭', '价格友好', '聚餐', '茶餐厅', '有定位'],
+    metadata: ['范围', '价格范围', '菜系', '地图地址']
+  },
+  travel: {
+    regionLabel: '地区 / 景点',
+    tags: ['出行与景点', '香港', '深圳', '新界', '九龙', '港岛', '交通路线', '周末', '有定位'],
+    metadata: ['地区', '交通方式', '预计时间', '预计费用', '地图地址']
+  }
 };
 
 const courseTypeOptions: Array<{ key: CourseTypeKey | 'all'; label: string }> = [
@@ -234,6 +263,23 @@ function writeSupportTickets(tickets: SupportTicket[]) {
   }
 }
 
+function readLocalDynamicPosts(): SharedPost[] {
+  try {
+    const raw = localStorage.getItem(DYNAMIC_POSTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as SharedPost[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalDynamicPosts(posts: SharedPost[]) {
+  try {
+    localStorage.setItem(DYNAMIC_POSTS_STORAGE_KEY, JSON.stringify(posts));
+  } catch {
+    // Local fallback only.
+  }
+}
+
 async function apiRequest<T>(path: string, options: RequestInit = {}) {
   if (!API_BASE_URL) throw new Error('未配置后端地址');
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -327,6 +373,40 @@ async function submitSupportTicket(input: Omit<SupportTicket, 'id' | 'status' | 
     body: JSON.stringify(input)
   });
   return data.ticket;
+}
+
+async function fetchDynamicPosts(adminToken = '') {
+  if (!API_BASE_URL) return readLocalDynamicPosts();
+  const query = adminToken ? '?includeDrafts=1' : '';
+  const data = await apiRequest<{ posts: SharedPost[] }>(`/api/posts${query}`, adminToken ? {
+    headers: { Authorization: `Bearer ${adminToken}` }
+  } : {});
+  return data.posts || [];
+}
+
+async function saveAdminPost(post: SharedPost, adminToken: string) {
+  const normalized: SharedPost = {
+    ...post,
+    id: post.id || `post_${post.sectionId}_${Date.now()}`,
+    updatedAt: new Date().toISOString(),
+    createdAt: post.createdAt || new Date().toISOString()
+  };
+  if (!API_BASE_URL) {
+    const existing = readLocalDynamicPosts();
+    const next = existing.some((item) => item.id === normalized.id)
+      ? existing.map((item) => item.id === normalized.id ? normalized : item)
+      : [normalized, ...existing];
+    writeLocalDynamicPosts(next);
+    return normalized;
+  }
+  if (!adminToken) throw new Error('需要管理员登录后才能保存内容');
+  const isExisting = Boolean(post.id);
+  const data = await apiRequest<{ post: SharedPost }>(isExisting ? `/api/admin/posts/${encodeURIComponent(post.id)}` : '/api/admin/posts', {
+    method: isExisting ? 'PUT' : 'POST',
+    headers: { Authorization: `Bearer ${adminToken}` },
+    body: JSON.stringify(normalized)
+  });
+  return data.post;
 }
 
 function routeFeature(route: Route) {
@@ -548,8 +628,15 @@ function isEduhkSharedPost(post: SharedPost) {
   return text.includes('eduhk') || text.includes('aiep') || text.includes('教育大学') || text.includes('教大');
 }
 
-function getVisibleSharedPosts(schoolId: SchoolId) {
-  return platformData.sharedPosts.filter((post) => {
+function mergeSharedPosts(dynamicPosts: SharedPost[]) {
+  const byId = new Map<string, SharedPost>();
+  for (const post of platformData.sharedPosts) byId.set(post.id, post);
+  for (const post of dynamicPosts) byId.set(post.id, post);
+  return Array.from(byId.values()).filter((post) => post.status !== 'deleted' && post.status !== 'archived');
+}
+
+function getVisibleSharedPosts(schoolId: SchoolId, dynamicPosts: SharedPost[] = []) {
+  return mergeSharedPosts(dynamicPosts).filter((post) => {
     if (post.schoolId === 'shared') return true;
     if (post.schoolId) return post.schoolId === schoolId;
     return schoolId === 'eduhk' ? isEduhkSharedPost(post) : !isEduhkSharedPost(post);
@@ -968,10 +1055,10 @@ function SchoolPanel({
   );
 }
 
-function HomePage({ activeSchool, onChooseSchool }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void }) {
+function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void; dynamicPosts: SharedPost[] }) {
   const programmes = getProgrammes(activeSchool.id);
   const courses = getCourses(activeSchool.id);
-  const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id);
+  const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
 
   return (
@@ -1309,7 +1396,152 @@ function CourseDetailPage({
   );
 }
 
-function PostGrid({ posts }: { posts: SharedPost[] }) {
+function AdminPostEditor({
+  activeSchool,
+  sectionId,
+  initialPost,
+  adminToken,
+  onSaved,
+  onCancel
+}: {
+  activeSchool: School;
+  sectionId: string;
+  initialPost?: SharedPost | null;
+  adminToken: string;
+  onSaved: (post: SharedPost) => void;
+  onCancel: () => void;
+}) {
+  const config = postEditorConfig[sectionId] || postEditorConfig['new-student'];
+  const [title, setTitle] = useState(initialPost?.title || '');
+  const [summary, setSummary] = useState(initialPost?.summary || '');
+  const [content, setContent] = useState(initialPost?.content || '');
+  const [region, setRegion] = useState(initialPost?.region || '');
+  const [source, setSource] = useState(initialPost?.source || '学生投稿');
+  const [schoolId, setSchoolId] = useState<SchoolId | 'shared'>(initialPost?.schoolId || activeSchool.id);
+  const [status, setStatus] = useState(initialPost?.status || 'published');
+  const [recommended, setRecommended] = useState(Boolean(initialPost?.recommended));
+  const [tags, setTags] = useState<string[]>(initialPost?.tags || []);
+  const [imageText, setImageText] = useState((initialPost?.imageUrls || []).join('\n'));
+  const [metadata, setMetadata] = useState<Record<string, string>>(initialPost?.metadata || {});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const toggleTag = (tag: string) => {
+    setTags((current) => current.includes(tag) ? current.filter((item) => item !== tag) : current.concat(tag));
+  };
+
+  const submit = async () => {
+    setError('');
+    setSaving(true);
+    try {
+      const post = await saveAdminPost({
+        id: initialPost?.id || '',
+        sectionId,
+        title: title.trim(),
+        summary: summary.trim(),
+        content: content.trim(),
+        tags,
+        region: region.trim(),
+        source,
+        authorRole: '管理员',
+        createdAt: initialPost?.createdAt || new Date().toISOString().slice(0, 10),
+        updatedAt: new Date().toISOString(),
+        status,
+        shared: schoolId === 'shared',
+        recommended,
+        schoolId,
+        imageUrls: imageText.split('\n').map((item) => item.trim()).filter(Boolean),
+        metadata
+      }, adminToken);
+      onSaved(post);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="admin-post-editor">
+      <div className="section-head compact">
+        <div>
+          <span className="eyebrow">管理员发布</span>
+          <h3>{initialPost ? '编辑内容' : '新增内容'}</h3>
+        </div>
+        <button className="secondary-action" onClick={onCancel}>取消</button>
+      </div>
+      <div className="support-form">
+        <label>
+          <span>可见范围</span>
+          <select value={schoolId} onChange={(event) => setSchoolId(event.target.value as SchoolId | 'shared')}>
+            <option value={activeSchool.id}>当前学校：{activeSchool.shortName}</option>
+            <option value="shared">两校共享</option>
+            <option value="eduhk">仅教育大学</option>
+            <option value="lingnan">仅岭南大学</option>
+          </select>
+        </label>
+        <label>
+          <span>状态</span>
+          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="published">发布</option>
+            <option value="draft">草稿</option>
+            <option value="deleted">隐藏 / 删除</option>
+          </select>
+        </label>
+        <label className="wide">
+          <span>标题</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="写一个清楚的标题" />
+        </label>
+        <label>
+          <span>{config.regionLabel}</span>
+          <input value={region} onChange={(event) => setRegion(event.target.value)} placeholder={config.regionLabel} />
+        </label>
+        <label>
+          <span>数据来源</span>
+          <select value={source} onChange={(event) => setSource(event.target.value)}>
+            <option value="学生投稿">学生投稿</option>
+            <option value="网络搜集">网络搜集</option>
+            <option value="管理员整理">管理员整理</option>
+          </select>
+        </label>
+        <label className="wide">
+          <span>摘要</span>
+          <input value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="列表页显示的简短说明" />
+        </label>
+        <label className="wide">
+          <span>正文</span>
+          <textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} placeholder="正文支持换行，详情页会按段落显示。"></textarea>
+        </label>
+        <div className="wide admin-tag-picker">
+          <span>板块标签</span>
+          <div className="filter-chips">
+            {config.tags.map((tag) => (
+              <button type="button" key={tag} className={tags.includes(tag) ? 'active' : ''} onClick={() => toggleTag(tag)}>{tag}</button>
+            ))}
+          </div>
+        </div>
+        {config.metadata.map((field) => (
+          <label key={field}>
+            <span>{field}</span>
+            <input value={metadata[field] || ''} onChange={(event) => setMetadata((current) => ({ ...current, [field]: event.target.value }))} placeholder={field} />
+          </label>
+        ))}
+        <label className="wide">
+          <span>图片 URL（可选，一行一个）</span>
+          <textarea value={imageText} onChange={(event) => setImageText(event.target.value)} rows={3} placeholder="建议先用对象存储或 CDN 图片 URL。不要把大图放进数据库。"></textarea>
+        </label>
+        <label className="checkbox-line wide">
+          <input type="checkbox" checked={recommended} onChange={(event) => setRecommended(event.target.checked)} />
+          <span>设为推荐内容</span>
+        </label>
+        <button className="primary-action" onClick={submit} disabled={saving}>{saving ? '保存中' : '保存内容'}</button>
+        {error && <p className="form-error">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+function PostGrid({ posts, canEdit = false, onEdit }: { posts: SharedPost[]; canEdit?: boolean; onEdit?: (post: SharedPost) => void }) {
   if (!posts.length) return <div className="empty-state"><strong>暂无内容</strong><span>当前筛选下没有可显示内容。</span></div>;
 
   return (
@@ -1328,18 +1560,34 @@ function PostGrid({ posts }: { posts: SharedPost[] }) {
               {post.tags.slice(0, 4).map((tag) => <span key={tag}>{tag}</span>)}
             </div>
           </button>
+          {canEdit && onEdit && <button className="secondary-action post-edit-action" onClick={() => onEdit(post)}>编辑</button>}
         </article>
       ))}
     </div>
   );
 }
 
-function SectionPage({ sectionId, activeSchool }: { sectionId: string; activeSchool: School }) {
+function SectionPage({
+  sectionId,
+  activeSchool,
+  dynamicPosts,
+  onDynamicPostsChange
+}: {
+  sectionId: string;
+  activeSchool: School;
+  dynamicPosts: SharedPost[];
+  onDynamicPostsChange: (posts: SharedPost[]) => void;
+}) {
   const category = categoryBySectionId[sectionId];
   const meta = sectionCategories.find((item) => item.key === category);
+  const [adminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
+  const [adminSession] = useStoredState('student-life-notes:admin-session', false);
+  const canEdit = Boolean(adminToken || (!API_BASE_URL && adminSession));
+  const [editingPost, setEditingPost] = useState<SharedPost | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const posts = useMemo(
-    () => getVisibleSharedPosts(activeSchool.id).filter((post) => post.sectionId === sectionId && post.status === 'published'),
-    [activeSchool.id, sectionId]
+    () => getVisibleSharedPosts(activeSchool.id, dynamicPosts).filter((post) => post.sectionId === sectionId && post.status === 'published'),
+    [activeSchool.id, dynamicPosts, sectionId]
   );
   const sectionFilterKey = `${FILTER_STORAGE_PREFIX}section:${sectionId}`;
   const defaultSectionFilters = useMemo<SectionFilterState>(
@@ -1394,6 +1642,39 @@ function SectionPage({ sectionId, activeSchool }: { sectionId: string; activeSch
         <h1>{meta?.name || '生活分区'}</h1>
         <p>{posts.length ? meta?.description || '当前学校相关生活信息。' : '这个分区当前学校暂时还没有上传内容。'}</p>
       </div>
+      <div className="page-toolbar-actions">
+        {canEdit ? (
+          <button
+            className="primary-action"
+            onClick={() => {
+              setEditingPost(null);
+              setEditorOpen(true);
+            }}
+          >
+            新增内容
+          </button>
+        ) : (
+          <button className="secondary-action" onClick={() => go('/admin')}>管理员登录后发布</button>
+        )}
+      </div>
+
+      {editorOpen && (
+        <AdminPostEditor
+          activeSchool={activeSchool}
+          sectionId={sectionId}
+          initialPost={editingPost}
+          adminToken={adminToken}
+          onCancel={() => setEditorOpen(false)}
+          onSaved={(post) => {
+            const next = dynamicPosts.some((item) => item.id === post.id)
+              ? dynamicPosts.map((item) => item.id === post.id ? post : item)
+              : [post, ...dynamicPosts];
+            onDynamicPostsChange(next);
+            setEditorOpen(false);
+            setEditingPost(null);
+          }}
+        />
+      )}
 
       <div className="filter-panel">
         <div className="filter-row">
@@ -1437,25 +1718,80 @@ function SectionPage({ sectionId, activeSchool }: { sectionId: string; activeSch
         <div className="filter-count">当前显示 {filteredPosts.length} / {posts.length} 条</div>
       </div>
 
-      <PostGrid posts={filteredPosts} />
+      <PostGrid
+        posts={filteredPosts}
+        canEdit={canEdit}
+        onEdit={(post) => {
+          setEditingPost(post);
+          setEditorOpen(true);
+        }}
+      />
     </section>
   );
 }
 
-function PostDetailPage({ id, activeSchool }: { id: string; activeSchool: School }) {
-  const post = getVisibleSharedPosts(activeSchool.id).find((item) => item.id === id);
+function PostDetailPage({
+  id,
+  activeSchool,
+  dynamicPosts,
+  onDynamicPostsChange
+}: {
+  id: string;
+  activeSchool: School;
+  dynamicPosts: SharedPost[];
+  onDynamicPostsChange: (posts: SharedPost[]) => void;
+}) {
+  const [adminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
+  const [adminSession] = useStoredState('student-life-notes:admin-session', false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const canEdit = Boolean(adminToken || (!API_BASE_URL && adminSession));
+  const post = getVisibleSharedPosts(activeSchool.id, dynamicPosts).find((item) => item.id === id);
   if (!post) return <EmptyPage title="没有找到这篇内容" />;
   const paragraphs = post.content.split('\n').filter(Boolean);
 
   return (
     <article className="detail-page">
       <button className="back-button" onClick={() => goBack(`/section/${post.sectionId}`)}>返回分区</button>
+      {canEdit && (
+        <div className="page-toolbar-actions">
+          <button className="primary-action" onClick={() => setEditorOpen(true)}>编辑这篇</button>
+        </div>
+      )}
+      {editorOpen && (
+        <AdminPostEditor
+          activeSchool={activeSchool}
+          sectionId={post.sectionId}
+          initialPost={post}
+          adminToken={adminToken}
+          onCancel={() => setEditorOpen(false)}
+          onSaved={(savedPost) => {
+            const next = dynamicPosts.some((item) => item.id === savedPost.id)
+              ? dynamicPosts.map((item) => item.id === savedPost.id ? savedPost : item)
+              : [savedPost, ...dynamicPosts];
+            onDynamicPostsChange(next);
+            setEditorOpen(false);
+          }}
+        />
+      )}
       <section className="detail-head">
         <span className="pill">{post.authorRole}</span>
         <h1>{post.title}</h1>
         <p>{post.summary || post.region}</p>
         <div className="tag-row">{post.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
       </section>
+      {post.metadata && Object.keys(post.metadata).length > 0 && (
+        <section className="source-card">
+          <strong>补充信息</strong>
+          {Object.entries(post.metadata).filter(([, value]) => value).map(([key, value]) => (
+            <span key={key}>{key}：{value}</span>
+          ))}
+        </section>
+      )}
+      {Boolean(post.imageUrls?.length) && (
+        <section className="post-image-grid">
+          {post.imageUrls?.map((url) => <img key={url} src={url} alt={post.title} />)}
+        </section>
+      )}
       <section className="detail-body">
         {paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
       </section>
@@ -1467,9 +1803,9 @@ function PostDetailPage({ id, activeSchool }: { id: string; activeSchool: School
   );
 }
 
-function SearchPage({ keyword, activeSchool }: { keyword: string; activeSchool: School }) {
+function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; activeSchool: School; dynamicPosts: SharedPost[] }) {
   const courses = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, 80);
-  const posts = getVisibleSharedPosts(activeSchool.id).filter((post) => postMatches(post, keyword)).slice(0, 30);
+  const posts = getVisibleSharedPosts(activeSchool.id, dynamicPosts).filter((post) => postMatches(post, keyword)).slice(0, 30);
   const legacyMatches = legacyPosts.filter((post) => {
     const token = normalize(keyword);
     return token && [post.title, post.summary, post.content.join(' ')].join(' ').toLowerCase().includes(token);
@@ -2052,6 +2388,8 @@ export default function App() {
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
+  const [adminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
+  const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
   const activeSchool = getSchool(activeSchoolId);
   const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
     id: 'guest-browser',
@@ -2062,6 +2400,11 @@ export default function App() {
     updatedAt: new Date().toISOString()
   }, [activeSchoolId, currentUser]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
+
+  const updateDynamicPosts = (posts: SharedPost[]) => {
+    setDynamicPosts(posts);
+    writeLocalDynamicPosts(posts);
+  };
 
   useLayoutEffect(() => {
     if (!hasAcceptedAgreement) return;
@@ -2080,6 +2423,14 @@ export default function App() {
   useEffect(() => {
     if (route.name === 'home') clearTransientFilters();
   }, [route.name]);
+
+  useEffect(() => {
+    void fetchDynamicPosts(adminToken)
+      .then(updateDynamicPosts)
+      .catch(() => {
+        // Keep local fallback content when the API is unavailable.
+      });
+  }, [adminToken]);
 
   useEffect(() => {
     if (!hasAcceptedAgreement) return;
@@ -2166,7 +2517,7 @@ export default function App() {
         <span>{BETA_NOTICE}</span>
       </section>
       <main>
-        {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
+        {route.name === 'home' && <HomePage activeSchool={activeSchool} onChooseSchool={chooseSchool} dynamicPosts={dynamicPosts} />}
         {route.name === 'courses' && (
           <CoursesPage
             activeSchool={activeSchool}
@@ -2181,9 +2532,23 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {route.name === 'section' && <SectionPage sectionId={route.id} activeSchool={activeSchool} />}
-        {route.name === 'post' && <PostDetailPage id={route.id} activeSchool={activeSchool} />}
-        {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} />}
+        {route.name === 'section' && (
+          <SectionPage
+            sectionId={route.id}
+            activeSchool={activeSchool}
+            dynamicPosts={dynamicPosts}
+            onDynamicPostsChange={updateDynamicPosts}
+          />
+        )}
+        {route.name === 'post' && (
+          <PostDetailPage
+            id={route.id}
+            activeSchool={activeSchool}
+            dynamicPosts={dynamicPosts}
+            onDynamicPostsChange={updateDynamicPosts}
+          />
+        )}
+        {route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} dynamicPosts={dynamicPosts} />}
         {route.name === 'register' && (
           <RegistrationPage
             activeSchoolId={activeSchoolId}

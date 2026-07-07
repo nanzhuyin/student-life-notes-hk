@@ -12,10 +12,10 @@
 
 每一次准备 push，都必须递增一个小版本，并在提交信息和日志中注明。
 
-- 上一次版本：`v1.20`
-- 上一次开放邮箱注册入口版本：`v1.20`
-- 本次开放联系作者信箱版本：`v1.21`
-- 下一次修改：`v1.22`
+- 上一次版本：`v1.21`
+- 上一次开放联系作者信箱版本：`v1.21`
+- 本次开放管理员板块投稿与编辑版本：`v1.22`
+- 下一次修改：`v1.23`
 
 每次版本递增时至少同步这些位置：
 
@@ -111,6 +111,28 @@ http://127.0.0.1:5173/student-life-notes-hk/#/
 ```
 
 ## 版本日志
+
+### v1.22
+
+日期：2026-07-07
+
+改动范围：
+
+- 管理员可以在生活内容各板块直接新增内容。
+- 管理员可以在板块列表或详情页直接编辑已有内容；编辑静态内容时以后端同 ID 覆盖层保存，不破坏原始 JSON。
+- 新增 `otter_posts` 后端数据表、公开 `GET /api/posts`、管理员 `POST /api/admin/posts` 和 `PUT /api/admin/posts/:id`。
+- 前端合并静态 JSON 和后端帖子，后端内容优先；`deleted` / `archived` 状态会隐藏内容。
+- 每个板块有独立标签和补充字段：租房、通勤、新生入学指导、美食、出行与景点分别显示对应筛选项。
+- 管理员发布时可以选择当前学校、两校共享、仅教育大学、仅岭南大学。
+- 图片先采用 URL 输入，一行一个；数据库只保存图片 URL，不保存图片二进制。
+- Supabase schema 新增 `otter_posts`，部署后需要在 SQL Editor 重新运行 `supabase/schema.sql`。
+
+测试：
+
+- `npm run build` 通过。
+- `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+- 本地 Node API 回归通过：`GET /api/posts`、管理员登录、`POST /api/admin/posts` 创建内容、`PUT /api/admin/posts/:id` 编辑内容。
+- 版本检查通过：`package.json` 为 `1.0.22`，`platformData.version` 为 `v1.22`。
 
 ### v1.21
 

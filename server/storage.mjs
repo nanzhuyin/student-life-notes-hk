@@ -4,7 +4,8 @@ import { dirname } from 'node:path';
 const defaultDb = {
   users: [],
   analyticsEvents: [],
-  supportTickets: []
+  supportTickets: [],
+  posts: []
 };
 
 function cloneDefaultDb() {
@@ -129,6 +130,52 @@ function fromTicketRow(row) {
   };
 }
 
+function toPostRow(post) {
+  return {
+    id: post.id,
+    section_id: post.sectionId,
+    title: post.title,
+    summary: post.summary || '',
+    content: post.content,
+    tags: post.tags || [],
+    region: post.region || '',
+    source: post.source || '',
+    author_role: post.authorRole || '管理员',
+    status: post.status || 'published',
+    shared: Boolean(post.shared),
+    recommended: Boolean(post.recommended),
+    owner_id: post.ownerId || '',
+    school_id: post.schoolId || 'shared',
+    image_urls: post.imageUrls || [],
+    metadata: post.metadata || {},
+    created_at: post.createdAt,
+    updated_at: post.updatedAt
+  };
+}
+
+function fromPostRow(row) {
+  return {
+    id: row.id,
+    sectionId: row.section_id,
+    title: row.title,
+    summary: row.summary,
+    content: row.content,
+    tags: row.tags || [],
+    region: row.region,
+    source: row.source,
+    authorRole: row.author_role,
+    status: row.status,
+    shared: row.shared,
+    recommended: row.recommended,
+    ownerId: row.owner_id,
+    schoolId: row.school_id,
+    imageUrls: row.image_urls || [],
+    metadata: row.metadata || {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
   const hasSupabase = Boolean(supabaseUrl && supabaseServiceRoleKey);
   const restBase = hasSupabase ? `${supabaseUrl.replace(/\/$/, '')}/rest/v1` : '';
@@ -188,15 +235,17 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
 
     async readAll() {
       if (!hasSupabase) return readLocalDb();
-      const [users, analyticsEvents, supportTickets] = await Promise.all([
+      const [users, analyticsEvents, supportTickets, posts] = await Promise.all([
         selectRows('otter_users', 'select=*&order=created_at.asc'),
         selectRows('otter_analytics_events', 'select=*&order=timestamp.asc&limit=20000'),
-        selectRows('otter_support_tickets', 'select=*&order=created_at.asc')
+        selectRows('otter_support_tickets', 'select=*&order=created_at.asc'),
+        selectRows('otter_posts', 'select=*&order=updated_at.desc').catch(() => [])
       ]);
       return {
         users: users.map(fromUserRow),
         analyticsEvents: analyticsEvents.map(fromAnalyticsRow),
-        supportTickets: supportTickets.map(fromTicketRow)
+        supportTickets: supportTickets.map(fromTicketRow),
+        posts: posts.map(fromPostRow)
       };
     },
 
@@ -287,6 +336,32 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         }))
       });
       return rows[0] ? fromTicketRow(rows[0]) : null;
+    },
+
+    async listPosts({ includeDrafts = false } = {}) {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        return db.posts
+          .filter((post) => includeDrafts || post.status === 'published')
+          .slice()
+          .sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)));
+      }
+      const statusQuery = includeDrafts ? '' : '&status=eq.published';
+      const rows = await selectRows('otter_posts', `select=*&order=updated_at.desc${statusQuery}`).catch(() => []);
+      return rows.map(fromPostRow);
+    },
+
+    async upsertPost(post) {
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        const index = db.posts.findIndex((item) => item.id === post.id);
+        if (index >= 0) db.posts[index] = post;
+        else db.posts.push(post);
+        await writeLocalDb(db);
+        return post;
+      }
+      const [row] = await upsertRows('otter_posts', [toPostRow(post)]);
+      return fromPostRow(row);
     }
   };
 }
