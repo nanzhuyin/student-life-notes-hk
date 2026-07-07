@@ -16,7 +16,7 @@ import type {
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.31';
+const APP_VERSION = 'v1.32';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2396,6 +2396,8 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(() => readSupportTickets().slice().reverse());
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [ticketReplies, setTicketReplies] = useState<Record<string, string>>({});
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<'all' | 'pending' | 'reviewing' | 'resolved' | 'closed'>('all');
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [adminNotice, setAdminNotice] = useState('');
   const schoolCounts = platformData.schools.map((school) => ({
     school,
@@ -2409,6 +2411,11 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
     resolved: supportTickets.filter((ticket) => ticket.status === 'resolved').length,
     closed: supportTickets.filter((ticket) => ticket.status === 'closed').length
   }), [supportTickets]);
+  const filteredSupportTickets = useMemo(() => {
+    if (ticketStatusFilter === 'all') return supportTickets;
+    if (ticketStatusFilter === 'pending') return supportTickets.filter((ticket) => ticket.status === 'pending' || ticket.status === 'new');
+    return supportTickets.filter((ticket) => ticket.status === ticketStatusFilter);
+  }, [supportTickets, ticketStatusFilter]);
   const maxFeatureViews = Math.max(1, ...analytics.features.map((item) => item.views));
   const isLocalPreview = isLocalPreviewHost();
   const dataSourceLabel = API_BASE_URL && adminToken ? '服务端真实数据' : isLocalPreview ? '本地调试管理端' : '本机备用数据';
@@ -2479,12 +2486,17 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
         body: JSON.stringify({ status, adminReply })
       });
       setSupportTickets((tickets) => tickets.map((ticket) => ticket.id === ticketId ? data.ticket : ticket));
+      setSelectedTicket((ticket) => ticket?.id === ticketId ? data.ticket : ticket);
       setAdminNotice(`已更新工单状态：${statusLabel(data.ticket.status)}`);
       return;
     }
     const next = readSupportTickets().map((ticket) => ticket.id === ticketId ? { ...ticket, status, adminReply: adminReply ?? ticket.adminReply, updatedAt: new Date().toISOString() } : ticket);
     writeSupportTickets(next);
     setSupportTickets(next.slice().reverse());
+    setSelectedTicket((ticket) => {
+      if (ticket?.id !== ticketId) return ticket;
+      return next.find((item) => item.id === ticketId) || ticket;
+    });
     setAdminNotice(`已更新工单状态：${statusLabel(status)}`);
   };
 
@@ -2504,6 +2516,22 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
     const timer = window.setInterval(() => void refreshAnalytics(), 8000);
     return () => window.clearInterval(timer);
   }, [adminReady, adminToken]);
+
+  useEffect(() => {
+    if (!adminReady) return;
+    try {
+      if (sessionStorage.getItem('student-life-notes:admin-focus') !== 'tickets') return;
+      sessionStorage.removeItem('student-life-notes:admin-focus');
+      window.setTimeout(() => document.getElementById('admin-support-tickets')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    } catch {
+      // Ignore private-mode storage failures.
+    }
+  }, [adminReady]);
+
+  const chooseTicketFilter = (status: 'pending' | 'reviewing' | 'resolved' | 'closed') => {
+    setTicketStatusFilter(status);
+    window.setTimeout(() => document.getElementById('admin-ticket-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  };
 
   return (
     <section className="page-panel">
@@ -2552,7 +2580,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div><strong>{platformData.courses.length}</strong><span>课程</span></div>
             <div><strong>{platformData.sharedPosts.length}</strong><span>生活内容</span></div>
           </div>
-          <section className="analytics-panel">
+          <section className="analytics-panel" id="admin-support-tickets">
             <div className="analytics-head">
               <div>
                 <span className="eyebrow">浏览统计</span>
@@ -2623,38 +2651,57 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               <button className="secondary-action" onClick={() => void refreshAnalytics()}>刷新工单</button>
             </div>
             <div className="stats-grid ticket-stats">
-              <div><strong>{ticketStatusCounts.pending}</strong><span>待处理</span></div>
-              <div><strong>{ticketStatusCounts.reviewing}</strong><span>处理中</span></div>
-              <div><strong>{ticketStatusCounts.resolved}</strong><span>已处理</span></div>
-              <div><strong>{ticketStatusCounts.closed}</strong><span>已关闭</span></div>
+              <button className={ticketStatusFilter === 'pending' ? 'active' : ''} onClick={() => chooseTicketFilter('pending')}><strong>{ticketStatusCounts.pending}</strong><span>待处理</span></button>
+              <button className={ticketStatusFilter === 'reviewing' ? 'active' : ''} onClick={() => chooseTicketFilter('reviewing')}><strong>{ticketStatusCounts.reviewing}</strong><span>处理中</span></button>
+              <button className={ticketStatusFilter === 'resolved' ? 'active' : ''} onClick={() => chooseTicketFilter('resolved')}><strong>{ticketStatusCounts.resolved}</strong><span>已处理</span></button>
+              <button className={ticketStatusFilter === 'closed' ? 'active' : ''} onClick={() => chooseTicketFilter('closed')}><strong>{ticketStatusCounts.closed}</strong><span>已关闭</span></button>
             </div>
-            <div className="ticket-list">
-              {supportTickets.length === 0 && <div className="empty-state"><strong>暂无投稿或建议</strong><span>用户提交后会显示在这里。</span></div>}
-              {supportTickets.map((ticket) => (
-                <article className="ticket-card" key={ticket.id}>
-                  <div>
-                    <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
-                    <span>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</span>
-                  </div>
-                  <p>{ticket.message}</p>
-                  <small>联系方式：{ticket.contact}</small>
-                  {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
-                  <textarea
-                    value={ticketReplies[ticket.id] ?? ticket.adminReply ?? ''}
-                    onChange={(event) => setTicketReplies((drafts) => ({ ...drafts, [ticket.id]: event.target.value }))}
-                    placeholder="写给用户的站内回复"
-                    rows={3}
-                  ></textarea>
-                  <div className="inline-actions">
-                    <button onClick={() => void updateTicket(ticket.id, 'pending', ticketReplies[ticket.id])}>待处理</button>
-                    <button onClick={() => void updateTicket(ticket.id, 'reviewing', ticketReplies[ticket.id])}>处理中</button>
-                    <button onClick={() => void updateTicket(ticket.id, 'resolved', ticketReplies[ticket.id])}>已处理并回复</button>
-                    <button onClick={() => void updateTicket(ticket.id, 'closed', ticketReplies[ticket.id])}>关闭</button>
-                  </div>
-                </article>
-              ))}
+            <div className="ticket-filter-row">
+              <button className={ticketStatusFilter === 'all' ? 'active' : ''} onClick={() => setTicketStatusFilter('all')}>全部工单</button>
+              <span>当前显示：{ticketStatusFilter === 'all' ? supportTickets.length : filteredSupportTickets.length} 条</span>
+            </div>
+            <div className="ticket-list" id="admin-ticket-list">
+              {filteredSupportTickets.length === 0 && <div className="empty-state"><strong>暂无{ticketStatusFilter === 'all' ? '' : statusLabel(ticketStatusFilter)}工单</strong><span>用户提交后会显示在这里。</span></div>}
+              {filteredSupportTickets.map((ticket) => {
+                const parsed = splitSupportMessage(ticket.message);
+                return (
+                  <article className="ticket-card clickable" key={ticket.id} onClick={() => setSelectedTicket(ticket)}>
+                    <div>
+                      <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
+                      <span>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p>{parsed.text}</p>
+                    {parsed.images.length > 0 && <SupportImageGrid images={parsed.images} />}
+                    <small>联系方式：{ticket.contact}</small>
+                    {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
+                    <textarea
+                      value={ticketReplies[ticket.id] ?? ticket.adminReply ?? ''}
+                      onChange={(event) => setTicketReplies((drafts) => ({ ...drafts, [ticket.id]: event.target.value }))}
+                      onClick={(event) => event.stopPropagation()}
+                      placeholder="写给用户的站内回复"
+                      rows={3}
+                    ></textarea>
+                    <div className="inline-actions" onClick={(event) => event.stopPropagation()}>
+                      <button onClick={() => setSelectedTicket(ticket)}>查看详情</button>
+                      <button onClick={() => void updateTicket(ticket.id, 'pending', ticketReplies[ticket.id])}>待处理</button>
+                      <button onClick={() => void updateTicket(ticket.id, 'reviewing', ticketReplies[ticket.id])}>处理中</button>
+                      <button onClick={() => void updateTicket(ticket.id, 'resolved', ticketReplies[ticket.id])}>已处理并回复</button>
+                      <button onClick={() => void updateTicket(ticket.id, 'closed', ticketReplies[ticket.id])}>关闭</button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </section>
+          {selectedTicket && (
+            <TicketDetailModal
+              ticket={selectedTicket}
+              reply={ticketReplies[selectedTicket.id] ?? selectedTicket.adminReply ?? ''}
+              onReplyChange={(value) => setTicketReplies((drafts) => ({ ...drafts, [selectedTicket.id]: value }))}
+              onClose={() => setSelectedTicket(null)}
+              onUpdate={(status) => void updateTicket(selectedTicket.id, status, ticketReplies[selectedTicket.id] ?? selectedTicket.adminReply ?? '')}
+            />
+          )}
           <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
           <div className="programme-grid">
             {schoolCounts.map((item) => (
@@ -2718,15 +2765,73 @@ function PolicyPage() {
   );
 }
 
-function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeSchool: School }) {
-  const [type, setType] = useState('联系作者');
-  const [contact, setContact] = useState(user.email || '');
+const SUPPORT_IMAGE_PREFIX = '[otter-image]';
+
+function splitSupportMessage(rawMessage: string) {
+  const lines = rawMessage.split('\n');
+  const images = lines
+    .filter((line) => line.startsWith(SUPPORT_IMAGE_PREFIX))
+    .map((line) => line.slice(SUPPORT_IMAGE_PREFIX.length).trim())
+    .filter(Boolean);
+  const text = lines.filter((line) => !line.startsWith(SUPPORT_IMAGE_PREFIX)).join('\n').trim();
+  return { text, images };
+}
+
+function compressImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('只能上传图片文件。'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('图片读取失败。'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('图片解析失败。'));
+      image.onload = () => {
+        const maxSide = 960;
+        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('浏览器不支持图片压缩。'));
+          return;
+        }
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      image.src = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function FloatingSupportWidget({
+  user,
+  activeSchool,
+  isAdmin
+}: {
+  user: RegisteredUser | null;
+  activeSchool: School;
+  isAdmin: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [type, setType] = useState('提交建议');
+  const [section, setSection] = useState(sectionCategories[1]?.name || '香港租房');
+  const [title, setTitle] = useState('');
+  const [contact, setContact] = useState(user?.email || '');
   const [message, setMessage] = useState('');
+  const [imageDataUrls, setImageDataUrls] = useState<string[]>([]);
+  const [imageNames, setImageNames] = useState<string[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const isLocalDebugUser = user.id === 'local-debug-user';
+  const isLocalDebugUser = user?.id === 'local-debug-user';
   const mailboxCounts = useMemo(() => ({
     pending: tickets.filter((ticket) => ticket.status === 'pending' || ticket.status === 'new').length,
     reviewing: tickets.filter((ticket) => ticket.status === 'reviewing').length,
@@ -2734,10 +2839,32 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
   }), [tickets]);
 
   useEffect(() => {
-    if (user.email && !contact) setContact(user.email);
-  }, [contact, user.email]);
+    if (user?.email && !contact) setContact(user.email);
+  }, [contact, user?.email]);
+
+  const openWidget = () => {
+    if (isAdmin) {
+      const target = document.getElementById('admin-support-tickets');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      try {
+        sessionStorage.setItem('student-life-notes:admin-focus', 'tickets');
+      } catch {
+        // Ignore private-mode storage failures.
+      }
+      go('/admin');
+      return;
+    }
+    setOpen(true);
+  };
 
   const lookupMailbox = async (lookupContact = contact) => {
+    if (!user) {
+      setError('请先登录后再查看回执。');
+      return;
+    }
     const email = lookupContact.trim().toLowerCase();
     setError('');
     setNotice('');
@@ -2763,9 +2890,32 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
     }
   };
 
+  const chooseImages = async (files: FileList | null) => {
+    setError('');
+    setNotice('');
+    if (!files?.length) return;
+    const selected = Array.from(files).slice(0, 3);
+    try {
+      setLoading(true);
+      const compressed = await Promise.all(selected.map(compressImageFile));
+      setImageDataUrls(compressed);
+      setImageNames(selected.map((file) => file.name));
+      setNotice(`已添加 ${selected.length} 张图片，提交后管理员可直接查看。`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '图片处理失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submit = async () => {
+    if (!user) {
+      setError('请先登录后再提交建议或投稿。');
+      return;
+    }
     const trimmedContact = contact.trim();
     const normalizedContact = isValidEmailShape(trimmedContact) ? trimmedContact.toLowerCase() : trimmedContact;
+    const trimmedTitle = title.trim();
     const trimmedMessage = message.trim();
     setError('');
     setNotice('');
@@ -2773,10 +2923,22 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
       setError('请填写邮箱或其他联系方式。');
       return;
     }
+    if (trimmedTitle.length < 2) {
+      setError('请写一个简短标题。');
+      return;
+    }
     if (trimmedMessage.length < 5) {
       setError('内容至少写 5 个字，方便作者判断要处理什么。');
       return;
     }
+    const composedMessage = [
+      `板块：${section}`,
+      `标题：${trimmedTitle}`,
+      '',
+      trimmedMessage,
+      '',
+      ...imageDataUrls.map((url) => `${SUPPORT_IMAGE_PREFIX}${url}`)
+    ].join('\n').trim();
     setLoading(true);
     try {
       const ticket = isLocalDebugUser ? (() => {
@@ -2787,7 +2949,7 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
           schoolId: activeSchool.id,
           type,
           contact: normalizedContact,
-          message: trimmedMessage,
+          message: composedMessage,
           status: 'pending',
           adminReply: '',
           createdAt: new Date().toISOString(),
@@ -2801,11 +2963,14 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
         schoolId: activeSchool.id,
         type,
         contact: normalizedContact,
-        message: trimmedMessage
+        message: composedMessage
       });
       setMessage('');
+      setTitle('');
+      setImageDataUrls([]);
+      setImageNames([]);
       setContact(normalizedContact);
-      setNotice(isLocalDebugUser ? '已写入本地调试工单。管理端本地调试界面可以看到。' : '已提交给作者。管理端会收到这条记录；管理员处理后，你可以在右侧站内信箱查看状态和回复。');
+      setNotice(isLocalDebugUser ? '已写入本地调试工单。管理端本地调试界面可以看到。' : '已提交给作者。管理端会收到这条记录；管理员处理后，你可以在站内信箱查看状态和回复。');
       if (isValidEmailShape(normalizedContact)) {
         await lookupMailbox(normalizedContact);
       } else {
@@ -2819,79 +2984,186 @@ function SupportPanel({ user, activeSchool }: { user: RegisteredUser; activeScho
   };
 
   useEffect(() => {
+    if (!user) return;
     if (isLocalDebugUser) {
       setNotice('本地调试模式：信箱使用浏览器本机数据，不请求线上 Render。');
       setTickets(readSupportTickets().filter((ticket) => ticket.userId === user.id || ticket.contact.toLowerCase() === user.email.toLowerCase()).slice().reverse());
       return;
     }
     if (user.email) void lookupMailbox(user.email);
-  }, [isLocalDebugUser, user.email]);
+  }, [isLocalDebugUser, user?.email]);
 
   useEffect(() => {
-    if (!user.email || isLocalDebugUser) return;
+    if (!user?.email || isLocalDebugUser) return;
     const timer = window.setInterval(() => void lookupMailbox(user.email), 15000);
     return () => window.clearInterval(timer);
-  }, [isLocalDebugUser, user.email]);
+  }, [isLocalDebugUser, user?.email]);
 
   return (
-    <section className="support-panel">
-      <div>
-        <span className="eyebrow">Contact</span>
-        <h2>联系作者信箱</h2>
-        <p>{BETA_NOTICE}</p>
-      </div>
-      <div className="support-disabled-note">
-        <strong>{schoolAbbreviation(activeSchool)} 私信反馈</strong>
-        <span>这里用于纠错、补充资料和联系作者；提交后进入管理端待处理列表，不会公开显示。管理员回复后会同步到右侧站内信箱。</span>
-      </div>
-      <div className="support-workspace">
-        <div className="support-form">
-          <label>
-            <span>类型</span>
-            <select value={type} onChange={(event) => setType(event.target.value)}>
-              <option value="联系作者">联系作者</option>
-              <option value="内容纠错">内容纠错</option>
-              <option value="资料补充">资料补充</option>
-              <option value="使用问题">使用问题</option>
-            </select>
-          </label>
-          <label>
-            <span>联系方式</span>
-            <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="推荐邮箱，方便查看回执" type="text" />
-          </label>
-          <label className="wide">
-            <span>内容</span>
-            <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写清楚页面、学校、项目或具体问题。" rows={4}></textarea>
-          </label>
-          <button className="primary-action" onClick={submit} disabled={loading}>{loading ? '处理中' : '发送给作者'}</button>
-          {error && <p className="form-error">{error}</p>}
-          {notice && <p className="form-success">{notice}</p>}
-        </div>
-        <div className="mailbox-panel">
-          <div className="section-head compact">
-            <div>
-              <span className="eyebrow">Mailbox</span>
-              <h3>站内信箱</h3>
+    <>
+      <button className="floating-support-button" onClick={openWidget}>
+        <strong>{isAdmin ? '工单' : '建议'}</strong>
+        <span>{isAdmin ? '查看处理' : '投稿/反馈'}</span>
+      </button>
+      {open && (
+        <div className="floating-support-layer" role="dialog" aria-modal="true">
+          <div className="floating-support-backdrop" onClick={() => setOpen(false)}></div>
+          <section className="floating-support-panel">
+            <div className="floating-support-head">
+              <div>
+                <span className="eyebrow">Feedback</span>
+                <h2>提交建议或投稿</h2>
+                <p>内容不会直接公开，管理员整理后再发布。</p>
+              </div>
+              <button className="secondary-action" onClick={() => setOpen(false)}>关闭</button>
             </div>
-            <button className="secondary-action" onClick={() => void lookupMailbox()} disabled={loading}>刷新</button>
-          </div>
-          <div className="mailbox-status-row">
-            <span>待处理 {mailboxCounts.pending}</span>
-            <span>处理中 {mailboxCounts.reviewing}</span>
-            <span>已处理 {mailboxCounts.resolved}</span>
-          </div>
-          {tickets.length === 0 && <div className="empty-state"><strong>暂无回执</strong><span>填写邮箱提交后，可以在这里查看处理状态。</span></div>}
-          {tickets.map((ticket) => (
-            <article className="mailbox-card" key={ticket.id}>
-              <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
-              <span>{ticket.schoolId || activeSchool.id} · {new Date(ticket.createdAt).toLocaleString()}</span>
-              <p>{ticket.message}</p>
-              {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
-            </article>
-          ))}
+            {!user ? (
+              <div className="support-login-prompt">
+                <strong>请先登录</strong>
+                <span>游客可以浏览内容；提交建议、投稿或图片需要登录后进行。</span>
+                <button className="primary-action" onClick={() => { setOpen(false); go('/login'); }}>去登录</button>
+              </div>
+            ) : (
+              <div className="support-workspace">
+                <div className="support-form">
+                  <label>
+                    <span>类型</span>
+                    <select value={type} onChange={(event) => setType(event.target.value)}>
+                      <option value="提交建议">提交建议</option>
+                      <option value="投稿内容">投稿内容</option>
+                      <option value="内容纠错">内容纠错</option>
+                      <option value="资料补充">资料补充</option>
+                      <option value="使用问题">使用问题</option>
+                      <option value="联系作者">联系作者</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>提交到板块</span>
+                    <select value={section} onChange={(event) => setSection(event.target.value)}>
+                      {sectionCategories.map((item) => <option key={item.key} value={item.name}>{item.name}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>标题</span>
+                    <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：某公寓租房补充" />
+                  </label>
+                  <label>
+                    <span>联系方式</span>
+                    <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="邮箱 / 微信 / 电话" type="text" />
+                  </label>
+                  <label className="wide">
+                    <span>内容</span>
+                    <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="写清楚地点、板块、价格、路线、建议或需要修改的内容。" rows={5}></textarea>
+                  </label>
+                  <label className="wide image-upload-box">
+                    <span>上传图片（最多 3 张）</span>
+                    <input type="file" accept="image/*" multiple onChange={(event) => void chooseImages(event.target.files)} />
+                    <small>{imageNames.length ? imageNames.join('，') : '图片会压缩后随工单提交，管理员可以直接查看。'}</small>
+                  </label>
+                  {imageDataUrls.length > 0 && (
+                    <div className="support-image-preview wide">
+                      {imageDataUrls.map((url, index) => <img key={`${url.slice(0, 32)}-${index}`} src={url} alt={`上传图片 ${index + 1}`} />)}
+                    </div>
+                  )}
+                  <button className="primary-action" onClick={submit} disabled={loading}>{loading ? '处理中' : '提交给管理员'}</button>
+                  {error && <p className="form-error">{error}</p>}
+                  {notice && <p className="form-success">{notice}</p>}
+                </div>
+                <div className="mailbox-panel">
+                  <div className="section-head compact">
+                    <div>
+                      <span className="eyebrow">Mailbox</span>
+                      <h3>我的回执</h3>
+                    </div>
+                    <button className="secondary-action" onClick={() => void lookupMailbox()} disabled={loading}>刷新</button>
+                  </div>
+                  <div className="mailbox-status-row">
+                    <span>待处理 {mailboxCounts.pending}</span>
+                    <span>处理中 {mailboxCounts.reviewing}</span>
+                    <span>已处理 {mailboxCounts.resolved}</span>
+                  </div>
+                  {tickets.length === 0 && <div className="empty-state"><strong>暂无回执</strong><span>提交后可以在这里查看处理状态。</span></div>}
+                  {tickets.map((ticket) => {
+                    const parsed = splitSupportMessage(ticket.message);
+                    return (
+                      <article className="mailbox-card" key={ticket.id}>
+                        <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
+                        <span>{ticket.schoolId || activeSchool.id} · {new Date(ticket.createdAt).toLocaleString()}</span>
+                        <p>{parsed.text}</p>
+                        {parsed.images.length > 0 && <SupportImageGrid images={parsed.images} />}
+                        {ticket.adminReply && <blockquote>{ticket.adminReply}</blockquote>}
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
         </div>
-      </div>
-    </section>
+      )}
+    </>
+  );
+}
+
+function SupportImageGrid({ images }: { images: string[] }) {
+  return (
+    <div className="support-image-grid">
+      {images.map((url, index) => <img key={`${url.slice(0, 32)}-${index}`} src={url} alt={`工单图片 ${index + 1}`} loading="lazy" />)}
+    </div>
+  );
+}
+
+function TicketDetailModal({
+  ticket,
+  reply,
+  onReplyChange,
+  onClose,
+  onUpdate
+}: {
+  ticket: SupportTicket;
+  reply: string;
+  onReplyChange: (value: string) => void;
+  onClose: () => void;
+  onUpdate: (status: string) => void;
+}) {
+  const parsed = splitSupportMessage(ticket.message);
+
+  return (
+    <div className="ticket-detail-layer" role="dialog" aria-modal="true">
+      <div className="ticket-detail-backdrop" onClick={onClose}></div>
+      <section className="ticket-detail-modal">
+        <div className="floating-support-head">
+          <div>
+            <span className="eyebrow">工单详情</span>
+            <h2>{ticket.type} · {statusLabel(ticket.status)}</h2>
+            <p>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</p>
+          </div>
+          <button className="secondary-action" onClick={onClose}>关闭</button>
+        </div>
+        <div className="ticket-detail-body">
+          <div className="ticket-detail-meta">
+            <span><strong>联系方式</strong>{ticket.contact}</span>
+            <span><strong>状态</strong>{statusLabel(ticket.status)}</span>
+            <span><strong>更新时间</strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : '-'}</span>
+          </div>
+          <article>
+            <h3>提交内容</h3>
+            <p>{parsed.text}</p>
+            {parsed.images.length > 0 && <SupportImageGrid images={parsed.images} />}
+          </article>
+          <label className="ticket-detail-reply">
+            <span>管理员回复</span>
+            <textarea value={reply} onChange={(event) => onReplyChange(event.target.value)} rows={4} placeholder="写给用户的站内回复"></textarea>
+          </label>
+          <div className="inline-actions">
+            <button onClick={() => onUpdate('pending')}>待处理</button>
+            <button onClick={() => onUpdate('reviewing')}>处理中</button>
+            <button onClick={() => onUpdate('resolved')}>已处理并回复</button>
+            <button onClick={() => onUpdate('closed')}>关闭</button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -3141,7 +3413,7 @@ export default function App() {
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
       </main>
-      {currentUser && route.name !== 'admin' && <SupportPanel user={effectiveUser} activeSchool={activeSchool} />}
+      <FloatingSupportWidget user={currentUser} activeSchool={activeSchool} isAdmin={isAdminAuthenticated} />
       <footer>
         <span>{APP_NAME} {APP_VERSION}</span>
         <span>{DISCLAIMER}</span>
