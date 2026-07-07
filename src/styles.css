@@ -3973,38 +3973,39 @@ body,
 
   .hk-sketch,
   .landing-shade {
-    position: fixed;
+    position: absolute;
     inset: 0;
   }
 
   .hk-sketch {
-    opacity: 0.22;
-    filter: blur(1px);
+    opacity: 0.08;
+    filter: none;
   }
 
   .landing-shade {
-    background: linear-gradient(180deg, rgba(24, 18, 31, 0.82), rgba(24, 18, 31, 0.94));
+    background: #211a2a;
   }
 
   .landing-overlay {
     padding: 1rem;
     border-radius: 1.35rem;
-    background: rgba(255, 255, 255, 0.92);
-    color: #2d2437;
-    backdrop-filter: blur(14px);
+    background: #372b43;
+    color: #ffffff;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .landing-kicker {
     margin-bottom: 0.7rem;
-    color: #3b3047;
-    background: #eadff5;
+    color: #2d2437;
+    background: #ffffff;
   }
 
   .landing-overlay h1,
   .agreement-panel h1 {
     max-width: none;
     margin: 0 0 0.75rem;
-    color: #2d2437;
+    color: #ffffff;
     font-size: clamp(1.8rem, 10vw, 2.7rem);
     line-height: 1.08;
     word-break: keep-all;
@@ -4014,7 +4015,7 @@ body,
   .landing-overlay p,
   .agreement-list p,
   .landing-policy-note span {
-    color: #6b6170;
+    color: rgba(255, 255, 255, 0.76);
     font-size: 0.94rem;
     line-height: 1.68;
   }
@@ -4027,9 +4028,34 @@ body,
   .landing-feature-grid span,
   .agreement-list div,
   .landing-policy-note {
-    border-color: rgba(59, 48, 71, 0.1);
-    color: #3b3047;
-    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .agreement-list strong,
+  .landing-policy-note strong {
+    color: #ffffff;
+  }
+
+  .agreement-check {
+    border-color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .agreement-check input {
+    background: #ffffff;
+  }
+
+  .enter-app-button {
+    color: #2d2437;
+    background: #ffffff;
+  }
+
+  .enter-app-button:disabled {
+    color: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.18);
   }
 
   .intro-panel,
