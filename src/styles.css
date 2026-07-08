@@ -1919,6 +1919,19 @@ p {
   border: 1px solid rgba(49, 45, 43, 0.08);
 }
 
+.post-detail-image-grid {
+  grid-template-columns: 1fr;
+  width: min(100%, 58rem);
+  margin: 1rem auto;
+}
+
+.post-detail-image-grid img {
+  max-height: 24rem;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #fff7ee;
+}
+
 .login-panel {
   display: flex;
   gap: 0.75rem;
@@ -2692,9 +2705,21 @@ p {
   background: #f8fcfa;
 }
 
+.course-match-list > div > strong {
+  color: #1f2a24;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .course-match-list span,
 .course-match-list small {
   color: #746b64;
+}
+
+.course-match-list p {
+  color: #3f4741;
+  overflow-wrap: anywhere;
 }
 
 .auth-required-panel {
