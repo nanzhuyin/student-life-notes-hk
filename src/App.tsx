@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.50';
+const APP_VERSION = 'v1.51';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2753,6 +2753,9 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
     []
   );
   const selectedProgramme = programmeOptions.find((programme) => programme.id === selectedProgrammeId);
+  const requiresMasterMajor = hasChosenProgramme
+    ? selectedProgramme?.degreeLevel === 'Doctor'
+    : targetDegreeLevel === 'Doctor';
 
   const submit = async () => {
     setError('');
@@ -2769,12 +2772,12 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
       setError('请填写本科专业。');
       return;
     }
-    if (!masterMajor.trim()) {
-      setError('请填写硕士专业；如果没有硕士经历，可以填写“暂无”。');
-      return;
-    }
     if (hasChosenProgramme && !selectedProgramme) {
       setError('请从知识库中选择一个已收录的目标专业。');
+      return;
+    }
+    if (requiresMasterMajor && !masterMajor.trim()) {
+      setError('申请或了解博士专业时，请填写硕士专业。');
       return;
     }
 
@@ -2783,7 +2786,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
       selectedProgrammeId: hasChosenProgramme ? selectedProgramme?.id || '' : '',
       selectedProgrammeName: hasChosenProgramme ? selectedProgramme?.programmeName || '' : '',
       undergraduateMajor: undergraduateMajor.trim(),
-      masterMajor: masterMajor.trim(),
+      masterMajor: requiresMasterMajor ? masterMajor.trim() : '',
       mainCourses: splitProfileList(mainCourses),
       skills: splitProfileList(skills),
       interests: splitProfileList(interests),
@@ -2877,10 +2880,6 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
               <span>本科专业（必填）</span>
               <input value={undergraduateMajor} onChange={(event) => setUndergraduateMajor(event.target.value)} placeholder="例如：Business Administration" />
             </label>
-            <label className="recommender-field">
-              <span>硕士专业（必填）</span>
-              <input value={masterMajor} onChange={(event) => setMasterMajor(event.target.value)} placeholder="例如：Marketing / Education / 暂无" />
-            </label>
             {!hasChosenProgramme && (
               <label className="recommender-field">
                 <span>目标学位层级（选填）</span>
@@ -2891,6 +2890,12 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                   <option value="Postgraduate Diploma">Postgraduate Diploma</option>
                   <option value="Other">Other</option>
                 </select>
+              </label>
+            )}
+            {requiresMasterMajor && (
+              <label className="recommender-field">
+                <span>硕士专业（博士方向必填）</span>
+                <input value={masterMajor} onChange={(event) => setMasterMajor(event.target.value)} placeholder="例如：Marketing / Education" />
               </label>
             )}
             <label className="recommender-field wide">
