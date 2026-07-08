@@ -8,6 +8,7 @@ export type MatchLevel = 'high' | 'medium' | 'low';
 
 export interface CourseDescription {
   courseName: string;
+  courseNameZh?: string;
   description: string;
   courseType: ProgrammeCourseType;
   sourceUrl: string;
@@ -15,6 +16,7 @@ export interface CourseDescription {
 
 export interface ImportantCourse {
   courseName: string;
+  courseNameZh?: string;
   courseType: ProgrammeCourseType;
   importance: ImportanceLevel;
   whyImportant: string;
@@ -27,8 +29,10 @@ export interface ImportantCourse {
 export interface Programme {
   id: string;
   programmeName: string;
+  programmeNameZh?: string;
   degreeLevel: ProgrammeDegreeLevel;
   school: string;
+  schoolId?: string;
   department: string;
   officialUrl: string;
   summary: string;
@@ -69,6 +73,7 @@ export interface StudentProfile {
 
 export interface ImportantCourseForStudent {
   courseName: string;
+  courseNameZh?: string;
   courseType: ProgrammeCourseType;
   importance: ImportanceLevel;
   whyThisCourseMatters: string;
