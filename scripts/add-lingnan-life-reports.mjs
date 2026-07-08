@@ -295,7 +295,15 @@ data.version = 'v1.53';
 data.generatedAt = new Date().toISOString();
 
 const existing = new Map(data.sharedPosts.map((post) => [post.id, post]));
-for (const post of posts) existing.set(post.id, post);
+for (const post of posts) {
+  const current = existing.get(post.id);
+  if (current?.metadata?.['从岭南出发']) {
+    post.metadata = { ...post.metadata, ...current.metadata };
+    post.content = current.content;
+    post.updatedAt = current.updatedAt || post.updatedAt;
+  }
+  existing.set(post.id, post);
+}
 data.sharedPosts = Array.from(existing.values());
 
 fs.writeFileSync(dataPath, `${JSON.stringify(data, null, 2)}\n`);
