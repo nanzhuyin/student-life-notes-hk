@@ -13,10 +13,11 @@ import type {
   SchoolId,
   SharedPost
 } from './types';
+import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentProfile } from './types/programme';
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.40';
+const APP_VERSION = 'v1.41';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -109,6 +110,7 @@ type Route =
   | { name: 'register' }
   | { name: 'login' }
   | { name: 'favorites' }
+  | { name: 'programmeRecommender' }
   | { name: 'admin' }
   | { name: 'about' }
   | { name: 'policy' };
@@ -193,6 +195,7 @@ function getRoute(): Route {
   if (path === 'register') return { name: 'register' };
   if (path === 'login') return { name: 'login' };
   if (path === 'plan' || path === 'favorites') return { name: 'favorites' };
+  if (path === 'programme-recommender') return { name: 'programmeRecommender' };
   if (path === 'admin') return { name: 'admin' };
   if (path === 'about') return { name: 'about' };
   if (path === 'policy') return { name: 'policy' };
@@ -472,6 +475,7 @@ function routeFeature(route: Route) {
   if (route.name === 'register') return '注册';
   if (route.name === 'login') return '登录';
   if (route.name === 'favorites') return '我的收藏';
+  if (route.name === 'programmeRecommender') return 'AI专业推荐';
   if (route.name === 'admin') return '管理端';
   if (route.name === 'policy') return '隐私与诚信';
   return '关于';
@@ -556,6 +560,13 @@ function goBack(fallbackPath = '/') {
 
 function normalize(value: string) {
   return value.trim().toLowerCase();
+}
+
+function splitProfileList(value: string) {
+  return value
+    .split(/[\n,，、;；]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function useRoute() {
@@ -996,6 +1007,7 @@ function Header({
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
+        <button className="ai-nav-button" onClick={() => go('/programme-recommender')}>AI 专业推荐</button>
         {!isLoggedIn && <button onClick={() => go('/login')}>登录</button>}
         <button onClick={() => go('/policy')}>隐私与诚信</button>
         {isAdmin && <button onClick={() => go('/admin')}>管理视角</button>}
@@ -2700,6 +2712,242 @@ function PolicyPage() {
   );
 }
 
+function ProgrammeRecommenderPage() {
+  const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
+  const [selectedProgrammeName, setSelectedProgrammeName] = useState('');
+  const [undergraduateMajor, setUndergraduateMajor] = useState('');
+  const [mainCourses, setMainCourses] = useState('');
+  const [skills, setSkills] = useState('');
+  const [interests, setInterests] = useState('');
+  const [careerGoals, setCareerGoals] = useState('');
+  const [preferredDirections, setPreferredDirections] = useState('');
+  const [targetDegreeLevel, setTargetDegreeLevel] = useState('');
+  const [studyPreferences, setStudyPreferences] = useState('');
+  const [concerns, setConcerns] = useState('');
+  const [workExperience, setWorkExperience] = useState('');
+  const [result, setResult] = useState<ProgrammeRecommendationResult | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    setError('');
+    setResult(null);
+    if (!API_BASE_URL) {
+      setError('前端尚未配置后端地址。请先在 GitHub Actions Variables 设置 VITE_API_BASE_URL。');
+      return;
+    }
+    if (!undergraduateMajor.trim() && !mainCourses.trim() && !interests.trim() && !careerGoals.trim()) {
+      setError('请至少填写本科专业、主修课程、兴趣方向或职业目标中的一项。');
+      return;
+    }
+
+    const request: StudentProfile = {
+      hasChosenProgramme,
+      selectedProgrammeId: '',
+      selectedProgrammeName: hasChosenProgramme ? selectedProgrammeName.trim() : '',
+      undergraduateMajor: undergraduateMajor.trim(),
+      mainCourses: splitProfileList(mainCourses),
+      skills: splitProfileList(skills),
+      interests: splitProfileList(interests),
+      careerGoals: splitProfileList(careerGoals),
+      preferredDirections: splitProfileList(preferredDirections),
+      targetDegreeLevels: targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
+      studyPreferences: splitProfileList(studyPreferences),
+      concerns: splitProfileList(concerns),
+      workExperience: splitProfileList(workExperience)
+    };
+
+    setLoading(true);
+    try {
+      const response = await apiRequest<RecommendationApiResponse>('/api/recommend-programmes', {
+        method: 'POST',
+        body: JSON.stringify(request)
+      });
+      if (!response.ok) throw new Error(response.message);
+      setResult(response.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '推荐接口暂时不可用，请稍后再试。');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="recommender-page">
+      <button className="back-button" onClick={() => goBack('/')}>返回</button>
+      <div className="page-title-block centered">
+        <span className="eyebrow">Programme Recommendation Assistant</span>
+        <h1>专业推荐助手</h1>
+        <p>输入你的本科背景、主修课程和目标方向，系统会基于公开专业资料生成参考建议。</p>
+      </div>
+
+      <div className="recommender-layout">
+        <section className="recommender-form-panel">
+          <div className="section-head compact">
+            <div>
+              <span className="eyebrow">Student Profile</span>
+              <h2>学生信息</h2>
+            </div>
+            <span className="recommender-status">{API_BASE_URL ? '已连接后端' : '待配置后端'}</span>
+          </div>
+
+          <label className="recommender-toggle">
+            <input type="checkbox" checked={hasChosenProgramme} onChange={(event) => setHasChosenProgramme(event.target.checked)} />
+            <span>我已经有想了解的目标专业</span>
+          </label>
+
+          {hasChosenProgramme && (
+            <label className="recommender-field wide">
+              <span>已选专业名称</span>
+              <input value={selectedProgrammeName} onChange={(event) => setSelectedProgrammeName(event.target.value)} placeholder="例如：Master of Science in Data Science" />
+            </label>
+          )}
+
+          <div className="recommender-form-grid">
+            <label className="recommender-field">
+              <span>本科专业</span>
+              <input value={undergraduateMajor} onChange={(event) => setUndergraduateMajor(event.target.value)} placeholder="例如：Business Administration" />
+            </label>
+            <label className="recommender-field">
+              <span>目标学位层级</span>
+              <select value={targetDegreeLevel} onChange={(event) => setTargetDegreeLevel(event.target.value)}>
+                <option value="">不限</option>
+                <option value="Master">Master</option>
+                <option value="Doctor">Doctor</option>
+                <option value="Postgraduate Diploma">Postgraduate Diploma</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label className="recommender-field wide">
+              <span>主修课程</span>
+              <textarea value={mainCourses} onChange={(event) => setMainCourses(event.target.value)} placeholder="每行或用逗号分隔，例如：Marketing, Statistics, Data Analysis" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>技能</span>
+              <textarea value={skills} onChange={(event) => setSkills(event.target.value)} placeholder="例如：Excel, Python, Research" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>兴趣方向</span>
+              <textarea value={interests} onChange={(event) => setInterests(event.target.value)} placeholder="例如：business analytics, management" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>职业目标</span>
+              <textarea value={careerGoals} onChange={(event) => setCareerGoals(event.target.value)} placeholder="例如：business analyst, consultant" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>偏好方向</span>
+              <textarea value={preferredDirections} onChange={(event) => setPreferredDirections(event.target.value)} placeholder="例如：data science, marketing, public policy" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>学习偏好</span>
+              <textarea value={studyPreferences} onChange={(event) => setStudyPreferences(event.target.value)} placeholder="例如：full-time, taught, research-oriented" rows={3}></textarea>
+            </label>
+            <label className="recommender-field">
+              <span>担心的问题</span>
+              <textarea value={concerns} onChange={(event) => setConcerns(event.target.value)} placeholder="例如：编程基础不足、跨专业申请不确定" rows={3}></textarea>
+            </label>
+            <label className="recommender-field wide">
+              <span>实习 / 工作 / 科研经历</span>
+              <textarea value={workExperience} onChange={(event) => setWorkExperience(event.target.value)} placeholder="例如：marketing internship, research assistant" rows={3}></textarea>
+            </label>
+          </div>
+
+          <button className="primary-action recommender-submit" onClick={submit} disabled={loading}>{loading ? '生成中' : '生成推荐'}</button>
+          {error && <p className="form-error">{error}</p>}
+          <p className="recommender-note">结果仅基于已采集的公开官网资料。课程描述不足时，系统会提示信息不足，不会补写官网没有的课程内容。</p>
+        </section>
+
+        <section className="recommender-result-panel">
+          <div className="section-head compact">
+            <div>
+              <span className="eyebrow">Reference Result</span>
+              <h2>推荐结果</h2>
+            </div>
+          </div>
+
+          {!result && (
+            <div className="empty-state">
+              <strong>等待输入</strong>
+              <span>填写学生背景后，系统会返回 3-5 个候选专业及课程匹配说明。</span>
+            </div>
+          )}
+
+          {result && (
+            <div className="recommendation-results">
+              <p className="result-summary">{result.summary}</p>
+              {result.informationLimits.length > 0 && (
+                <div className="information-limit-box">
+                  <strong>信息限制</strong>
+                  {result.informationLimits.map((item) => <span key={item}>{item}</span>)}
+                </div>
+              )}
+              {result.recommendations.map((item) => (
+                <article className="recommendation-card" key={item.programmeId}>
+                  <div className="recommendation-card-head">
+                    <div>
+                      <span className={`match-pill ${item.matchLevel}`}>{item.matchLevel} · {item.matchScore}</span>
+                      <h3>{item.programmeName}</h3>
+                    </div>
+                    <a href={item.sourceUrl} target="_blank" rel="noreferrer">官网</a>
+                  </div>
+                  <div className="recommendation-section">
+                    <strong>为什么推荐</strong>
+                    <ul>{item.whyRecommended.map((text) => <li key={text}>{text}</li>)}</ul>
+                  </div>
+                  <div className="recommendation-section">
+                    <strong>背景匹配</strong>
+                    <p>{item.backgroundMatch.explanation}</p>
+                  </div>
+                  <div className="recommendation-section">
+                    <strong>重要课程</strong>
+                    {item.importantCoursesForThisStudent.length === 0 ? (
+                      <p>该专业公开页面暂未提供详细课程信息，建议以官网最新资料为准。</p>
+                    ) : (
+                      <div className="course-match-list">
+                        {item.importantCoursesForThisStudent.map((course) => (
+                          <div key={`${item.programmeId}-${course.courseName}`}>
+                            <strong>{course.courseName}</strong>
+                            <span>{course.courseType} · {course.importance}</span>
+                            <p>{course.whyThisCourseMatters}</p>
+                            {course.studentPreparationAdvice.length > 0 && <small>准备建议：{course.studentPreparationAdvice.join('；')}</small>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {item.potentialGaps.length > 0 && (
+                    <div className="recommendation-section">
+                      <strong>潜在短板</strong>
+                      <ul>{item.potentialGaps.map((text) => <li key={text}>{text}</li>)}</ul>
+                    </div>
+                  )}
+                  {item.suggestedPreparations.length > 0 && (
+                    <div className="recommendation-section">
+                      <strong>入学前准备</strong>
+                      <ul>{item.suggestedPreparations.map((text) => <li key={text}>{text}</li>)}</ul>
+                    </div>
+                  )}
+                </article>
+              ))}
+              <p className="recommender-disclaimer">{result.disclaimer || 'This recommendation is for reference only. Please refer to official programme websites for final information.'}</p>
+            </div>
+          )}
+        </section>
+      </div>
+    </section>
+  );
+}
+
+function FloatingAiEntry({ route }: { route: Route }) {
+  if (route.name === 'programmeRecommender') return null;
+  return (
+    <button className="floating-ai-entry" onClick={() => go('/programme-recommender')} aria-label="专业推荐助手">
+      <strong>AI</strong>
+      <span>专业推荐</span>
+    </button>
+  );
+}
+
 const SUPPORT_IMAGE_PREFIX = '[otter-image]';
 
 function splitSupportMessage(rawMessage: string) {
@@ -3344,10 +3592,12 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
+        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage />}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
       </main>
+      <FloatingAiEntry route={route} />
       <FloatingSupportWidget user={currentUser} activeSchool={activeSchool} isAdmin={isAdminAuthenticated} />
       <footer>
         <span>{APP_NAME} {APP_VERSION}</span>

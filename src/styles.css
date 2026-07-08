@@ -748,6 +748,12 @@ button {
   background: #8f1d2c;
 }
 
+.top-nav .ai-nav-button {
+  border-color: rgba(47, 111, 84, 0.22);
+  color: #245c4b;
+  background: #f1faf5;
+}
+
 main {
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto;
@@ -1004,7 +1010,10 @@ p {
 .search-box input,
 .toolbar input,
 .toolbar select,
-.login-panel input {
+.login-panel input,
+.recommender-field input,
+.recommender-field select,
+.recommender-field textarea {
   min-width: 0;
   border: 1px solid rgba(49, 45, 43, 0.12);
   border-radius: 0.55rem;
@@ -1041,6 +1050,9 @@ p {
 .detail-body,
 .source-card,
 .about-card,
+.recommender-form-panel,
+.recommender-result-panel,
+.recommendation-card,
 .post-card,
 .course-card,
 .empty-state {
@@ -2227,6 +2239,33 @@ p {
   font-weight: 900;
 }
 
+.floating-ai-entry {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  top: calc(58vh - 6rem);
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  width: 4.65rem;
+  min-height: 4.65rem;
+  border: 3px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #2f6f54, #7b5f8c);
+  box-shadow: 0 18px 38px rgba(47, 111, 84, 0.26);
+  cursor: pointer;
+}
+
+.floating-ai-entry strong {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.floating-ai-entry span {
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
 .floating-support-layer,
 .ticket-detail-layer {
   position: fixed;
@@ -2462,6 +2501,186 @@ p {
   padding: 1.4rem;
   color: #746b64;
   text-align: center;
+}
+
+.recommender-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(21rem, 1.06fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.recommender-form-panel,
+.recommender-result-panel {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2.4vw, 1.55rem);
+}
+
+.recommender-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.recommender-field,
+.recommender-toggle {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.recommender-field.wide {
+  grid-column: 1 / -1;
+}
+
+.recommender-field span,
+.recommender-toggle span {
+  color: #504944;
+  font-weight: 900;
+}
+
+.recommender-field textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.recommender-toggle {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: start;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(47, 111, 84, 0.16);
+  border-radius: 0.75rem;
+  background: #f1faf5;
+}
+
+.recommender-status {
+  align-self: start;
+  border: 1px solid rgba(47, 111, 84, 0.16);
+  border-radius: 999px;
+  padding: 0.42rem 0.7rem;
+  color: #245c4b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: #f1faf5;
+}
+
+.recommender-submit {
+  width: 100%;
+}
+
+.recommender-note,
+.recommender-disclaimer,
+.result-summary {
+  margin: 0;
+  color: #746b64;
+  line-height: 1.65;
+}
+
+.recommendation-results {
+  display: grid;
+  gap: 1rem;
+}
+
+.recommendation-card {
+  display: grid;
+  gap: 0.95rem;
+  padding: 1rem;
+}
+
+.recommendation-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.recommendation-card-head h3 {
+  margin: 0.4rem 0 0;
+  color: #262224;
+}
+
+.recommendation-card-head a {
+  flex: 0 0 auto;
+  border: 1px solid rgba(143, 29, 44, 0.18);
+  border-radius: 999px;
+  padding: 0.48rem 0.72rem;
+  color: #8f1d2c;
+  font-weight: 900;
+  text-decoration: none;
+  background: #fff8f1;
+}
+
+.match-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.34rem 0.6rem;
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  background: #746b64;
+}
+
+.match-pill.high {
+  background: #2f6f54;
+}
+
+.match-pill.medium {
+  background: #c27a32;
+}
+
+.match-pill.low {
+  background: #746b64;
+}
+
+.recommendation-section {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.recommendation-section > strong,
+.information-limit-box strong {
+  color: #2f3f38;
+}
+
+.recommendation-section p,
+.recommendation-section ul {
+  margin: 0;
+  color: #504944;
+  line-height: 1.62;
+}
+
+.recommendation-section ul {
+  padding-left: 1.2rem;
+}
+
+.information-limit-box {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid rgba(194, 122, 50, 0.22);
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  color: #6d4b2f;
+  background: #fff8f1;
+}
+
+.course-match-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.course-match-list > div {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(47, 111, 84, 0.12);
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  background: #f8fcfa;
+}
+
+.course-match-list span,
+.course-match-list small {
+  color: #746b64;
 }
 
 .auth-required-panel {
@@ -4101,5 +4320,51 @@ body,
   .post-card,
   .programme-card {
     border-radius: 1.2rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .recommender-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .floating-ai-entry {
+    top: auto;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: calc(6.4rem + env(safe-area-inset-bottom));
+    width: 3.35rem;
+    min-height: 3.35rem;
+    border-width: 2px;
+  }
+
+  .floating-ai-entry strong {
+    font-size: 0.92rem;
+  }
+
+  .floating-ai-entry span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 620px) {
+  .recommender-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-card-head {
+    display: grid;
+  }
+
+  .recommendation-card-head a {
+    justify-self: start;
+  }
+
+  .recommender-status {
+    justify-self: start;
   }
 }
