@@ -24,7 +24,11 @@ function normalize(value) {
 function stripCourseCode(value = '') {
   return String(value || '')
     .replace(/^[A-Z]{2,8}\d{3,5}[A-Z]?\s*[:：]?\s*/i, '')
+    .replace(/\s*\(\s*\d+(?:\.\d+)?\s*(credits?|units?|cps?)\s*\)\s*/gi, ' ')
+    .replace(/\s+\d+\s*(credits?|units?|cps?)$/i, '')
+    .replace(/\s*\*\s*or\s*$/i, '')
     .replace(/\s*[#^*]+\s*$/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -80,6 +84,78 @@ function includesAny(text, keywords) {
 
 function compact(items, limit = 5) {
   return Array.from(new Set(items.map((item) => String(item || '').trim()).filter(Boolean))).slice(0, limit);
+}
+
+function slug(value) {
+  return normalize(value).replace(/\s+/g, '-').slice(0, 140) || 'course';
+}
+
+function parseCredits(value) {
+  const match = String(value || '').match(/\b(\d+(?:\.\d+)?)\s*(credits?|units?|cps?)\b/i);
+  if (!match) return { credits: null, creditsText: '学分以官网最新资料为准' };
+  return {
+    credits: Number(match[1]),
+    creditsText: `${match[1]} ${match[2].toLowerCase()}`
+  };
+}
+
+function isDisplayableOfficialCourse(course) {
+  const name = String(course.courseName || '').toLowerCase();
+  const description = String(course.description || '').toLowerCase();
+  if (!description.trim()) return false;
+  if (/auditing fee|tuition fee|members of the public|concentration|download syllabus/.test(name)) return false;
+  if (/this pillar|focus areas|workflows and tools|tuition fee|cheques should/.test(description)) return false;
+  return Boolean(courseCode(course.courseName)) || /this course|capstone project|doctoral thesis|research project/.test(description);
+}
+
+function officialCourseTitle(course) {
+  const stripped = stripCourseCode(course.courseName);
+  if (stripped && !/^[A-Z]{2,8}\d{3,5}[A-Z]?$/i.test(stripped)) return stripped;
+  const beforeThisCourse = String(course.description || '').split(/\bThis course\b/i)[0].trim();
+  if (beforeThisCourse && beforeThisCourse.length <= 120) return beforeThisCourse.replace(/\s+/g, ' ').trim();
+  return stripped || course.courseName;
+}
+
+function makePlatformCourse({ platformProgramme, programme, officialCourse }) {
+  const code = courseCode(officialCourse.courseName);
+  const title = officialCourseTitle(officialCourse);
+  const credits = parseCredits(officialCourse.courseName);
+  return {
+    id: `${platformProgramme.id}-${slug(code || title)}`,
+    programmeId: platformProgramme.id,
+    programmeTitle: platformProgramme.titleZh || platformProgramme.title || programme.programmeName,
+    schoolId: 'lingnan',
+    school: '岭南大学',
+    faculty: platformProgramme.faculty || programme.school || '岭南大学',
+    unitName: platformProgramme.unitName || '',
+    unitType: platformProgramme.unitType || '',
+    unitLabel: platformProgramme.unitLabel || '',
+    parentUnit: platformProgramme.parentUnit || '',
+    unitNote: platformProgramme.unitNote || '',
+    title,
+    titleZh: title,
+    type: officialCourse.courseType === 'project' ? '项目 / 论文' : officialCourse.courseType === 'elective' ? '选修课程' : officialCourse.courseType === 'core' ? '核心课程' : '官网课程描述',
+    typeKey: officialCourse.courseType === 'project' ? 'project' : officialCourse.courseType === 'elective' ? 'elective' : officialCourse.courseType === 'core' ? 'core' : 'general',
+    credits: credits.credits,
+    creditsText: credits.creditsText,
+    required: officialCourse.courseType === 'core' || officialCourse.courseType === 'foundation' || officialCourse.courseType === 'project',
+    description: officialCourse.descriptionZh || officialCourse.description,
+    officialDescriptionEn: officialCourse.description,
+    officialDescriptionZh: officialCourse.descriptionZh || '',
+    descriptionSourceUrl: officialCourse.sourceUrl || programme.officialUrl,
+    descriptionSourceType: 'official',
+    courseGuide: officialCourse.courseGuide,
+    medium: '以项目官方安排为准',
+    mediumDetail: '课程描述来自官网公开页面；中文翻译用于浏览，最终以官网英文原文和项目办公室最新资料为准。',
+    programmeCodes: [],
+    sourceUrl: officialCourse.sourceUrl || programme.officialUrl,
+    checkedAt: new Date().toISOString().slice(0, 10),
+    semester: '',
+    prerequisites: '',
+    courseCode: code,
+    tags: ['授课型研究生 TPG', platformProgramme.faculty || programme.school || '岭南大学', '官网课程描述'],
+    notes: '官网公开课程描述补充；中文翻译用于浏览，最终以官网英文原文为准。'
+  };
 }
 
 function buildCourseGuide(course, officialDescriptionEn, officialDescriptionZh) {
@@ -202,6 +278,7 @@ async function main() {
   const platformData = JSON.parse(await fs.readFile(PLATFORM_DATA_PATH, 'utf8'));
   const translatedCache = new Map();
   let matched = 0;
+  let addedFrontendCourses = 0;
   let translated = 0;
   let officialDescriptions = 0;
   const touchedProgrammes = new Set();
@@ -237,6 +314,12 @@ async function main() {
     if (!index.byCode.size && !index.byTitle.size) continue;
 
     const platformCourses = platformData.courses.filter((course) => course.programmeId === platformProgramme.id);
+    const existingCourseKeys = new Set(platformCourses.flatMap((course) => [
+      course.courseCode ? `code:${course.courseCode}` : '',
+      normalize(course.title) ? `title:${normalize(course.title)}` : '',
+      normalize(course.titleZh) ? `title:${normalize(course.titleZh)}` : ''
+    ].filter(Boolean)));
+
     for (const course of platformCourses) {
       const officialCourse =
         (course.courseCode && index.byCode.get(course.courseCode)) ||
@@ -246,6 +329,7 @@ async function main() {
 
       const officialDescriptionEn = String(officialCourse.description || '').trim();
       if (!officialDescriptionEn) continue;
+      course.programmeTitle = platformProgramme.titleZh || course.programmeTitle || platformProgramme.title || programme.programmeName;
       let officialDescriptionZh = officialCourse.descriptionZh || (course.officialDescriptionEn === officialDescriptionEn ? course.officialDescriptionZh || '' : '');
       if (!officialDescriptionZh) {
         if (!translatedCache.has(officialDescriptionEn)) {
@@ -275,12 +359,39 @@ async function main() {
       matched += 1;
       touchedProgrammes.add(programme.programmeName);
     }
+
+    for (const officialCourse of programme.courseDescriptions || []) {
+      if (!isDisplayableOfficialCourse(officialCourse)) continue;
+      const officialCode = courseCode(officialCourse.courseName);
+      const officialTitle = officialCourseTitle(officialCourse);
+      const keys = [
+        officialCode ? `code:${officialCode}` : '',
+        normalize(officialTitle) ? `title:${normalize(officialTitle)}` : ''
+      ].filter(Boolean);
+      if (keys.some((key) => existingCourseKeys.has(key))) continue;
+
+      const generatedCourse = makePlatformCourse({ platformProgramme, programme, officialCourse });
+      let id = generatedCourse.id;
+      let suffix = 2;
+      while (platformData.courses.some((course) => course.id === id)) {
+        id = `${generatedCourse.id}-${suffix}`;
+        suffix += 1;
+      }
+      generatedCourse.id = id;
+      platformData.courses.push(generatedCourse);
+      platformCourses.push(generatedCourse);
+      keys.forEach((key) => existingCourseKeys.add(key));
+      addedFrontendCourses += 1;
+      matched += 1;
+      touchedProgrammes.add(programme.programmeName);
+    }
   }
 
   await fs.writeFile(PROGRAMMES_PATH, `${JSON.stringify(programmes, null, 2)}\n`);
   await fs.writeFile(PLATFORM_DATA_PATH, `${JSON.stringify(platformData, null, 2)}\n`);
   console.log(JSON.stringify({
     matchedCourses: matched,
+    addedFrontendCourses,
     officialCourseDescriptions: officialDescriptions,
     translatedDescriptions: translated,
     touchedProgrammes: touchedProgrammes.size,
