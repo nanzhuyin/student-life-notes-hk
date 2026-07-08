@@ -2119,9 +2119,9 @@ p {
 
 .event-table > div {
   display: grid;
-  grid-template-columns: minmax(10rem, 1.2fr) minmax(6.5rem, 0.7fr) minmax(5rem, 0.55fr) minmax(4.5rem, 0.45fr) minmax(10rem, 1fr) minmax(5.5rem, 0.55fr);
+  grid-template-columns: minmax(10rem, 1.1fr) minmax(6.5rem, 0.7fr) minmax(5rem, 0.55fr) minmax(7rem, 0.8fr) minmax(4.5rem, 0.45fr) minmax(10rem, 1fr) minmax(5.5rem, 0.55fr);
   gap: 0.65rem;
-  min-width: 52rem;
+  min-width: 60rem;
   padding: 0.65rem 0;
   border-bottom: 1px solid rgba(49, 45, 43, 0.08);
 }

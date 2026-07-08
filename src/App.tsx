@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.54';
+const APP_VERSION = 'v1.55';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2349,7 +2349,7 @@ function buildAnalyticsSummary(events: AnalyticsEvent[]) {
 }
 
 function analyticsToCsv(events: AnalyticsEvent[]) {
-  const header = ['id', 'timestamp', 'type', 'schoolId', 'routeName', 'feature', 'userRole', 'username', 'targetId', 'durationSeconds', 'path'];
+  const header = ['id', 'timestamp', 'type', 'schoolId', 'routeName', 'feature', 'userRole', 'username', 'userId', 'targetId', 'durationSeconds', 'path'];
   const rows = events.map((event) => header.map((key) => {
     const value = String((event as unknown as Record<string, unknown>)[key] ?? '');
     return `"${value.replace(/"/g, '""')}"`;
@@ -2364,6 +2364,8 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const [entered, setEntered] = useStoredState('student-life-notes:admin-session', false);
   const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>(() => readAnalyticsEvents());
+  const [analyticsEventTotal, setAnalyticsEventTotal] = useState<number | null>(null);
+  const [analyticsEventsTruncated, setAnalyticsEventsTruncated] = useState(false);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(() => readSupportTickets().slice().reverse());
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [ticketReplies, setTicketReplies] = useState<Record<string, string>>({});
@@ -2391,22 +2393,41 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const isLocalPreview = isLocalPreviewHost();
   const dataSourceLabel = API_BASE_URL && adminToken ? '服务端真实数据' : isLocalPreview ? '本地调试管理端' : '本机备用数据';
   const adminReady = entered && (!API_BASE_URL || Boolean(adminToken) || isLocalPreview);
+  const shownAnalyticsEventTotal = analyticsEventTotal ?? analyticsEvents.length;
+  const analyticsScopeText = analyticsEventsTruncated
+    ? `；当前统计基于最近 ${analyticsEvents.length} 条事件`
+    : '';
   const refreshAnalytics = async () => {
     if (API_BASE_URL && adminToken) {
       try {
-        const data = await apiRequest<{ analyticsEvents: AnalyticsEvent[]; supportTickets: SupportTicket[]; users: RegisteredUser[] }>('/api/admin/dashboard', {
+        const data = await apiRequest<{
+          analyticsEvents: AnalyticsEvent[];
+          analyticsEventTotal?: number;
+          analyticsEventsLoaded?: number;
+          analyticsEventsTruncated?: boolean;
+          supportTickets: SupportTicket[];
+          users: RegisteredUser[];
+        }>('/api/admin/dashboard', {
           headers: { Authorization: `Bearer ${adminToken}` }
         });
-        setAnalyticsEvents(data.analyticsEvents || []);
+        const events = data.analyticsEvents || [];
+        setAnalyticsEvents(events);
+        setAnalyticsEventTotal(typeof data.analyticsEventTotal === 'number' ? data.analyticsEventTotal : events.length);
+        setAnalyticsEventsTruncated(Boolean(data.analyticsEventsTruncated));
         setSupportTickets(data.supportTickets || []);
         setRegisteredUsers(data.users || []);
-        setAdminNotice('已刷新服务端数据');
+        setAdminNotice(data.analyticsEventsTruncated
+          ? `已刷新服务端数据；事件总数 ${data.analyticsEventTotal ?? events.length}，当前加载最近 ${events.length} 条。`
+          : '已刷新服务端数据');
         return;
       } catch (err) {
         setAdminNotice(err instanceof Error ? err.message : '服务端刷新失败');
       }
     }
-    setAnalyticsEvents(readAnalyticsEvents());
+    const localEvents = readAnalyticsEvents();
+    setAnalyticsEvents(localEvents);
+    setAnalyticsEventTotal(localEvents.length);
+    setAnalyticsEventsTruncated(false);
     setSupportTickets(readSupportTickets().slice().reverse());
   };
   const exportAnalytics = (format: 'json' | 'csv') => {
@@ -2418,7 +2439,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
       userRole: 'admin',
       username: 'admin'
     });
-    const events = readAnalyticsEvents();
+    const events = analyticsEvents;
     if (format === 'json') {
       downloadTextFile(`student-life-analytics-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(events, null, 2), 'application/json;charset=utf-8');
     } else {
@@ -2556,14 +2577,14 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               <div>
                 <span className="eyebrow">浏览统计</span>
                 <h2>{dataSourceLabel}</h2>
-                <p>记录页面浏览、学校切换、收藏和导出操作。当前事件数：{analyticsEvents.length}；注册用户：{registeredUsers.length}</p>
+                <p>记录页面浏览、学校切换、收藏和导出操作。当前事件数：{shownAnalyticsEventTotal}{analyticsScopeText}；注册用户：{registeredUsers.length}</p>
                 {adminNotice && <p>{adminNotice}</p>}
               </div>
               <div className="analytics-actions">
                 <button className="secondary-action" onClick={refreshAnalytics}>刷新</button>
                 <button className="secondary-action" onClick={() => exportAnalytics('json')}>导出 JSON</button>
                 <button className="secondary-action" onClick={() => exportAnalytics('csv')}>导出 CSV</button>
-                <button className="secondary-action danger" onClick={clearAnalytics}>清空本机统计</button>
+                <button className="secondary-action danger" onClick={clearAnalytics}>清空本机备用统计</button>
               </div>
             </div>
             <div className="stats-grid analytics-stats">
@@ -2598,12 +2619,13 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
             <div className="analytics-card">
               <h3>最近事件</h3>
               <div className="event-table">
-                <div><strong>时间</strong><strong>类型</strong><strong>身份</strong><strong>学校</strong><strong>功能</strong><strong>停留</strong></div>
+                <div><strong>时间</strong><strong>类型</strong><strong>身份</strong><strong>用户</strong><strong>学校</strong><strong>功能</strong><strong>停留</strong></div>
                 {analytics.recent.map((event) => (
                   <div key={event.id}>
                     <span>{new Date(event.timestamp).toLocaleString()}</span>
                     <span>{event.type}</span>
                     <span>{event.userRole === 'admin' ? '管理员' : event.userRole === 'registered' ? '注册用户' : '游客'}</span>
+                    <span>{event.username || event.userId || '-'}</span>
                     <span>{event.schoolId.toUpperCase()}</span>
                     <span>{event.feature}</span>
                     <span>{event.durationSeconds ? formatDuration(event.durationSeconds) : '-'}</span>

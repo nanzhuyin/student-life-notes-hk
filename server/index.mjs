@@ -416,6 +416,9 @@ async function route(req, res) {
     sendJson(req, res, 200, {
       users: db.users.slice(-100).reverse().map(({ passwordHash, ...user }) => user),
       analyticsEvents: db.analyticsEvents,
+      analyticsEventTotal: db.analyticsEventTotal ?? db.analyticsEvents.length,
+      analyticsEventsLoaded: db.analyticsEvents.length,
+      analyticsEventsTruncated: Boolean(db.analyticsEventsTruncated),
       analytics: buildAnalyticsSummary(db.analyticsEvents),
       supportTickets: db.supportTickets.slice().reverse(),
       posts: (db.posts || []).slice().sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)))

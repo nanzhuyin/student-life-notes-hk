@@ -4,11 +4,16 @@ import { dirname } from 'node:path';
 const defaultDb = {
   users: [],
   analyticsEvents: [],
+  analyticsEventTotal: 0,
+  analyticsEventsTruncated: false,
   supportTickets: [],
   posts: [],
   programmes: [],
   recommendationLogs: []
 };
+
+const SUPABASE_PAGE_SIZE = 1000;
+const ANALYTICS_READ_LIMIT = 50000;
 
 function cloneDefaultDb() {
   return structuredClone(defaultDb);
@@ -273,7 +278,7 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
   const supabaseBase = supabaseUrl.replace(/\/$/, '').replace(/\/rest\/v1$/, '');
   const restBase = hasSupabase ? `${supabaseBase}/rest/v1` : '';
 
-  async function supabaseRequest(path, options = {}) {
+  async function supabaseResponse(path, options = {}) {
     const response = await fetch(`${restBase}${path}`, {
       ...options,
       headers: {
@@ -289,7 +294,12 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
       const message = data?.message || data?.hint || text || `Supabase request failed: ${response.status}`;
       throw new Error(message);
     }
-    return data;
+    return { data, headers: response.headers };
+  }
+
+  async function supabaseRequest(path, options = {}) {
+    const response = await supabaseResponse(path, options);
+    return response.data;
   }
 
   async function readLocalDb() {
@@ -307,6 +317,26 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
 
   async function selectRows(table, query) {
     return supabaseRequest(`/${table}?${query}`);
+  }
+
+  async function selectRowsPaged(table, query, maxRows = ANALYTICS_READ_LIMIT) {
+    const rows = [];
+    for (let offset = 0; rows.length < maxRows; offset += SUPABASE_PAGE_SIZE) {
+      const separator = query ? '&' : '';
+      const page = await selectRows(table, `${query}${separator}limit=${SUPABASE_PAGE_SIZE}&offset=${offset}`);
+      rows.push(...page);
+      if (page.length < SUPABASE_PAGE_SIZE) break;
+    }
+    return rows.slice(0, maxRows);
+  }
+
+  async function countRows(table) {
+    const { headers } = await supabaseResponse(`/${table}?select=id&limit=1`, {
+      headers: { Prefer: 'count=exact' }
+    });
+    const contentRange = headers.get('content-range') || '';
+    const total = Number(contentRange.split('/')[1]);
+    return Number.isFinite(total) ? total : 0;
   }
 
   async function upsertRows(table, rows) {
@@ -327,16 +357,26 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
     type: hasSupabase ? 'supabase' : 'json',
 
     async readAll() {
-      if (!hasSupabase) return readLocalDb();
-      const [users, analyticsEvents, supportTickets, posts] = await Promise.all([
+      if (!hasSupabase) {
+        const db = await readLocalDb();
+        return {
+          ...db,
+          analyticsEventTotal: db.analyticsEvents.length,
+          analyticsEventsTruncated: false
+        };
+      }
+      const [users, analyticsRowsDesc, analyticsEventTotal, supportTickets, posts] = await Promise.all([
         selectRows('otter_users', 'select=*&order=created_at.asc'),
-        selectRows('otter_analytics_events', 'select=*&order=timestamp.asc&limit=20000'),
+        selectRowsPaged('otter_analytics_events', 'select=*&order=timestamp.desc'),
+        countRows('otter_analytics_events'),
         selectRows('otter_support_tickets', 'select=*&order=created_at.asc'),
         selectRows('otter_posts', 'select=*&order=updated_at.desc').catch(() => [])
       ]);
       return {
         users: users.map(fromUserRow),
-        analyticsEvents: analyticsEvents.map(fromAnalyticsRow),
+        analyticsEvents: analyticsRowsDesc.map(fromAnalyticsRow).reverse(),
+        analyticsEventTotal,
+        analyticsEventsTruncated: analyticsEventTotal > analyticsRowsDesc.length,
         supportTickets: supportTickets.map(fromTicketRow),
         posts: posts.map(fromPostRow)
       };
