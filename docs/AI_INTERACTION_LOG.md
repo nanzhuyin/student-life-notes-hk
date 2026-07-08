@@ -25,7 +25,8 @@
 - 本次 AI 推荐后端权限校验版本：`v1.47`
 - 本次 AI 推荐文字和租房详情图修复版本：`v1.48`
 - 本次 AI 推荐请求失败和表单简化版本：`v1.49`
-- 下一次修改：`v1.50`
+- 本次 AI 推荐日志 schema 兼容版本：`v1.50`
+- 下一次修改：`v1.51`
 
 每次版本递增时至少同步这些位置：
 
@@ -78,6 +79,22 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.50
+
+日期：2026-07-08
+
+改动范围：
+
+- 推荐日志写入增加 Supabase 旧表结构兼容。
+- 如果线上 Supabase 暂未执行新增 `master_major` 列的 schema，后端会自动移除该字段重试写入 recommendation_logs。
+- 该兼容避免 AI 推荐已经生成但日志写入失败导致接口整体返回失败。
+- 同步本次部署版本号为 `v1.50`。
+
+测试：
+
+- `node --check server/storage.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.49
 

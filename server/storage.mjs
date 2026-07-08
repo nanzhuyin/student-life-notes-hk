@@ -262,6 +262,12 @@ function toRecommendationLogRow(log) {
   };
 }
 
+function withoutMasterMajor(row) {
+  const { master_major, ...rest } = row;
+  void master_major;
+  return rest;
+}
+
 export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
   const hasSupabase = Boolean(supabaseUrl && supabaseServiceRoleKey);
   const supabaseBase = supabaseUrl.replace(/\/$/, '').replace(/\/rest\/v1$/, '');
@@ -489,11 +495,22 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         await writeLocalDb(db);
         return item;
       }
-      const [row] = await supabaseRequest('/recommendation_logs?select=*', {
-        method: 'POST',
-        headers: { Prefer: 'return=representation' },
-        body: JSON.stringify(toRecommendationLogRow(log))
-      });
+      const recommendationRow = toRecommendationLogRow(log);
+      let row;
+      try {
+        [row] = await supabaseRequest('/recommendation_logs?select=*', {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify(recommendationRow)
+        });
+      } catch (error) {
+        if (!String(error?.message || '').includes('master_major')) throw error;
+        [row] = await supabaseRequest('/recommendation_logs?select=*', {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify(withoutMasterMajor(recommendationRow))
+        });
+      }
       return row;
     }
   };
