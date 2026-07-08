@@ -21,7 +21,8 @@ Rules:
 14. Preserve official programme names, course names, IDs, URLs, and enum values exactly as provided in the candidate data. Do not translate or rewrite official names.
 15. You must only describe graduate outcomes, future directions, employers, sectors, or career prospects that are present in the provided candidate data.
 16. If year-by-year graduate destination data is insufficient, clearly state that the official graduate outcome information is insufficient.
-17. When at least three candidate programmes are provided, recommend at least three programmes.`;
+17. When at least three candidate programmes are provided, recommend at least three programmes.
+18. When candidate courses include courseNameZh, use it as the Chinese reference name in explanations without changing the official courseName.`;
 
 const OUTPUT_SHAPE = {
   summary: 'string',
@@ -43,6 +44,7 @@ const OUTPUT_SHAPE = {
       importantCoursesForThisStudent: [
         {
           courseName: 'string',
+          courseNameZh: 'string',
           courseType: 'core | elective | foundation | project | unknown',
           importance: 'high | medium | low',
           whyThisCourseMatters: 'string',
@@ -128,12 +130,14 @@ function courseGuideValues(course) {
 
 function buildWeightedFields(programme) {
   return [
-    { field: 'programmeName', weight: 8, values: [programme.programmeName] },
+    { field: 'programmeName', weight: 8, values: [programme.programmeName, programme.programmeNameZh] },
     { field: 'degreeLevel', weight: 6, values: [programme.degreeLevel] },
     { field: 'suitableBackgrounds', weight: 14, values: programme.suitableBackgrounds || [] },
     { field: 'coreCourses', weight: 12, values: programme.coreCourses || [] },
     { field: 'courseDescriptions', weight: 12, values: (programme.courseDescriptions || []).flatMap((course) => [course.courseName, course.description, course.descriptionZh, ...courseGuideValues(course)]) },
     { field: 'importantCourses', weight: 12, values: (programme.importantCourses || []).flatMap((course) => [course.courseName, course.whyImportant, ...(course.relatedStudentBackgrounds || []), ...(course.relatedCareerGoals || [])]) },
+    { field: 'courseDescriptions', weight: 12, values: (programme.courseDescriptions || []).flatMap((course) => [course.courseName, course.courseNameZh, course.description, course.descriptionZh, ...courseGuideValues(course)]) },
+    { field: 'importantCourses', weight: 12, values: (programme.importantCourses || []).flatMap((course) => [course.courseName, course.courseNameZh, course.whyImportant, ...(course.relatedStudentBackgrounds || []), ...(course.relatedCareerGoals || [])]) },
     { field: 'skillsDeveloped', weight: 9, values: programme.skillsDeveloped || [] },
     { field: 'careerDirections', weight: 13, values: programme.careerDirections || [] },
     { field: 'graduateOutcomes', weight: 14, values: [programme.graduateOutcomeSummary, ...(programme.graduateOutcomes || []).flatMap((outcome) => [outcome.description, ...(outcome.roles || []), ...(outcome.sectors || []), ...(outcome.employers || [])])] },
@@ -148,8 +152,10 @@ function safeProgrammeForModel(programme) {
   return {
     id: programme.id,
     programmeName: programme.programmeName,
+    programmeNameZh: programme.programmeNameZh,
     degreeLevel: programme.degreeLevel,
     school: programme.school,
+    schoolId: programme.schoolId,
     department: programme.department,
     officialUrl: programme.officialUrl,
     summary: programme.summary,
@@ -157,7 +163,7 @@ function safeProgrammeForModel(programme) {
     suitableBackgrounds: programme.suitableBackgrounds || [],
     learningObjectives: programme.learningObjectives || [],
     coreCourses: programme.coreCourses || [],
-    courseDescriptions: (programme.courseDescriptions || []).slice(0, 80),
+    courseDescriptions: programme.courseDescriptions || [],
     importantCourses: programme.importantCourses || [],
     skillsDeveloped: programme.skillsDeveloped || [],
     careerDirections: programme.careerDirections || [],
@@ -332,6 +338,7 @@ Important restrictions:
 - If the candidate programme does not include course information, say that course information is insufficient.
 - Write all user-facing text values in Simplified Chinese, including summary, reasons, explanations, preparation advice, potential gaps, career fit, future outcomes, informationLimits, and notRecommended reasons.
 - Preserve official programme names and course names exactly as provided in candidate data.
+- For every important course, set courseName to the official course name and courseNameZh to the provided Chinese reference name when available.
 - Output valid JSON only.
 
 Required JSON output shape:
@@ -372,7 +379,16 @@ export function validateRecommendationOutput(output, candidates) {
     new Set([
       ...(programme.coreCourses || []),
       ...(programme.courseDescriptions || []).map((course) => course.courseName),
-      ...(programme.importantCourses || []).map((course) => course.courseName)
+      ...(programme.courseDescriptions || []).map((course) => course.courseNameZh),
+      ...(programme.importantCourses || []).map((course) => course.courseName),
+      ...(programme.importantCourses || []).map((course) => course.courseNameZh)
+    ].filter(Boolean))
+  ]));
+  const allowedCourseZhByName = new Map(candidates.map((programme) => [
+    programme.id,
+    new Map([
+      ...(programme.courseDescriptions || []).map((course) => [course.courseName, course.courseNameZh]),
+      ...(programme.importantCourses || []).map((course) => [course.courseName, course.courseNameZh])
     ])
   ]));
 
@@ -395,6 +411,13 @@ export function validateRecommendationOutput(output, candidates) {
       assertString(course.courseName, `recommendations[${index}].importantCoursesForThisStudent.courseName`);
       if (!allowedCourseNames.get(programme.id)?.has(course.courseName)) {
         throw new RecommendationError('MODEL_OUTPUT_INVALID', `Model mentioned course outside candidate data: ${course.courseName}`);
+      }
+      if (course.courseNameZh !== undefined && typeof course.courseNameZh !== 'string') {
+        throw new RecommendationError('MODEL_OUTPUT_INVALID', 'courseNameZh must be a string when provided.');
+      }
+      const expectedZh = allowedCourseZhByName.get(programme.id)?.get(course.courseName);
+      if (expectedZh && course.courseNameZh && course.courseNameZh !== expectedZh) {
+        throw new RecommendationError('MODEL_OUTPUT_INVALID', `Model changed courseNameZh for ${course.courseName}`);
       }
     }
   }

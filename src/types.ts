@@ -125,7 +125,17 @@ export interface Course {
   learningGains?: string[];
   careerLinks?: string[];
   selectionAdvice?: string;
+  perspectiveSummary?: string;
+  backgroundPerspectives?: CoursePerspective[];
+  strategyFocus?: string[];
   materialBasis?: string[];
+}
+
+export interface CoursePerspective {
+  role: string;
+  viewpoint: string;
+  deepen: string;
+  career: string;
 }
 
 export interface SharedPost {

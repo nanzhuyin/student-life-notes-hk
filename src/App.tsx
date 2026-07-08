@@ -38,8 +38,10 @@ const legacyPosts = postsData as NotePost[];
 const recommenderProgrammes = programmeOptionsJson as Array<{
   id: string;
   programmeName: string;
+  programmeNameZh?: string;
   degreeLevel: string;
   school: string;
+  schoolId?: string;
 }>;
 
 if (typeof document !== 'undefined') {
@@ -188,6 +190,30 @@ type SupportTicket = {
   adminReply?: string;
   createdAt: string;
   updatedAt?: string;
+};
+
+type CourseAdvisorProfile = {
+  age: string;
+  workExperience: string;
+  isFreshGraduate: boolean;
+  background: string;
+  goals: string;
+  question: string;
+};
+
+type CourseAdvisorResult = {
+  summary: string;
+  fitLevel: 'required' | 'high' | 'medium' | 'low';
+  fitScore: number;
+  keyReasons: string[];
+  mustLearnNote?: string;
+  recommendedFocus: string[];
+  careerConnection: string[];
+  suggestedCourseCombination: string[];
+  nextQuestionPrompts: string[];
+  source: 'deepseek' | 'local-rules';
+  disclaimer: string;
+  modelNote?: string;
 };
 
 let pendingScrollMode: ScrollMode | null = null;
@@ -847,6 +873,26 @@ function getVisibleSharedPosts(schoolId: SchoolId, dynamicPosts: SharedPost[] = 
   });
 }
 
+function getGuideCards(posts: SharedPost[]) {
+  return posts
+    .slice()
+    .sort((a, b) => {
+      const recommendedScore = Number(Boolean(b.recommended)) - Number(Boolean(a.recommended));
+      if (recommendedScore) return recommendedScore;
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+    })
+    .slice(0, 8);
+}
+
+function getGuideCardLabel(post: SharedPost) {
+  if (post.sectionId === 'transport-spots') return '玩乐攻略';
+  if (post.sectionId === 'new-student') return '新生攻略';
+  if (post.sectionId === 'housing') return '租房参考';
+  if (post.sectionId === 'commute') return '通勤路线';
+  if (post.sectionId === 'food') return '附近美食';
+  return '最新更新';
+}
+
 function uniqueCompact(values: Array<string | undefined | null>) {
   return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean)));
 }
@@ -882,6 +928,9 @@ function displayCourseInfo(value: string) {
 function CourseInsightBlock({ course }: { course: Course }) {
   const hasInsight = Boolean(
     course.selectionAdvice ||
+    course.perspectiveSummary ||
+    course.backgroundPerspectives?.length ||
+    course.strategyFocus?.length ||
     course.learnerFit?.length ||
     course.learningGains?.length ||
     course.careerLinks?.length ||
@@ -897,8 +946,41 @@ function CourseInsightBlock({ course }: { course: Course }) {
 
   return (
     <section className="course-insight-panel">
-      <h2>选课解析</h2>
+      <h2>{course.backgroundPerspectives?.length ? '背景视角与就业衔接' : '选课解析'}</h2>
       {course.selectionAdvice && <p className="course-insight-lead">{course.selectionAdvice}</p>}
+      {course.perspectiveSummary && <p className="course-insight-core">{course.perspectiveSummary}</p>}
+      {course.backgroundPerspectives?.length ? (
+        <>
+          <div className="course-perspective-head">
+            <span>不同背景怎么看</span>
+            <strong>同一门课，对应届生、转专业学生和资深从业者的价值不同。</strong>
+          </div>
+          <div className="course-perspective-grid" aria-label="不同背景学生视角">
+            {course.backgroundPerspectives.map((perspective) => (
+              <article key={perspective.role} className="course-perspective-card">
+                <span>{perspective.role}</span>
+                <p>{perspective.viewpoint}</p>
+                <dl>
+                  <div>
+                    <dt>建议深化</dt>
+                    <dd>{perspective.deepen}</dd>
+                  </div>
+                  <div>
+                    <dt>职业连接</dt>
+                    <dd>{perspective.career}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : null}
+      {course.strategyFocus?.length ? (
+        <div className="course-strategy-strip">
+          <strong>选课抓手</strong>
+          {course.strategyFocus.map((item) => <span key={item}>{item}</span>)}
+        </div>
+      ) : null}
       {blocks.length > 0 && (
         <div className="course-insight-grid">
           {blocks.map((block) => (
@@ -927,6 +1009,153 @@ function getUnitText(item: { faculty?: string; unitName?: string; unitLabel?: st
   const unitLabel = item.unitLabel || (faculty.includes('学院') ? '学院' : '单位');
   if (!unitName || unitName === item.faculty || unitName === faculty) return `${unitLabel}：${faculty}`;
   return `${faculty} · ${unitLabel}：${unitName}`;
+}
+
+function compactList(values: Array<string | undefined | null>, max = 6) {
+  return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean))).slice(0, max);
+}
+
+function scoreCourseAgainstProfile(course: Course, profile: CourseAdvisorProfile) {
+  const profileText = normalize([
+    profile.age,
+    profile.isFreshGraduate ? '应届生 求职 就业 fresh graduate' : '',
+    profile.workExperience,
+    profile.background,
+    profile.goals,
+    profile.question
+  ].join(' '));
+  const courseText = normalize([
+    course.title,
+    course.titleZh,
+    course.type,
+    course.description,
+    course.selectionAdvice || '',
+    course.perspectiveSummary || '',
+    ...(course.strategyFocus || []),
+    ...(course.learnerFit || []),
+    ...(course.learningGains || []),
+    ...(course.careerLinks || []),
+    ...(course.backgroundPerspectives || []).flatMap((item) => [item.role, item.viewpoint, item.deepen, item.career])
+  ].join(' '));
+  const tokens = compactList(profileText.split(' ').filter((token) => token.length >= 2), 40);
+  let score = course.required ? 45 : 30;
+  tokens.forEach((token) => {
+    if (courseText.includes(token)) score += token.length >= 4 ? 5 : 2;
+  });
+  ['数据', '分析', '产品', '媒体', '内容', '教育', '管理', '就业', '求职', '作品', '安全', '隐私', '政策', '机器人', '空间', '模型', '部署', 'llm', 'rag', 'agent'].forEach((keyword) => {
+    if (profileText.includes(keyword) && courseText.includes(keyword)) score += 8;
+  });
+  if (profile.isFreshGraduate && courseText.includes('就业')) score += 14;
+  if (normalize(profile.goals).includes('就业')) score += 10;
+  if (normalize(profile.workExperience).includes('媒体') && courseText.includes('媒体')) score += 12;
+  if (normalize(profile.background).includes('数据') && courseText.includes('数据')) score += 12;
+  if (course.typeKey === 'project' && normalize(profile.goals).includes('作品')) score += 12;
+  return Math.max(0, Math.min(100, score));
+}
+
+function selectCoursePerspective(course: Course, profile: CourseAdvisorProfile) {
+  const perspectives = course.backgroundPerspectives || [];
+  if (!perspectives.length) return null;
+  const profileText = normalize([
+    profile.isFreshGraduate ? '应届生 就业' : '',
+    profile.workExperience,
+    profile.background,
+    profile.goals,
+    profile.question
+  ].join(' '));
+  const tokens = compactList(profileText.split(' ').filter((token) => token.length >= 2), 40);
+  return perspectives
+    .map((item) => {
+      const text = normalize([item.role, item.viewpoint, item.deepen, item.career].join(' '));
+      let score = profile.isFreshGraduate && text.includes('应届生') ? 30 : 0;
+      tokens.forEach((token) => {
+        if (text.includes(token)) score += token.length >= 4 ? 4 : 1;
+      });
+      return { item, score };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.item || perspectives[0];
+}
+
+function getFitLevel(course: Course, score: number): CourseAdvisorResult['fitLevel'] {
+  if (course.required) return 'required';
+  if (score >= 74) return 'high';
+  if (score >= 52) return 'medium';
+  return 'low';
+}
+
+function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile): CourseAdvisorResult {
+  const programmeCourses = platformData.courses.filter((item) => item.programmeId === course.programmeId);
+  const score = scoreCourseAgainstProfile(course, profile);
+  const fitLevel = getFitLevel(course, score);
+  const perspective = selectCoursePerspective(course, profile);
+  const rankedSiblings = programmeCourses
+    .filter((item) => item.id !== course.id)
+    .map((item) => ({ item, score: scoreCourseAgainstProfile(item, profile) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(({ item }) => `${getCourseTitle(item)}：${item.selectionAdvice || item.perspectiveSummary || '可作为同项目搭配参考。'}`);
+  const requiredChain = programmeCourses.filter((item) => item.required).slice(0, 4).map((item) => getCourseTitle(item)).join('、');
+  const recommendedFocus = compactList([
+    ...(course.strategyFocus || []),
+    perspective?.deepen,
+    ...(course.learningGains || []).slice(0, 2)
+  ]);
+  const careerConnection = compactList([
+    perspective?.career,
+    ...(course.careerLinks || [])
+  ]);
+  return {
+    summary: course.required
+      ? `${getCourseTitle(course)} 是必修课，你必须学习；AI 顾问建议你把重点放在“${recommendedFocus[0] || '课程核心能力'}”，并把它转化成可解释的项目或职业叙事。`
+      : `${getCourseTitle(course)} 对你的适配度为${fitLevel === 'high' ? '高' : fitLevel === 'medium' ? '中等' : '较低'}。建议重点看它能否帮助你实现：${profile.goals || perspective?.career || '就业或职业升级目标'}。`,
+    fitLevel,
+    fitScore: course.required ? 100 : score,
+    keyReasons: compactList([
+      course.selectionAdvice,
+      perspective?.viewpoint,
+      profile.isFreshGraduate ? '你选择了应届生身份，系统会优先把课程价值转成就业、作品集和岗位表达。' : '',
+      profile.workExperience ? `你的经历信息显示：${profile.workExperience}` : ''
+    ]),
+    mustLearnNote: course.required ? '这是必修课，不能作为“是否选择”的问题处理；更重要的是根据你的背景决定学习重点和项目表达方式。' : '',
+    recommendedFocus,
+    careerConnection,
+    suggestedCourseCombination: compactList([
+      course.required ? `必修链路：${requiredChain} 都需要完成。` : `当前是${course.type}，可结合必修课形成方向组合。`,
+      ...rankedSiblings
+    ], 5),
+    nextQuestionPrompts: [
+      '如果我的目标是尽快就业，这门课应如何写进简历？',
+      '如果我是非技术背景，学习这门课前要补什么？',
+      '这门课和同项目其他课程应该怎么搭配？'
+    ],
+    source: 'local-rules',
+    disclaimer: '本建议基于当前课程库和学生自填信息生成，仅供选课参考，不代表学校官方意见。'
+  };
+}
+
+async function requestCourseAdvisor(course: Course, profile: CourseAdvisorProfile, authToken: string) {
+  if (!API_BASE_URL) return buildLocalCourseAdvisor(course, profile);
+  try {
+    const data = await apiRequest<{ ok: true; data: CourseAdvisorResult }>('/api/course-advisor', {
+      method: 'POST',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      body: JSON.stringify({
+        courseId: course.id,
+        age: profile.age,
+        workExperience: profile.workExperience,
+        isFreshGraduate: profile.isFreshGraduate,
+        background: profile.background,
+        goals: profile.goals,
+        question: profile.question
+      })
+    });
+    return data.data;
+  } catch (error) {
+    return {
+      ...buildLocalCourseAdvisor(course, profile),
+      modelNote: error instanceof Error ? error.message : '后端暂不可用，已使用本地规则库。'
+    };
+  }
 }
 
 function getProgrammeTitle(programme: { schoolId: SchoolId; title: string; titleZh?: string }) {
@@ -968,6 +1197,19 @@ function getProgrammeSelectLabel(programme: { schoolId: SchoolId; title: string;
   if (programme.schoolId !== 'lingnan') return title;
   const shortName = getProgrammeEnglishShortName(programme);
   return shortName && shortName !== title ? `${title} / ${shortName}` : title;
+}
+
+function getRecommenderProgrammeLabel(programme: { programmeName: string; programmeNameZh?: string; degreeLevel: string; school: string; schoolId?: string }) {
+  const schoolLabel = programme.schoolId === 'eduhk' ? 'EdUHK' : programme.schoolId === 'lingnan' ? 'LU' : programme.school;
+  const title = programme.programmeNameZh && programme.programmeNameZh !== programme.programmeName
+    ? `${programme.programmeNameZh} / ${programme.programmeName}`
+    : programme.programmeName;
+  return `${schoolLabel} · ${title} · ${programme.degreeLevel}`;
+}
+
+function getRecommendationCourseTitle(course: { courseName: string; courseNameZh?: string }) {
+  if (course.courseNameZh && course.courseNameZh !== course.courseName) return `${course.courseNameZh} / ${course.courseName}`;
+  return course.courseName;
 }
 
 function getMediumTone(medium: string) {
@@ -1014,7 +1256,7 @@ function getProgrammeMetricText(programme: Programme) {
   if (programme.totalCredits) return `${programme.totalCredits} 学分`;
   const actualCourses = getProgrammeCourseTotal(programme);
   const count = actualCourses || programme.courseCount || 0;
-  return count > 0 ? `${count} 门课程` : '课程资料待补充';
+  return count > 0 ? `${count} 门课程` : '暂无课程条目';
 }
 
 function groupProgrammesByFaculty(programmes: Programme[]) {
@@ -1431,7 +1673,7 @@ function SchoolPanel({
   onChooseSchool: (schoolId: SchoolId) => void;
 }) {
   return (
-    <section className="school-panel">
+    <section className={`school-panel ${activeSchool.id}`}>
       <div>
         <span className="eyebrow">当前平台</span>
         <h2 className="school-title-line">
@@ -1444,7 +1686,7 @@ function SchoolPanel({
         {platformData.schools.map((school) => (
           <button
             key={school.id}
-            className={`school-card ${activeSchool.id === school.id ? 'active' : ''}`}
+            className={`school-card ${school.id} ${activeSchool.id === school.id ? 'active' : ''}`}
             onClick={() => onChooseSchool(school.id)}
           >
             <span className="school-card-code">{schoolAbbreviation(school)}</span>
@@ -1463,6 +1705,7 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
+  const guideCards = getGuideCards(visibleSharedPosts);
 
   return (
     <>
@@ -1481,32 +1724,66 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
         <div className="hero-live-panel guide-panel" aria-label="站内使用路线">
           <div className="live-panel-head">
             <span className="eyebrow">Guide</span>
-            <strong>怎么使用</strong>
+            <strong>三步开始</strong>
           </div>
-          <div className="guide-feature-card">
-            <strong>先选学校，再看内容。</strong>
-            <span>课程清单、生活条目和收藏会跟随当前学校切换；共享资料会在两个学校都显示。</span>
+          <div className="guide-visual" aria-hidden="true">
+            <div className="guide-step-card choose-school">
+              <div className="guide-illustration school-switch-picture">
+                <span></span>
+                <span></span>
+              </div>
+              <strong>选学校</strong>
+            </div>
+            <div className="guide-path-line"></div>
+            <div className="guide-step-card browse-content">
+              <div className="guide-illustration content-grid-picture">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <strong>看课程</strong>
+            </div>
+            <div className="guide-path-line"></div>
+            <div className="guide-step-card save-notes">
+              <div className="guide-illustration saved-picture">
+                <span></span>
+              </div>
+              <strong>收藏</strong>
+            </div>
           </div>
-          <div className="live-metric-list">
-            <div>
-              <span>01</span>
-              <strong>查生活信息</strong>
-              <small>租房、通勤、入学、饮食和出行按板块浏览。</small>
+          <div className="guide-scroll-section">
+            <div className="guide-scroll-head">
+              <strong>最新更新</strong>
+              <span>自动轮播</span>
             </div>
-            <div>
-              <span>02</span>
-              <strong>看课程清单</strong>
-              <small>从“专业课程知识库”进入，按学历、学院和项目筛选。</small>
-            </div>
-            <div>
-              <span>03</span>
-              <strong>保存常用内容</strong>
-              <small>把常看的课程和生活条目加入收藏，之后快速返回。</small>
+            <div className="guide-scroll-row" aria-label="最新更新与攻略">
+              <div className="guide-scroll-track">
+                {guideCards.map((post) => (
+                  <button key={post.id} className="guide-update-card" onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}>
+                    <span>{getGuideCardLabel(post)}</span>
+                    <strong>{post.title}</strong>
+                    <small>{post.summary || post.content.slice(0, 52)}</small>
+                  </button>
+                ))}
+                {guideCards.map((post) => (
+                  <button
+                    key={`${post.id}-loop`}
+                    className="guide-update-card"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}
+                  >
+                    <span>{getGuideCardLabel(post)}</span>
+                    <strong>{post.title}</strong>
+                    <small>{post.summary || post.content.slice(0, 52)}</small>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
-      <SchoolPanel activeSchool={activeSchool} onChooseSchool={onChooseSchool} />
 
       <section className="section">
         <div className="section-head">
@@ -1670,7 +1947,7 @@ function CoursesPage({
           <label>
             <span>项目</span>
             <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
-              <option value="">未选择项目，先看专业模块</option>
+              <option value="">未选择项目</option>
               {programmeOptions.map((programme) => (
                 <option key={programme.id} value={programme.id}>{getProgrammeSelectLabel(programme)}</option>
               ))}
@@ -1685,12 +1962,6 @@ function CoursesPage({
 
       {!activeProgramme && (
         <section className="programme-module-board">
-          <div className="course-list-head">
-            <div>
-              <h2>专业模块</h2>
-              <p>先按学院、学系或独立单位查看专业。选择一个专业后，下方会显示对应课程清单。</p>
-            </div>
-          </div>
           {!programmeGroups.length && (
             <div className="empty-state">
               <strong>当前筛选下暂无专业</strong>
@@ -1743,28 +2014,18 @@ function CoursesPage({
         </section>
       )}
 
-      <div className="course-list-head">
-        <div>
-          <h2>课程清单</h2>
-          <p>
-            {activeProgramme && courses.length
-              ? `当前项目共显示 ${courses.length} 门课程${keyword || typeKey !== 'all' ? '，已按关键词或课程类型筛选。' : '。'}`
-              : activeProgramme
-                ? '当前项目课程资料待补充，将优先从官网、handbook、项目 PDF 和可信公开资料整理。'
-              : '请先在上方专业模块中选择一个项目。'}
-          </p>
-        </div>
-        {(keyword || typeKey !== 'all') && (
+      {(keyword || typeKey !== 'all') && (
+        <div className="course-list-head compact-actions">
           <button className="secondary-action" onClick={() => updateCourseFilters({ keyword: '', typeKey: 'all' })}>
             清除课程筛选
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {!courses.length && (
         <div className="empty-state">
-          <strong>{activeProgramme ? '课程资料待补充' : '尚未选择项目'}</strong>
-          <span>{activeProgramme ? '这个项目暂未收录具体课程条目，后续会从官网、handbook、项目 PDF 和可信公开资料补充。' : '从专业模块或项目下拉菜单选择一个专业后，会显示课程清单。'}</span>
+          <strong>{activeProgramme ? '暂无匹配课程' : '尚未选择项目'}</strong>
+          <span>{activeProgramme ? '请调整筛选条件，或返回项目列表查看其他专业。' : '选择一个专业后即可查看对应课程。'}</span>
         </div>
       )}
 
@@ -1801,10 +2062,12 @@ function CoursesPage({
 
 function CourseDetailPage({
   id,
+  authToken,
   favoriteCourseIds,
   onToggleFavoriteCourse
 }: {
   id: string;
+  authToken: string;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
 }) {
@@ -1880,6 +2143,7 @@ function CourseDetailPage({
           </>
         )}
         <CourseInsightBlock course={course} />
+        <CourseAdvisorPanel course={course} authToken={authToken} />
         <h2>选课信息</h2>
         <dl className="info-list">
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
@@ -1898,6 +2162,147 @@ function CourseDetailPage({
         </button>
       </div>
     </article>
+  );
+}
+
+function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: string }) {
+  const [profile, setProfile] = useState<CourseAdvisorProfile>({
+    age: '',
+    workExperience: '',
+    isFreshGraduate: false,
+    background: '',
+    goals: '',
+    question: ''
+  });
+  const [result, setResult] = useState<CourseAdvisorResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const updateProfile = <K extends keyof CourseAdvisorProfile>(key: K, value: CourseAdvisorProfile[K]) => {
+    setProfile((current) => ({ ...current, [key]: value }));
+  };
+
+  const runAdvisor = async (profileOverride?: CourseAdvisorProfile) => {
+    const currentProfile = profileOverride || profile;
+    setError('');
+    const hasInput = Boolean(
+      currentProfile.age ||
+      currentProfile.workExperience.trim() ||
+      currentProfile.background.trim() ||
+      currentProfile.goals.trim() ||
+      currentProfile.question.trim() ||
+      currentProfile.isFreshGraduate
+    );
+    if (!hasInput) {
+      setError('请至少填写一个背景信息，AI 才能按你的情况匹配课程。');
+      return;
+    }
+    if (API_BASE_URL && !authToken) {
+      setError('请先登录或使用管理员身份进入后再使用 AI 课程顾问。');
+      return;
+    }
+    setLoading(true);
+    try {
+      setResult(await requestCourseAdvisor(course, currentProfile, authToken));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : '暂时无法生成建议');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const usePrompt = (prompt: string) => {
+    const next = { ...profile, question: prompt };
+    setProfile(next);
+    void runAdvisor(next);
+  };
+
+  const sourceLabel = result?.source === 'deepseek' ? 'DeepSeek 已接入' : '本地规则库预览';
+  const fitLabel = result?.fitLevel === 'required'
+    ? '必修'
+    : result?.fitLevel === 'high'
+      ? '高度适配'
+      : result?.fitLevel === 'medium'
+        ? '中度适配'
+        : '谨慎选择';
+
+  return (
+    <section className="course-ai-advisor">
+      <div className="course-ai-head">
+        <span>AI Course Advisor</span>
+        <h2>AI 课程顾问</h2>
+        <p>输入你的年龄、经历和目标，系统会结合当前课程库判断这门课如何学习、是否适合你，以及怎样衔接就业或职业升级。</p>
+      </div>
+      <div className="course-ai-form">
+        <label>
+          <span>年龄</span>
+          <input value={profile.age} onChange={(event) => updateProfile('age', event.target.value)} inputMode="numeric" placeholder="例如：23" />
+        </label>
+        <label className="course-ai-check">
+          <input type="checkbox" checked={profile.isFreshGraduate} onChange={(event) => updateProfile('isFreshGraduate', event.target.checked)} />
+          <span>我是应届生 / 求职优先</span>
+        </label>
+        <label>
+          <span>专业或学习背景</span>
+          <input value={profile.background} onChange={(event) => updateProfile('background', event.target.value)} placeholder="例如：传媒、教育、商科、数据分析" />
+        </label>
+        <label>
+          <span>工作经验</span>
+          <textarea value={profile.workExperience} onChange={(event) => updateProfile('workExperience', event.target.value)} rows={3} placeholder="例如：3 年媒体编辑；做过内容策划和采访"></textarea>
+        </label>
+        <label>
+          <span>目标</span>
+          <textarea value={profile.goals} onChange={(event) => updateProfile('goals', event.target.value)} rows={3} placeholder="例如：想找 AI 产品/数据分析工作，或希望开阔行业视野"></textarea>
+        </label>
+        <label>
+          <span>你想问 AI 的问题</span>
+          <textarea value={profile.question} onChange={(event) => updateProfile('question', event.target.value)} rows={3} placeholder="例如：我非技术背景，这门课该重点学什么？"></textarea>
+        </label>
+      </div>
+      {error && <p className="course-ai-error">{error}</p>}
+      <div className="course-ai-actions">
+        <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成我的课程建议'}</button>
+        <small>{API_BASE_URL ? '登录后将通过后端调用 DeepSeek；失败时自动使用本地规则库。' : '当前为本地调试：使用课程规则库预览，接入 DeepSeek 后自动升级。'}</small>
+      </div>
+      {result && (
+        <div className="course-ai-result">
+          <div className="course-ai-result-head">
+            <span>{sourceLabel}</span>
+            <strong>{fitLabel} · {result.fitScore} 分</strong>
+          </div>
+          {result.mustLearnNote && <p className="course-ai-required">{result.mustLearnNote}</p>}
+          <p className="course-ai-summary">{result.summary}</p>
+          <div className="course-ai-result-grid">
+            <CourseAdvisorList title="为什么这样判断" items={result.keyReasons} />
+            <CourseAdvisorList title="你应该深化什么" items={result.recommendedFocus} />
+            <CourseAdvisorList title="就业 / 职业连接" items={result.careerConnection} />
+            <CourseAdvisorList title="课程搭配建议" items={result.suggestedCourseCombination} />
+          </div>
+          {result.nextQuestionPrompts.length > 0 && (
+            <div className="course-ai-prompts">
+              <strong>继续追问</strong>
+              {result.nextQuestionPrompts.map((prompt) => (
+                <button key={prompt} onClick={() => usePrompt(prompt)}>{prompt}</button>
+              ))}
+            </div>
+          )}
+          {result.modelNote && <p className="course-ai-note">{result.modelNote}</p>}
+          <small>{result.disclaimer}</small>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CourseAdvisorList({ title, items }: { title: string; items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="course-ai-list">
+      <h3>{title}</h3>
+      <ul>
+        {items.map((item) => <li key={item}>{item}</li>)}
+      </ul>
+    </div>
   );
 }
 
@@ -2883,6 +3288,8 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
     () => recommenderProgrammes
       .slice()
       .sort((a, b) => {
+        const school = (a.schoolId || a.school).localeCompare(b.schoolId || b.school);
+        if (school) return school;
         const level = a.degreeLevel.localeCompare(b.degreeLevel);
         if (level) return level;
         return a.programmeName.localeCompare(b.programmeName);
@@ -3003,12 +3410,12 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                 <option value="">从知识库选择一个专业</option>
                 {programmeOptions.map((programme) => (
                   <option key={programme.id} value={programme.id}>
-                    {programme.programmeName} · {programme.degreeLevel}
+                    {getRecommenderProgrammeLabel(programme)}
                   </option>
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前知识库收录 {programmeOptions.length} 个专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
+                当前知识库收录 {programmeOptions.length} 个 EDU / LU 专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
@@ -3128,7 +3535,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                       <div className="course-match-list">
                         {item.importantCoursesForThisStudent.map((course) => (
                           <div key={`${item.programmeId}-${course.courseName}`}>
-                            <strong>{course.courseName}</strong>
+                            <strong>{getRecommendationCourseTitle(course)}</strong>
                             <span>{course.courseType} · {course.importance}</span>
                             <p>{course.whyThisCourseMatters}</p>
                             {course.studentPreparationAdvice.length > 0 && <small>准备建议：{course.studentPreparationAdvice.join('；')}</small>}
@@ -3644,6 +4051,14 @@ export default function App() {
     }
   }, [adminSession, adminToken, currentUser, hasValidAdminToken, hasValidUserToken]);
 
+  useEffect(() => {
+    document.body.classList.toggle('theme-eduhk', activeSchoolId === 'eduhk');
+    document.body.classList.toggle('theme-lingnan', activeSchoolId === 'lingnan');
+    return () => {
+      document.body.classList.remove('theme-eduhk', 'theme-lingnan');
+    };
+  }, [activeSchoolId]);
+
   useLayoutEffect(() => {
     if (!hasAcceptedAgreement) return;
     const top = scrollMode === 'restore' ? getSavedScrollPosition(routeKey) : 0;
@@ -3769,7 +4184,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell school-theme-${activeSchool.id}`}>
       <Header
         activeSchool={activeSchool}
         onChooseSchool={chooseSchool}
@@ -3800,6 +4215,7 @@ export default function App() {
         {!shouldBlockForAuth && route.name === 'course' && (
           <CourseDetailPage
             id={route.id}
+            authToken={recommenderAuthToken}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />

@@ -5,6 +5,11 @@ import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  buildLocalCourseAdvisorResult,
+  callDeepSeekCourseAdvisor,
+  validateCourseAdvisorInput
+} from './course-advisor.mjs';
+import {
   RecommendationError,
   callDeepSeekRecommendation,
   findProgrammeCandidates,
@@ -16,6 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
 const PROGRAMMES_JSON_FILE = process.env.PROGRAMMES_JSON_FILE || join(__dirname, '..', 'src', 'data', 'programmes.json');
+const PLATFORM_DATA_JSON_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, '..', 'src', 'data', 'platformData.json');
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({
   dbFile: DB_FILE,
@@ -187,6 +193,10 @@ function requireRecommendationUser(req) {
 
 async function loadBundledProgrammes() {
   return JSON.parse(await readFile(PROGRAMMES_JSON_FILE, 'utf8'));
+}
+
+async function loadPlatformData() {
+  return JSON.parse(await readFile(PLATFORM_DATA_JSON_FILE, 'utf8'));
 }
 
 async function listProgrammeKnowledgeBase() {
@@ -385,6 +395,37 @@ async function route(req, res) {
         otherContext: profile.otherContext,
         retrievedProgrammeIds: candidates.map((programme) => programme.id),
         modelOutput: data
+      });
+      sendJson(req, res, 200, { ok: true, data });
+    } catch (error) {
+      sendApiError(req, res, error);
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/course-advisor') {
+    try {
+      if (!requireRecommendationUser(req)) {
+        sendJson(req, res, 401, { ok: false, message: '请先登录或使用管理员身份进入后再使用 AI 课程顾问。', code: 'AUTH_REQUIRED' });
+        return;
+      }
+      const profile = validateCourseAdvisorInput(await readJson(req));
+      const platformData = await loadPlatformData();
+      const course = (platformData.courses || []).find((item) => item.id === profile.courseId);
+      if (!course) {
+        sendJson(req, res, 404, { ok: false, message: '没有找到这门课程', code: 'COURSE_NOT_FOUND' });
+        return;
+      }
+      const programmeCourses = (platformData.courses || []).filter((item) => item.programmeId === course.programmeId);
+      const localResult = buildLocalCourseAdvisorResult({ course, programmeCourses, profile });
+      const data = await callDeepSeekCourseAdvisor({
+        apiKey: process.env.DEEPSEEK_API_KEY || '',
+        baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
+        model: process.env.DEEPSEEK_COURSE_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+        profile,
+        course,
+        programmeCourses,
+        localResult
       });
       sendJson(req, res, 200, { ok: true, data });
     } catch (error) {

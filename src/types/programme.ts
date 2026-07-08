@@ -27,6 +27,7 @@ export interface CourseGuide {
 
 export interface CourseDescription {
   courseName: string;
+  courseNameZh?: string;
   description: string;
   descriptionZh?: string;
   courseType: ProgrammeCourseType;
@@ -37,6 +38,7 @@ export interface CourseDescription {
 
 export interface ImportantCourse {
   courseName: string;
+  courseNameZh?: string;
   courseType: ProgrammeCourseType;
   importance: ImportanceLevel;
   whyImportant: string;
@@ -63,8 +65,10 @@ export interface GraduateOutcome {
 export interface Programme {
   id: string;
   programmeName: string;
+  programmeNameZh?: string;
   degreeLevel: ProgrammeDegreeLevel;
   school: string;
+  schoolId?: string;
   department: string;
   officialUrl: string;
   summary: string;
@@ -110,6 +114,7 @@ export interface StudentProfile {
 
 export interface ImportantCourseForStudent {
   courseName: string;
+  courseNameZh?: string;
   courseType: ProgrammeCourseType;
   importance: ImportanceLevel;
   whyThisCourseMatters: string;
