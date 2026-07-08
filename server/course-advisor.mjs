@@ -102,10 +102,27 @@ function scoreCourseForProfile(course, profile) {
   if (profile.isFreshGraduate && courseText.includes('就业')) score += 14;
   if (normalize(profile.goals).includes('就业') || normalize(profile.goals).includes('job')) score += 10;
   if (normalize(profile.workExperience).includes('媒体') && courseText.includes('媒体')) score += 12;
+  if (/(媒体|传媒|内容|编辑|记者|传播)/.test(profileText) && /(data science|数据科学|数据分析|回归|聚类)/.test(courseText)) {
+    const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化)/.test(profileText);
+    score += hasQuantReadiness ? 8 : -26;
+  }
   if (normalize(profile.workExperience).includes('教育') && courseText.includes('教育')) score += 10;
   if (normalize(profile.background).includes('数据') && courseText.includes('数据')) score += 12;
   if (course.typeKey === 'project' && normalize(profile.goals).includes('作品')) score += 12;
   return Math.max(0, Math.min(100, score));
+}
+
+function knowledgeText(knowledge) {
+  if (!knowledge) return '';
+  return [
+    knowledge.advisorSummary,
+    ...(knowledge.suitableFor || []),
+    ...(knowledge.lessSuitableFor || []),
+    ...(knowledge.careerDirections || []),
+    ...(knowledge.studyFocus || []),
+    ...(knowledge.riskWarnings || []),
+    ...(knowledge.retrievalKeywords || [])
+  ].join(' ');
 }
 
 function selectPerspective(course, profile) {
@@ -133,8 +150,9 @@ function fitLevelFor(course, score) {
   return 'low';
 }
 
-function siblingSuggestions(course, profile, programmeCourses) {
+function siblingSuggestions(course, profile, programmeCourses, programmeCourseKnowledge = []) {
   const currentBaseId = course.baseId || course.id;
+  const knowledgeById = new Map(programmeCourseKnowledge.map((item) => [item.id, item]));
   const ranked = programmeCourses
     .filter((item) => item.id !== course.id)
     .map((item) => ({ item, score: scoreCourseForProfile(item, profile) }))
@@ -144,32 +162,49 @@ function siblingSuggestions(course, profile, programmeCourses) {
   const base = course.required
     ? [`必修链路：${required.map((item) => item.titleZh || item.title).join('、')} 都需要完成。`]
     : [`当前是${course.type}，可结合必修课形成方向组合。`];
-  const pair = ranked.map(({ item }) => `${item.titleZh || item.title}：${item.selectionAdvice || item.perspectiveSummary || '可作为同项目课程搭配参考。'}`);
+  const pair = ranked.map(({ item }) => {
+    const knowledge = knowledgeById.get(item.id);
+    return `${item.titleZh || item.title}：${knowledge?.advisorSummary || item.selectionAdvice || item.perspectiveSummary || '可作为同项目课程搭配参考。'}`;
+  });
   if (currentBaseId === 'data-science') pair.unshift('与 Project II 搭配可形成“数据分析 + 模型部署”的作品集。');
   if (currentBaseId === 'project-chatbot') pair.unshift('与 AI Technologies and Engineering 搭配，可形成“系统理解 + 产品落地”的求职叙事。');
   if (currentBaseId === 'privacy-security-policy') pair.unshift('与 AI Technologies and Engineering 搭配，可形成“工程方案 + 负责任上线”的方向。');
   return unique([...base, ...pair]).slice(0, 5);
 }
 
-export function buildLocalCourseAdvisorResult({ course, programmeCourses, profile }) {
-  const score = scoreCourseForProfile(course, profile);
+export function buildLocalCourseAdvisorResult({ course, programmeCourses, profile, courseKnowledge = null, programmeCourseKnowledge = [], retrievalRules = [] }) {
+  const scoredCourse = courseKnowledge ? {
+    ...course,
+    selectionAdvice: unique([course.selectionAdvice, courseKnowledge.advisorSummary, ...(courseKnowledge.suitableFor || []), ...(courseKnowledge.lessSuitableFor || [])]).join(' '),
+    perspectiveSummary: unique([course.perspectiveSummary, knowledgeText(courseKnowledge)]).join(' '),
+    strategyFocus: unique([...(course.strategyFocus || []), ...(courseKnowledge.studyFocus || [])]),
+    learnerFit: unique([...(course.learnerFit || []), ...(courseKnowledge.suitableFor || [])]),
+    learningGains: unique([...(course.learningGains || []), ...(courseKnowledge.learningGains || [])]),
+    careerLinks: unique([...(course.careerLinks || []), ...(courseKnowledge.careerDirections || [])]),
+    tags: unique([...(course.tags || []), ...(courseKnowledge.domains || []), ...(courseKnowledge.retrievalKeywords || [])])
+  } : course;
+  const score = scoreCourseForProfile(scoredCourse, profile);
   const fitLevel = fitLevelFor(course, score);
   const perspective = selectPerspective(course, profile);
   const mustLearnNote = course.required
     ? '这是必修课，不能作为“是否选择”的问题处理；更重要的是根据你的背景决定学习重点和项目表达方式。'
     : '';
   const keyReasons = unique([
+    courseKnowledge?.advisorSummary,
     course.selectionAdvice,
     perspective?.viewpoint,
+    ...(courseKnowledge?.riskWarnings || []).slice(0, 2),
     profile.isFreshGraduate ? '你选择了应届生身份，系统会优先把课程价值转成就业、作品集和岗位表达。' : '',
     profile.workExperience ? `你的经历信息显示：${profile.workExperience}` : ''
   ]).slice(0, 4);
   const recommendedFocus = unique([
+    ...(courseKnowledge?.studyFocus || []),
     ...(course.strategyFocus || []),
     perspective?.deepen,
     ...(course.learningGains || []).slice(0, 2)
   ]).slice(0, 5);
   const careerConnection = unique([
+    ...(courseKnowledge?.careerDirections || []),
     perspective?.career,
     ...(course.careerLinks || [])
   ]).slice(0, 5);
@@ -184,13 +219,19 @@ export function buildLocalCourseAdvisorResult({ course, programmeCourses, profil
     mustLearnNote,
     recommendedFocus,
     careerConnection,
-    suggestedCourseCombination: siblingSuggestions(course, profile, programmeCourses),
+    suggestedCourseCombination: siblingSuggestions(course, profile, programmeCourses, programmeCourseKnowledge),
     nextQuestionPrompts: [
       '如果我的目标是尽快就业，这门课应如何写进简历？',
       '如果我是非技术背景，学习这门课前要补什么？',
       '这门课和同项目其他课程应该怎么搭配？'
     ],
     source: 'local-rules',
+    knowledgeBase: courseKnowledge ? {
+      confidence: courseKnowledge.confidence,
+      reviewStatus: courseKnowledge.reviewStatus,
+      intensity: courseKnowledge.intensity,
+      retrievalRules: retrievalRules.slice(0, 5).map((item) => item.rule)
+    } : undefined,
     disclaimer: COURSE_ADVISOR_DISCLAIMER
   };
 }
@@ -216,13 +257,40 @@ function safeCourse(course) {
   };
 }
 
-function buildDeepSeekCoursePrompt({ profile, course, programmeCourses, localResult }) {
+function safeKnowledge(knowledge) {
+  if (!knowledge) return null;
+  return {
+    id: knowledge.id,
+    programmeId: knowledge.programmeId,
+    title: knowledge.title,
+    titleZh: knowledge.titleZh,
+    typeKey: knowledge.typeKey,
+    required: Boolean(knowledge.required),
+    medium: knowledge.medium,
+    domains: knowledge.domains || [],
+    intensity: knowledge.intensity || {},
+    suitableFor: knowledge.suitableFor || [],
+    lessSuitableFor: knowledge.lessSuitableFor || [],
+    careerDirections: knowledge.careerDirections || [],
+    studyFocus: knowledge.studyFocus || [],
+    riskWarnings: knowledge.riskWarnings || [],
+    advisorSummary: knowledge.advisorSummary || '',
+    evidenceSummary: knowledge.evidenceSummary || '',
+    confidence: knowledge.confidence || '',
+    reviewStatus: knowledge.reviewStatus || ''
+  };
+}
+
+function buildDeepSeekCoursePrompt({ profile, course, programmeCourses, courseKnowledge, programmeCourseKnowledge = [], retrievalRules = [], localResult }) {
   return JSON.stringify({
     task: 'Generate a personalized course-selection answer.',
     outputShape: OUTPUT_SHAPE,
     studentProfile: profile,
     currentCourse: safeCourse(course),
     sameProgrammeCourses: programmeCourses.map(safeCourse),
+    currentCourseAdvisorKnowledge: safeKnowledge(courseKnowledge),
+    sameProgrammeAdvisorKnowledge: programmeCourseKnowledge.map(safeKnowledge).filter(Boolean),
+    retrievalRules,
     localRuleBasedDraft: localResult
   }, null, 2);
 }
@@ -256,7 +324,7 @@ function normalizeAdvisorOutput(output, localResult) {
   return next;
 }
 
-export async function callDeepSeekCourseAdvisor({ apiKey, baseUrl, model, profile, course, programmeCourses, localResult }) {
+export async function callDeepSeekCourseAdvisor({ apiKey, baseUrl, model, profile, course, programmeCourses, courseKnowledge = null, programmeCourseKnowledge = [], retrievalRules = [], localResult }) {
   if (!apiKey) return localResult;
   const endpoint = `${String(baseUrl || 'https://api.deepseek.com').replace(/\/$/, '')}/chat/completions`;
   const response = await fetch(endpoint, {
@@ -270,7 +338,7 @@ export async function callDeepSeekCourseAdvisor({ apiKey, baseUrl, model, profil
       thinking: { type: 'disabled' },
       messages: [
         { role: 'system', content: COURSE_ADVISOR_SYSTEM_PROMPT },
-        { role: 'user', content: buildDeepSeekCoursePrompt({ profile, course, programmeCourses, localResult }) }
+        { role: 'user', content: buildDeepSeekCoursePrompt({ profile, course, programmeCourses, courseKnowledge, programmeCourseKnowledge, retrievalRules, localResult }) }
       ],
       response_format: { type: 'json_object' },
       temperature: 0.25,

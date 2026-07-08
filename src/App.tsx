@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.60';
+const APP_VERSION = 'v1.62';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -215,6 +215,24 @@ type CourseAdvisorResult = {
   disclaimer: string;
   modelNote?: string;
 };
+
+const COURSE_ADVISOR_EMPTY_PROFILE: CourseAdvisorProfile = {
+  age: '',
+  workExperience: '',
+  isFreshGraduate: false,
+  background: '',
+  goals: '',
+  question: ''
+};
+
+const COURSE_ADVISOR_AGE_OPTIONS = [
+  { value: '', label: '请选择年龄' },
+  ...Array.from({ length: 43 }, (_, index) => {
+    const age = index + 18;
+    return { value: String(age), label: `${age} 岁` };
+  }),
+  { value: '61', label: '60 岁以上' }
+];
 
 let pendingScrollMode: ScrollMode | null = null;
 let appNavigationDepth = 0;
@@ -1045,9 +1063,15 @@ function scoreCourseAgainstProfile(course: Course, profile: CourseAdvisorProfile
   ['数据', '分析', '产品', '媒体', '内容', '教育', '管理', '就业', '求职', '作品', '安全', '隐私', '政策', '机器人', '空间', '模型', '部署', 'llm', 'rag', 'agent'].forEach((keyword) => {
     if (profileText.includes(keyword) && courseText.includes(keyword)) score += 8;
   });
-  if (profile.isFreshGraduate && courseText.includes('就业')) score += 14;
+  if (profile.isFreshGraduate && courseText.includes('就业')) score += 10;
   if (normalize(profile.goals).includes('就业')) score += 10;
   if (normalize(profile.workExperience).includes('媒体') && courseText.includes('媒体')) score += 12;
+  if (/(媒体|传媒|内容|编辑|记者|传播)/.test(profileText) && /(data science|数据科学|数据分析|回归|聚类)/.test(courseText)) {
+    const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化)/.test(profileText);
+    score += hasQuantReadiness ? 8 : -26;
+  }
+  if (/(教育|老师|教师|学校|公共服务|政策)/.test(profileText) && /(数据|分析|评估|学习)/.test(courseText)) score += 14;
+  if (/(管理|主管|负责人|总监|创业|老板|资深)/.test(profileText) && /(决策|评估|管理|策略|数据|风险|政策)/.test(courseText)) score += 12;
   if (normalize(profile.background).includes('数据') && courseText.includes('数据')) score += 12;
   if (course.typeKey === 'project' && normalize(profile.goals).includes('作品')) score += 12;
   return Math.max(0, Math.min(100, score));
@@ -1083,9 +1107,154 @@ function getFitLevel(course: Course, score: number): CourseAdvisorResult['fitLev
   return 'low';
 }
 
+function getCourseAdvisorAudienceRule(course: Course, profile: CourseAdvisorProfile) {
+  const profileText = normalize([
+    profile.age,
+    profile.workExperience,
+    profile.background,
+    profile.goals,
+    profile.question
+  ].join(' '));
+  const courseText = normalize([
+    course.title,
+    course.titleZh,
+    course.description,
+    course.selectionAdvice || '',
+    course.perspectiveSummary || '',
+    ...(course.strategyFocus || []),
+    ...(course.learnerFit || []),
+    ...(course.learningGains || []),
+    ...(course.careerLinks || [])
+  ].join(' '));
+  const age = Number(profile.age);
+  const isDataCourse = /(data science|数据科学|数据分析|回归|聚类|模型评估|可视化)/.test(courseText);
+  const isMediaProfile = /(媒体|传媒|内容|编辑|记者|新闻|传播|公众号|短视频|品牌内容)/.test(profileText);
+  const isEducationProfile = /(教育|教师|老师|学校|培训|学生|课程|学习)/.test(profileText);
+  const isManagerProfile = /(管理|主管|负责人|总监|创业|老板|资深|8年|10年|多年)/.test(profileText) || age >= 28;
+  const isTechnicalProfile = /(计算机|数据|统计|编程|python|r语言|算法|工程|开发)/.test(profileText);
+  const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化|机器学习基础)/.test(profileText);
+  const hasDataCareerGoal = /(数据分析|数据科学|统计学|商业分析|bi|business intelligence|机器学习|算法|ai产品|ai 产品|产品分析|运营分析|用户研究|量化|研究助理)/.test(profileText);
+  const wantsMathChallenge = /(挑战数学|想学数学|补数学|补统计|愿意补|不怕数学|数学能力|统计能力|算法能力|技术路线)/.test(profileText);
+
+  if (isMediaProfile && isDataCourse && !hasQuantReadiness) {
+    return {
+      label: '媒体 / 内容从业者（数学基础弱）',
+      scoreBoost: -28,
+      summary: `${getCourseTitle(course)} 不建议作为没有数学、统计或编程基础的 30 岁左右媒体/内容从业者的首选选修。这门课会接触算法、回归、分类、聚类和 R / Shiny，学习压力会比较大；如果只是想打开 AI 视野，更适合先选偏文科、政策、伦理和应用趋势的课程。`,
+      reasons: [
+        'Data Science 的核心不是“聊数据”，而是用算法和模型处理问题；没有线代、统计或编程底子时，容易把精力耗在基础门槛上。',
+        '资深媒体人更有优势的是行业判断、叙事、传播、用户理解和公共议题表达，应该把 AI 课程转成这些优势的放大器。',
+        '如果确实要学 Data Science，建议先补 Excel / 统计概念 / R 或 Python 入门，再把目标限定为“能读懂结果、会问问题”，不要一开始追求建模熟练。'
+      ],
+      focus: ['先补统计和编程基础', '理解算法结果而非硬转码', '避免把选修课变成高挫败感课程'],
+      career: [
+        '更推荐：Privacy, Security, and Policy（隐私、安全与政策）',
+        '更推荐：Trends in Artificial Intelligence at Workplace and at Home（工作与家庭中的人工智能趋势）',
+        '可结合必修 Humanities and Artificial Intelligence，把媒体经验转成 AI 伦理、社会影响和公共传播能力'
+      ]
+    };
+  }
+
+  if (profile.isFreshGraduate && isDataCourse && (hasQuantReadiness || hasDataCareerGoal || wantsMathChallenge)) {
+    return {
+      label: '应届生 / 数据统计就业导向',
+      scoreBoost: 16,
+      summary: `${getCourseTitle(course)} 适合想走数据、统计、产品分析或技术路线的应届生，尤其是愿意挑战数学、统计和基础编程的人。这门课的核心不是泛泛了解 AI，而是用回归、分类、聚类等统计与算法方法解决问题，并把结果转成作品集和面试案例。`,
+      reasons: [
+        'Data Science 更接近统计学和算法应用，需要面对数学、统计、编程和模型评估，不适合作为轻松视野课。',
+        '应届生如果缺少工作经验，可以把课程项目转成简历里的数据分析案例、用户研究案例或产品分析案例。',
+        '适合把学习目标设为“能处理数据、解释模型、讲清业务含义”，而不是只写“了解 AI”。'
+      ],
+      focus: ['统计学基础', 'R / 数据处理', '回归、分类、聚类', '模型评估', '作品集项目'],
+      career: ['数据分析助理', 'BI / 运营分析', '产品分析', '市场研究', '教育数据分析', 'AI 产品助理']
+    };
+  }
+
+  if (profile.isFreshGraduate && isDataCourse && !hasQuantReadiness && !hasDataCareerGoal && !wantsMathChallenge) {
+    return {
+      label: '应届生 / 未确认量化准备',
+      scoreBoost: -6,
+      summary: `${getCourseTitle(course)} 不建议仅因为“应届生要就业”就直接选择。它偏统计学和算法应用，如果你没有明确的数据岗位目标，也没有准备补数学、统计或编程，建议先考虑更偏 AI 视野、政策、安全或应用趋势的选修课。`,
+      reasons: [
+        '这门课会遇到回归、分类、聚类、模型评估和 R / Shiny，学习压力主要来自统计和编程门槛。',
+        '应届生选课应服务于目标岗位；如果目标不是数据、产品分析或技术相关岗位，投入产出未必最高。',
+        '如果之后决定挑战数学和数据路线，可以先补 Excel、统计概念、Python 或 R 入门，再选择这门课。'
+      ],
+      focus: ['先确认岗位目标', '补统计和编程基础', '避免盲目选择高门槛选修'],
+      career: [
+        '更推荐：Privacy, Security, and Policy（隐私、安全与政策）',
+        '更推荐：Trends in Artificial Intelligence at Workplace and at Home（工作与家庭中的人工智能趋势）',
+        '若目标转为数据方向，再把 Data Science 作为核心选修'
+      ]
+    };
+  }
+
+  if (isMediaProfile && isDataCourse) {
+    return {
+      label: '媒体 / 内容从业者（有数据基础）',
+      scoreBoost: 8,
+      summary: `${getCourseTitle(course)} 只适合已经愿意补统计、算法和编程基础的媒体或内容从业者。学习目标不是“转成纯程序员”，而是把数据分析能力接到内容选题、用户研究、传播效果评估和 AI 产品表达上。`,
+      reasons: [
+        '媒体经验本身有选题、访谈、叙事和用户理解优势；但 Data Science 需要额外补数据和算法基础。',
+        '这类学生最应该把课程成果做成内容数据分析、用户分群、传播效果评估或市场研究案例。',
+        '学习重点应放在问题定义、结果解释和可视化表达，不建议把目标设成短期内精通建模。'
+      ],
+      focus: ['R / 基础数据处理', '回归、分类、聚类的业务含义', '把模型结果讲给非技术团队', '传播数据或用户数据项目'],
+      career: ['内容策略 / 用户研究', '市场研究 / 数据新闻', 'AI 产品运营', '行业研究与咨询']
+    };
+  }
+
+  if (profile.isFreshGraduate) {
+    return {
+      label: '应届生 / 就业优先',
+      scoreBoost: 10,
+      summary: `${getCourseTitle(course)} 对应届生的价值取决于能否转成简历项目。不要只写“学过这门课”，要写清楚你解决了什么问题、用了什么方法、输出了什么结果。`,
+      reasons: ['应届生缺少工作履历，课程项目可以补作品集和面试案例。', '优先选择能产出可展示结果、报告、代码或原型的学习路径。'],
+      focus: ['可展示项目', '岗位关键词', '方法和结果表达'],
+      career: ['数据分析助理', 'AI 产品助理', '教育科技运营', '研究助理']
+    };
+  }
+
+  if (isEducationProfile && isDataCourse) {
+    return {
+      label: '教育 / 公共服务背景',
+      scoreBoost: 12,
+      summary: `${getCourseTitle(course)} 适合教育或公共服务背景学生，因为它可以把学生表现、问卷、服务数据和政策效果转成可验证的证据。`,
+      reasons: ['教育和公共服务场景天然有大量行为、学习和反馈数据。', '学习重点应放在指标设计、分群、预测和结果解释。'],
+      focus: ['学习数据分析', '政策或项目评估', '可解释报告'],
+      career: ['学习分析', '教育科技', '政策评估', '公共服务优化']
+    };
+  }
+
+  if (isManagerProfile) {
+    return {
+      label: '管理者 / 资深从业者',
+      scoreBoost: 8,
+      summary: `${getCourseTitle(course)} 对资深从业者的意义不一定是亲自做所有技术细节，而是建立判断框架：知道什么时候该用 AI、怎样看结果、哪些风险不能忽略。`,
+      reasons: ['资深从业者更需要把课程转化为决策质量、团队协作和业务判断。', '学习时要关注边界、指标、成本、风险和组织落地。'],
+      focus: ['指标选择', '可信度判断', '业务解释', '团队沟通'],
+      career: ['管理咨询', '业务分析', 'AI 转型负责人', '产品或项目管理']
+    };
+  }
+
+  if (isTechnicalProfile) {
+    return {
+      label: '技术 / 数据背景',
+      scoreBoost: 8,
+      summary: `${getCourseTitle(course)} 对技术或数据背景学生更适合作为深化课：重点不是概念入门，而是把方法做扎实，并形成可复用的项目。`,
+      reasons: ['已有技术基础时，可以把课程要求提高到模型比较、误差分析和部署表达。'],
+      focus: ['方法比较', '模型评估', '工程化表达'],
+      career: ['数据分析', '机器学习应用', 'AI 工程助理', '技术产品']
+    };
+  }
+
+  return null;
+}
+
 function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile): CourseAdvisorResult {
   const programmeCourses = platformData.courses.filter((item) => item.programmeId === course.programmeId);
-  const score = scoreCourseAgainstProfile(course, profile);
+  const audienceRule = getCourseAdvisorAudienceRule(course, profile);
+  const score = Math.min(100, scoreCourseAgainstProfile(course, profile) + (audienceRule?.scoreBoost || 0));
   const fitLevel = getFitLevel(course, score);
   const perspective = selectCoursePerspective(course, profile);
   const rankedSiblings = programmeCourses
@@ -1096,21 +1265,25 @@ function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile):
     .map(({ item }) => `${getCourseTitle(item)}：${item.selectionAdvice || item.perspectiveSummary || '可作为同项目搭配参考。'}`);
   const requiredChain = programmeCourses.filter((item) => item.required).slice(0, 4).map((item) => getCourseTitle(item)).join('、');
   const recommendedFocus = compactList([
+    ...(audienceRule?.focus || []),
     ...(course.strategyFocus || []),
     perspective?.deepen,
     ...(course.learningGains || []).slice(0, 2)
   ]);
   const careerConnection = compactList([
+    ...(audienceRule?.career || []),
     perspective?.career,
     ...(course.careerLinks || [])
   ]);
   return {
     summary: course.required
       ? `${getCourseTitle(course)} 是必修课，你必须学习；AI 顾问建议你把重点放在“${recommendedFocus[0] || '课程核心能力'}”，并把它转化成可解释的项目或职业叙事。`
-      : `${getCourseTitle(course)} 对你的适配度为${fitLevel === 'high' ? '高' : fitLevel === 'medium' ? '中等' : '较低'}。建议重点看它能否帮助你实现：${profile.goals || perspective?.career || '就业或职业升级目标'}。`,
+      : audienceRule?.summary || `${getCourseTitle(course)} 对你的适配度为${fitLevel === 'high' ? '高' : fitLevel === 'medium' ? '中等' : '较低'}。建议重点看它能否帮助你实现：${profile.goals || perspective?.career || '就业或职业升级目标'}。`,
     fitLevel,
     fitScore: course.required ? 100 : score,
     keyReasons: compactList([
+      audienceRule ? `识别画像：${audienceRule.label}` : '',
+      ...(audienceRule?.reasons || []),
       course.selectionAdvice,
       perspective?.viewpoint,
       profile.isFreshGraduate ? '你选择了应届生身份，系统会优先把课程价值转成就业、作品集和岗位表达。' : '',
@@ -1129,8 +1302,71 @@ function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile):
       '这门课和同项目其他课程应该怎么搭配？'
     ],
     source: 'local-rules',
-    disclaimer: '本建议基于当前课程库和学生自填信息生成，仅供选课参考，不代表学校官方意见。'
+    disclaimer: '本建议来自当前内测固定规则库和课程资料，不代表学校官方意见；后续接入 DeepSeek 后可升级为更细的对话式分析。'
   };
+}
+
+function hasCourseAdvisorProfileInput(profile: CourseAdvisorProfile) {
+  return Boolean(
+    profile.age ||
+    profile.workExperience.trim() ||
+    profile.background.trim() ||
+    profile.goals.trim() ||
+    profile.question.trim() ||
+    profile.isFreshGraduate
+  );
+}
+
+function buildCourseAdvisorPromptScript(course: Course, profile: CourseAdvisorProfile, result: CourseAdvisorResult | null) {
+  const courseFacts = [
+    `课程：${getCourseTitle(course)}`,
+    `课程类型：${course.required ? '必修课' : course.type || '选修/项目课程'}`,
+    `授课语言：${course.medium || course.mediumDetail || '以课程页面为准'}`,
+    `所属项目：${course.programmeTitle || '未标注'}`,
+    `资料来源：${course.descriptionSourceUrl || course.sourceUrl || '当前课程库'}`
+  ];
+  const profileFacts = [
+    `年龄：${profile.age ? `${profile.age} 岁左右` : '未填写'}`,
+    `是否应届生：${profile.isFreshGraduate ? '是' : '否/未选择'}`,
+    `专业或学习背景：${profile.background.trim() || '未填写'}`,
+    `工作经验：${profile.workExperience.trim() || '未填写'}`,
+    `目标：${profile.goals.trim() || '未填写'}`,
+    `本次问题：${profile.question.trim() || '未填写'}`
+  ];
+  const rules = [
+    '只基于 Otter 当前课程资料、课程知识库和固定画像规则生成建议。',
+    '必修课不判断“是否要选”，只解释学习重点、能力转化和职业表达。',
+    '选修课会按学生背景、年龄阶段、就业目标、数学/统计/编程准备度判断适配度。',
+    '对于 Data Science 等高技术课程，会明确提示数学、统计、算法和编程门槛。',
+    '不要编造官方录取、就业承诺或课程不存在的信息。',
+    '回答仅供选课参考，不代表任何大学、学院、课程团队或官方立场。'
+  ];
+  const output = result ? [
+    `适配标签：${result.fitLevel} · ${result.fitScore} 分`,
+    `摘要：${result.summary}`,
+    `主要理由：${result.keyReasons.join('；') || '无'}`,
+    `建议深化：${result.recommendedFocus.join('；') || '无'}`
+  ] : ['尚未生成结果。'];
+
+  return [
+    '[生成原脚本 / Prompt Draft]',
+    '',
+    '你是 Otter 的课程建议助手。请根据以下课程资料、用户画像和规则，生成面向学生的选课建议。',
+    '',
+    '【课程资料】',
+    ...courseFacts,
+    '',
+    '【用户画像】',
+    ...profileFacts,
+    '',
+    '【回答规则】',
+    ...rules.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    '【当前规则库输出】',
+    ...output,
+    '',
+    '注：此脚本不包含 API Key、账号密码或用户联系方式。'
+  ].join('\n');
 }
 
 async function requestCourseAdvisor(course: Course, profile: CourseAdvisorProfile, authToken: string) {
@@ -2062,12 +2298,10 @@ function CoursesPage({
 
 function CourseDetailPage({
   id,
-  authToken,
   favoriteCourseIds,
   onToggleFavoriteCourse
 }: {
   id: string;
-  authToken: string;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
 }) {
@@ -2076,107 +2310,144 @@ function CourseDetailPage({
   if (!course) return <EmptyPage title="没有找到这门课程" />;
 
   return (
-    <article className="detail-page">
-      <button className="back-button" onClick={() => goBack('/courses')}>返回课程库</button>
-      <section className="detail-head course-detail-head">
-        <span className="pill">{course.school} · {course.type}</span>
-        <h1>{getCourseTitle(course)}</h1>
-        {getCourseSubtitle(course) && <p>{getCourseSubtitle(course)}</p>}
-        <div className="tag-row">
-          <span>{formatCreditsText(course)}</span>
-          <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
-          <span>{course.required ? '必修' : '可选'}</span>
-          {course.courseCode && <span>{course.courseCode}</span>}
-        </div>
-      </section>
-
-      <section className="detail-body">
-        <h2>课程简介</h2>
-        <p>{formatFacultyText(course.description)}</p>
-        {course.officialDescriptionEn && (
-          <>
-            <h2>官网英文原文</h2>
-            <p>{course.officialDescriptionEn}</p>
-          </>
-        )}
-        {course.courseGuide && (
-          <>
-            <h2>学生视角课程指南</h2>
-            <div className="course-guide-grid">
-              <div>
-                <strong>适合背景</strong>
-                <ul>{course.courseGuide.suitableBackgrounds.map((item) => <li key={item}>{item}</li>)}</ul>
-              </div>
-              <div>
-                <strong>建议深化</strong>
-                <ul>{course.courseGuide.deepenFocus.map((item) => <li key={item}>{item}</li>)}</ul>
-              </div>
-              <div>
-                <strong>能力产出</strong>
-                <ul>{course.courseGuide.skillsGained.map((item) => <li key={item}>{item}</li>)}</ul>
-              </div>
-              <div>
-                <strong>就业 / 转型衔接</strong>
-                <ul>{course.courseGuide.careerConnections.map((item) => <li key={item}>{item}</li>)}</ul>
-              </div>
-            </div>
-            {course.courseGuide.studentPerspectives.length > 0 && (
-              <div className="student-perspective-list">
-                {course.courseGuide.studentPerspectives.map((item) => (
-                  <div key={`${item.profile}-${item.value}`}>
-                    <strong>{item.profile}</strong>
-                    <p>{item.value}</p>
-                    <small>学习重点：{item.suggestedFocus}</small>
-                  </div>
-                ))}
-              </div>
-            )}
-            {course.courseGuide.preparationAdvice.length > 0 && (
-              <>
-                <h2>课前准备建议</h2>
-                <ul>{course.courseGuide.preparationAdvice.map((item) => <li key={item}>{item}</li>)}</ul>
-              </>
-            )}
-            {course.courseGuide.informationLimits.length > 0 && (
-              <p className="detail-note">{course.courseGuide.informationLimits.join('；')}</p>
-            )}
-          </>
-        )}
-        <CourseInsightBlock course={course} />
-        <CourseAdvisorPanel course={course} authToken={authToken} />
-        <h2>选课信息</h2>
-        <dl className="info-list">
-          <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
-          <div><dt>学院 / 单位</dt><dd>{getUnitText(course)}</dd></div>
-          {course.parentUnit && <div><dt>上级单位</dt><dd>{course.parentUnit}</dd></div>}
-          <div><dt>开课学期</dt><dd>{displayCourseInfo(course.semester)}</dd></div>
-          <div><dt>先修要求</dt><dd>{displayCourseInfo(course.prerequisites)}</dd></div>
-          <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
-          <div><dt>来源</dt><dd>{course.descriptionSourceUrl || course.sourceUrl}</dd></div>
-        </dl>
-      </section>
-
-      <div className="detail-actions">
-        <button className={`primary-action ${favoriteCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onToggleFavoriteCourse(course.id)}>
+    <article className="detail-page course-detail-page">
+      <div className="detail-topbar">
+        <button className="back-button detail-back-button" onClick={() => goBack('/courses')}>← 返回上一页</button>
+        <button className={`detail-save-button ${favoriteCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onToggleFavoriteCourse(course.id)}>
           {favoriteCourseIds.includes(course.id) ? '已收藏' : '收藏课程'}
         </button>
       </div>
+
+      <section className="detail-head course-detail-head course-detail-hero">
+        <div className="course-detail-title-block">
+          <span className="pill">{course.school} · {course.type}</span>
+          <h1>{getCourseTitle(course)}</h1>
+          {getCourseSubtitle(course) && <p>{getCourseSubtitle(course)}</p>}
+          <div className="tag-row">
+            <span>{formatCreditsText(course)}</span>
+            <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
+            <span>{course.required ? '必修课' : '选修课'}</span>
+            {course.courseCode && <span>{course.courseCode}</span>}
+          </div>
+        </div>
+        <aside className="course-detail-snapshot" aria-label="课程快速信息">
+          <div>
+            <span>所属项目</span>
+            <strong>{course.programmeTitle}</strong>
+          </div>
+          <div>
+            <span>开课单位</span>
+            <strong>{course.unitName || formatFacultyName(course.faculty)}</strong>
+          </div>
+          <div>
+            <span>资料核对</span>
+            <strong>{course.checkedAt}</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section className="detail-body course-detail-body">
+        <div className="course-detail-content">
+          <section className="course-detail-card course-description-card">
+            <span className="section-kicker">Course Brief</span>
+            <h2>这门课讲什么</h2>
+            <p>{formatFacultyText(course.description)}</p>
+          </section>
+          {course.officialDescriptionEn && (
+            <section className="course-detail-card course-official-card">
+              <span className="section-kicker">Official Text</span>
+              <h2>官网英文原文</h2>
+              <p>{course.officialDescriptionEn}</p>
+            </section>
+          )}
+          {course.courseGuide && (
+            <section className="course-detail-card course-guide-card">
+              <span className="section-kicker">Student Guide</span>
+              <h2>学生视角课程指南</h2>
+              <div className="course-guide-grid">
+                <div>
+                  <strong>适合背景</strong>
+                  <ul>{course.courseGuide.suitableBackgrounds.map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+                <div>
+                  <strong>建议深化</strong>
+                  <ul>{course.courseGuide.deepenFocus.map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+                <div>
+                  <strong>能力产出</strong>
+                  <ul>{course.courseGuide.skillsGained.map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+                <div>
+                  <strong>就业 / 转型衔接</strong>
+                  <ul>{course.courseGuide.careerConnections.map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+              </div>
+              {course.courseGuide.studentPerspectives.length > 0 && (
+                <div className="student-perspective-list">
+                  {course.courseGuide.studentPerspectives.map((item) => (
+                    <div key={`${item.profile}-${item.value}`}>
+                      <strong>{item.profile}</strong>
+                      <p>{item.value}</p>
+                      <small>学习重点：{item.suggestedFocus}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {course.courseGuide.preparationAdvice.length > 0 && (
+                <div className="course-guide-prep">
+                  <strong>课前准备建议</strong>
+                  <ul>{course.courseGuide.preparationAdvice.map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+              )}
+              {course.courseGuide.informationLimits.length > 0 && (
+                <p className="detail-note">{course.courseGuide.informationLimits.join('；')}</p>
+              )}
+            </section>
+          )}
+          <CourseInsightBlock course={course} />
+          <CourseAdvisorPanel course={course} />
+        </div>
+
+        <aside className="course-detail-side">
+          <section className="course-detail-card">
+            <span className="section-kicker">Selection Info</span>
+            <h2>选课信息</h2>
+            <dl className="info-list compact">
+              <div><dt>学院 / 单位</dt><dd>{getUnitText(course)}</dd></div>
+              {course.parentUnit && <div><dt>上级单位</dt><dd>{course.parentUnit}</dd></div>}
+              <div><dt>开课学期</dt><dd>{displayCourseInfo(course.semester)}</dd></div>
+              <div><dt>先修要求</dt><dd>{displayCourseInfo(course.prerequisites)}</dd></div>
+              <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
+              <div><dt>来源</dt><dd>{course.descriptionSourceUrl || course.sourceUrl}</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </section>
     </article>
   );
 }
 
-function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: string }) {
-  const [profile, setProfile] = useState<CourseAdvisorProfile>({
-    age: '',
-    workExperience: '',
-    isFreshGraduate: false,
-    background: '',
-    goals: '',
-    question: ''
-  });
+function CourseAdvisorPanel({ course }: { course: Course }) {
+  const [profile, setProfile] = useState<CourseAdvisorProfile>(COURSE_ADVISOR_EMPTY_PROFILE);
   const [result, setResult] = useState<CourseAdvisorResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastAdvisorQuestion, setLastAdvisorQuestion] = useState('');
+  const [activeFollowUp, setActiveFollowUp] = useState('');
+  const [showPromptScript, setShowPromptScript] = useState(false);
+
+  useEffect(() => {
+    if (!hasCourseAdvisorProfileInput(profile) && !result) return undefined;
+    const timer = window.setTimeout(() => {
+      setProfile(COURSE_ADVISOR_EMPTY_PROFILE);
+      setResult(null);
+      setError('');
+      setLastAdvisorQuestion('');
+      setActiveFollowUp('');
+      setShowPromptScript(false);
+    }, 30 * 60 * 1000);
+    return () => window.clearTimeout(timer);
+  }, [profile, result]);
 
   const updateProfile = <K extends keyof CourseAdvisorProfile>(key: K, value: CourseAdvisorProfile[K]) => {
     setProfile((current) => ({ ...current, [key]: value }));
@@ -2185,39 +2456,74 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
   const runAdvisor = async (profileOverride?: CourseAdvisorProfile) => {
     const currentProfile = profileOverride || profile;
     setError('');
-    const hasInput = Boolean(
-      currentProfile.age ||
-      currentProfile.workExperience.trim() ||
-      currentProfile.background.trim() ||
-      currentProfile.goals.trim() ||
-      currentProfile.question.trim() ||
-      currentProfile.isFreshGraduate
-    );
-    if (!hasInput) {
-      setError('请至少填写一个背景信息，AI 才能按你的情况匹配课程。');
-      return;
-    }
-    if (API_BASE_URL && !authToken) {
-      setError('请先登录或使用管理员身份进入后再使用 AI 课程顾问。');
+    if (!hasCourseAdvisorProfileInput(currentProfile)) {
+      setError('请至少填写一个背景信息，规则库才能按你的情况匹配课程。');
       return;
     }
     setLoading(true);
     try {
-      setResult(await requestCourseAdvisor(course, currentProfile, authToken));
+      setResult(null);
+      setLastAdvisorQuestion(currentProfile.question.trim() || '根据当前画像生成课程建议');
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      setResult(buildLocalCourseAdvisor(course, currentProfile));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : '暂时无法生成建议');
     } finally {
       setLoading(false);
+      setActiveFollowUp('');
     }
   };
 
   const usePrompt = (prompt: string) => {
+    if (loading) return;
     const next = { ...profile, question: prompt };
+    setActiveFollowUp(prompt);
     setProfile(next);
     void runAdvisor(next);
   };
 
-  const sourceLabel = result?.source === 'deepseek' ? 'DeepSeek 已接入' : '本地规则库预览';
+  const usePreset = (nextProfile: CourseAdvisorProfile) => {
+    setProfile(nextProfile);
+    void runAdvisor(nextProfile);
+  };
+
+  const exampleProfiles: Array<{ label: string; profile: CourseAdvisorProfile }> = [
+    {
+      label: '30岁媒体人',
+      profile: {
+        age: '30',
+        workExperience: '8 年媒体 / 内容编辑经验，做过选题、采访、内容策划和传播复盘。',
+        isFreshGraduate: false,
+        background: '传媒、新闻、内容运营',
+        goals: '判断这门课能否帮助我转向数据新闻、用户研究、AI 产品运营或行业研究。',
+        question: '我是媒体人，30 岁，适不适合学习 Data Science？'
+      }
+    },
+    {
+      label: '应届求职',
+      profile: {
+        age: '23',
+        workExperience: '',
+        isFreshGraduate: true,
+        background: '本科商科 / 文科背景，有基础 Excel 和调研经历。',
+        goals: '希望尽快找到 AI 产品、数据分析或教育科技相关工作。',
+        question: '我应该怎样把这门课写进简历？'
+      }
+    },
+    {
+      label: '教育从业者',
+      profile: {
+        age: '28',
+        workExperience: '3 年教育或培训相关经验，接触过学生反馈、课程运营或学习数据。',
+        isFreshGraduate: false,
+        background: '教育、课程运营、公共服务',
+        goals: '希望用 AI 和数据方法提升课程、学生服务或项目评估能力。',
+        question: '这门课对教育行业有什么实际帮助？'
+      }
+    }
+  ];
+
+  const sourceLabel = result?.source === 'deepseek' ? 'DeepSeek 已接入' : '固定规则库';
   const fitLabel = result?.fitLevel === 'required'
     ? '必修'
     : result?.fitLevel === 'high'
@@ -2225,18 +2531,28 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
       : result?.fitLevel === 'medium'
         ? '中度适配'
         : '谨慎选择';
+  const promptScript = buildCourseAdvisorPromptScript(course, profile, result);
 
   return (
     <section className="course-ai-advisor">
       <div className="course-ai-head">
-        <span>AI Course Advisor</span>
-        <h2>AI 课程顾问</h2>
-        <p>输入你的年龄、经历和目标，系统会结合当前课程库判断这门课如何学习、是否适合你，以及怎样衔接就业或职业升级。</p>
+        <span>Rule-based Course Advisor</span>
+        <h2>规则型课程建议</h2>
+        <p>内测阶段先不依赖 AI 接口。系统会按固定画像和课程资料判断：必修课学什么重点，选修课适合谁、怎样衔接就业或职业升级。</p>
+        <div className="course-ai-presets" aria-label="快速画像示例">
+          {exampleProfiles.map((item) => (
+            <button key={item.label} onClick={() => usePreset(item.profile)}>{item.label}</button>
+          ))}
+        </div>
       </div>
       <div className="course-ai-form">
         <label>
           <span>年龄</span>
-          <input value={profile.age} onChange={(event) => updateProfile('age', event.target.value)} inputMode="numeric" placeholder="例如：23" />
+          <select value={profile.age} onChange={(event) => updateProfile('age', event.target.value)}>
+            {COURSE_ADVISOR_AGE_OPTIONS.map((item) => (
+              <option key={item.value || 'empty'} value={item.value}>{item.label}</option>
+            ))}
+          </select>
         </label>
         <label className="course-ai-check">
           <input type="checkbox" checked={profile.isFreshGraduate} onChange={(event) => updateProfile('isFreshGraduate', event.target.checked)} />
@@ -2261,8 +2577,13 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
       </div>
       {error && <p className="course-ai-error">{error}</p>}
       <div className="course-ai-actions">
-        <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成我的课程建议'}</button>
-        <small>{API_BASE_URL ? '登录后将通过后端调用 DeepSeek；失败时自动使用本地规则库。' : '当前为本地调试：使用课程规则库预览，接入 DeepSeek 后自动升级。'}</small>
+        <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成课程建议'}</button>
+        <small>当前使用固定规则库，结果更稳定；后续可接 DeepSeek 做更细的连续追问。</small>
+      </div>
+      <div className="course-ai-privacy">
+        <strong>隐私与 AI 说明</strong>
+        <p>本课程建议表单不会窃取任何用户隐私信息。你填写的年龄、背景、工作经验、目标和问题仅用于本次生成，页面内画像会在 30 分钟后自动清理；如需立即清理记录，请联系管理员。</p>
+        <p>请不要填写身份证号、银行卡号、账号密码、验证码、详细住址等敏感信息。当前回答由 AI 规则库生成，仅供选课参考，不代表任何大学、学院、课程团队或官方立场。</p>
       </div>
       {result && (
         <div className="course-ai-result">
@@ -2270,6 +2591,7 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
             <span>{sourceLabel}</span>
             <strong>{fitLabel} · {result.fitScore} 分</strong>
           </div>
+          {lastAdvisorQuestion && <p className="course-ai-current-question">本次问题：{lastAdvisorQuestion}</p>}
           {result.mustLearnNote && <p className="course-ai-required">{result.mustLearnNote}</p>}
           <p className="course-ai-summary">{result.summary}</p>
           <div className="course-ai-result-grid">
@@ -2282,10 +2604,18 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
             <div className="course-ai-prompts">
               <strong>继续追问</strong>
               {result.nextQuestionPrompts.map((prompt) => (
-                <button key={prompt} onClick={() => usePrompt(prompt)}>{prompt}</button>
+                <button key={prompt} onClick={() => usePrompt(prompt)} disabled={loading}>
+                  {loading && activeFollowUp === prompt ? '正在生成...' : prompt}
+                </button>
               ))}
             </div>
           )}
+          <div className="course-ai-script">
+            <button type="button" onClick={() => setShowPromptScript((current) => !current)}>
+              {showPromptScript ? '收起生成原脚本' : '查看生成原脚本'}
+            </button>
+            {showPromptScript && <pre>{promptScript}</pre>}
+          </div>
           {result.modelNote && <p className="course-ai-note">{result.modelNote}</p>}
           <small>{result.disclaimer}</small>
         </div>
@@ -3295,6 +3625,7 @@ function ProgrammeRecommenderPage({
   const programmeOptions = useMemo(
     () => recommenderProgrammes
       .filter((programme) => programme.schoolId === activeSchool.id)
+      .filter((programme) => !(activeSchool.id === 'lingnan' && programme.degreeLevel === 'Bachelor'))
       .slice()
       .sort((a, b) => {
         const school = (a.schoolId || a.school).localeCompare(b.schoolId || b.school);
@@ -3338,6 +3669,7 @@ function ProgrammeRecommenderPage({
     }
 
     const request: StudentProfile = {
+      schoolId: activeSchool.id,
       hasChosenProgramme,
       selectedProgrammeId: hasChosenProgramme ? selectedProgramme?.id || '' : '',
       selectedProgrammeName: hasChosenProgramme ? selectedProgramme?.programmeName || '' : '',
@@ -3350,7 +3682,9 @@ function ProgrammeRecommenderPage({
       preferredDirections: splitProfileList(preferredDirections),
       targetDegreeLevels: hasChosenProgramme && selectedProgramme
         ? [selectedProgramme.degreeLevel as StudentProfile['targetDegreeLevels'][number]]
-        : targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
+        : targetDegreeLevel
+          ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]]
+          : activeSchool.id === 'lingnan' ? ['Master', 'Doctor'] : [],
       studyPreferences: splitProfileList(studyPreferences),
       concerns: splitProfileList(concerns),
       workExperience: splitProfileList(workExperience),
@@ -3427,7 +3761,7 @@ function ProgrammeRecommenderPage({
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
+                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业{activeSchool.id === 'lingnan' ? '，本科专业暂不纳入 AI 知识库' : ''}；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
@@ -3441,7 +3775,7 @@ function ProgrammeRecommenderPage({
               <label className="recommender-field">
                 <span>目标学位层级（选填）</span>
                 <select value={targetDegreeLevel} onChange={(event) => setTargetDegreeLevel(event.target.value)}>
-                  <option value="">不限</option>
+                  <option value="">{activeSchool.id === 'lingnan' ? '不限（硕博）' : '不限'}</option>
                   <option value="Master">Master</option>
                   <option value="Doctor">Doctor</option>
                   <option value="Postgraduate Diploma">Postgraduate Diploma</option>
@@ -4227,7 +4561,6 @@ export default function App() {
         {!shouldBlockForAuth && route.name === 'course' && (
           <CourseDetailPage
             id={route.id}
-            authToken={recommenderAuthToken}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />

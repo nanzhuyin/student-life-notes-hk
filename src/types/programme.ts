@@ -95,6 +95,7 @@ export interface Programme {
 }
 
 export interface StudentProfile {
+  schoolId?: string;
   hasChosenProgramme: boolean;
   selectedProgrammeId: string;
   selectedProgrammeName: string;

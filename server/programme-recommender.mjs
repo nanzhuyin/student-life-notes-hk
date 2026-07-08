@@ -181,6 +181,7 @@ function safeProgrammeForModel(programme) {
 
 export function validateStudentProfile(body) {
   const profile = {
+    schoolId: ['eduhk', 'lingnan'].includes(String(body.schoolId || '').trim()) ? String(body.schoolId || '').trim() : '',
     hasChosenProgramme: Boolean(body.hasChosenProgramme),
     selectedProgrammeId: trimString(body.selectedProgrammeId, 160),
     selectedProgrammeName: trimString(body.selectedProgrammeName, 240),
@@ -227,6 +228,11 @@ function isSelectedProgramme(programme, profile) {
 }
 
 export function findProgrammeCandidates(programmes, profile, limit = 5) {
+  const availableProgrammes = programmes.filter((programme) => {
+    if (profile.schoolId && programme.schoolId !== profile.schoolId) return false;
+    if (profile.schoolId === 'lingnan' && programme.degreeLevel === 'Bachelor') return false;
+    return true;
+  });
   const terms = {
     selectedProgramme: unique([profile.selectedProgrammeId, profile.selectedProgrammeName]),
     undergraduateMajor: unique([profile.undergraduateMajor]),
@@ -254,7 +260,7 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
     ...terms.otherContext
   ]);
 
-  const ranked = programmes
+  const ranked = availableProgrammes
     .map((programme) => {
       const matchedFields = [];
       let score = 0;
@@ -283,7 +289,7 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
     .slice(0, limit);
 
   if (!profile.hasChosenProgramme || !terms.selectedProgramme.length || ranked.some((candidate) => isSelectedProgramme(candidate.programme, profile))) return ranked;
-  const selected = programmes.find((programme) => isSelectedProgramme(programme, profile));
+  const selected = availableProgrammes.find((programme) => isSelectedProgramme(programme, profile));
   if (!selected) return ranked;
   return ranked.slice(0, Math.max(0, limit - 1)).concat({
     programme: selected,
@@ -297,6 +303,7 @@ export function buildDeepSeekUserPrompt(profile, candidateProgrammes) {
 - Has chosen programme: ${profile.hasChosenProgramme}
 - Selected programme id: ${profile.selectedProgrammeId}
 - Selected programme name: ${profile.selectedProgrammeName}
+- Current school id: ${profile.schoolId}
 - Undergraduate major: ${profile.undergraduateMajor}
 - Master's major: ${profile.masterMajor}
 - Main courses: ${JSON.stringify(profile.mainCourses)}

@@ -16,17 +16,16 @@ Render 后端服务添加：
 ```bash
 DEEPSEEK_API_KEY=你的 DeepSeek Key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_COURSE_MODEL=deepseek-v4-flash
 ```
 
-如果不单独配置 `DEEPSEEK_COURSE_MODEL`，后端会使用 `DEEPSEEK_MODEL`；再没有则默认 `deepseek-v4-flash`。
+本项目只接入 `deepseek-v4-flash`。模型名已在后端固定，不需要配置 `DEEPSEEK_MODEL` 或 `DEEPSEEK_COURSE_MODEL`。
 
 ## 技术路线
 
 1. 前端把用户画像和当前课程 ID 发到 `/api/course-advisor`。
 2. 后端读取 `src/data/platformData.json` 中的课程知识库。
 3. 后端先生成一份本地规则库结果，保证无 Key 时也能回答。
-4. 如果存在 `DEEPSEEK_API_KEY`，后端把当前课程、同项目课程、用户画像和本地草稿一起发给 DeepSeek。
+4. 如果存在 `DEEPSEEK_API_KEY`，后端把当前课程、同项目课程、课程顾问知识卡、检索规则、用户画像和本地草稿一起发给 DeepSeek v4 flash。
 5. DeepSeek 必须返回 JSON；后端会规范字段并返回给前端。
 
 ## 输出结构

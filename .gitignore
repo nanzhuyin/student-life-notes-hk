@@ -27,5 +27,8 @@ docs/*
 !docs/API_CONTRACT.md
 !docs/AI_INTERACTION_LOG.md
 !docs/COURSE_DATA_AUDIT.md
+!docs/ADVISOR_KNOWLEDGE_WORKFLOW.md
+!docs/advisor-knowledge-review.md
+!docs/DEEPSEEK_V4_FLASH_OPTIMIZATION.md
 !docs/SUPABASE_RENDER_DEPLOYMENT_GUIDE.md
 assets/

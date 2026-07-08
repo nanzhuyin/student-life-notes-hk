@@ -22,6 +22,8 @@ const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
 const PROGRAMMES_JSON_FILE = process.env.PROGRAMMES_JSON_FILE || join(__dirname, '..', 'src', 'data', 'programmes.json');
 const PLATFORM_DATA_JSON_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, '..', 'src', 'data', 'platformData.json');
+const ADVISOR_KNOWLEDGE_JSON_FILE = process.env.ADVISOR_KNOWLEDGE_JSON_FILE || join(__dirname, '..', 'src', 'data', 'advisorKnowledge.json');
+const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash';
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({
   dbFile: DB_FILE,
@@ -199,6 +201,14 @@ async function loadPlatformData() {
   return JSON.parse(await readFile(PLATFORM_DATA_JSON_FILE, 'utf8'));
 }
 
+async function loadAdvisorKnowledge() {
+  try {
+    return JSON.parse(await readFile(ADVISOR_KNOWLEDGE_JSON_FILE, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 async function listProgrammeKnowledgeBase() {
   const rows = await storage.listProgrammes();
   if (rows.length) return rows;
@@ -373,7 +383,7 @@ async function route(req, res) {
       const data = await callDeepSeekRecommendation({
         apiKey: process.env.DEEPSEEK_API_KEY || '',
         baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+        model: DEEPSEEK_V4_FLASH_MODEL,
         profile,
         candidates
       });
@@ -417,14 +427,27 @@ async function route(req, res) {
         return;
       }
       const programmeCourses = (platformData.courses || []).filter((item) => item.programmeId === course.programmeId);
-      const localResult = buildLocalCourseAdvisorResult({ course, programmeCourses, profile });
+      const advisorKnowledge = await loadAdvisorKnowledge();
+      const courseKnowledge = (advisorKnowledge?.courseKnowledge || []).find((item) => item.id === course.id);
+      const programmeCourseKnowledge = (advisorKnowledge?.courseKnowledge || []).filter((item) => item.programmeId === course.programmeId);
+      const localResult = buildLocalCourseAdvisorResult({
+        course,
+        programmeCourses,
+        profile,
+        courseKnowledge,
+        programmeCourseKnowledge,
+        retrievalRules: advisorKnowledge?.retrievalRules || []
+      });
       const data = await callDeepSeekCourseAdvisor({
         apiKey: process.env.DEEPSEEK_API_KEY || '',
         baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-        model: process.env.DEEPSEEK_COURSE_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+        model: DEEPSEEK_V4_FLASH_MODEL,
         profile,
         course,
         programmeCourses,
+        courseKnowledge,
+        programmeCourseKnowledge,
+        retrievalRules: advisorKnowledge?.retrievalRules || [],
         localResult
       });
       sendJson(req, res, 200, { ok: true, data });
