@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.63';
+const APP_VERSION = 'v1.64';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2094,9 +2094,27 @@ function CoursesPage({
     });
   };
 
+  const programmeRoutePath = (id: string) => `/courses?programme=${encodeURIComponent(id)}`;
+
+  const chooseProgramme = (id: string) => {
+    const nextId = id ? normalizeProgrammeId(id) : '';
+    updateCourseFilters({ programmeId: nextId });
+    go(nextId ? programmeRoutePath(nextId) : '/courses');
+  };
+
   const clearActiveProgramme = () => {
     updateCourseFilters({ programmeId: '' });
-    if (routeProgramme) window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/courses`);
+    go('/courses');
+  };
+
+  const openCourseDetail = (course: Course) => {
+    if (activeProgramme) {
+      const programmeHash = `#${programmeRoutePath(activeProgramme.id)}`;
+      if (window.location.hash !== programmeHash) {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${programmeHash}`);
+      }
+    }
+    go(`/course/${encodeURIComponent(course.id)}`);
   };
 
   const { programmeId, levelFilter, facultyFilter, typeKey, keyword } = filters;
@@ -2142,9 +2160,11 @@ function CoursesPage({
         <h1>{activeSchool.name}</h1>
         <p>{activeSchool.description}</p>
       </div>
-      <div className="page-toolbar-actions">
-        <button className="secondary-action" onClick={() => goBack('/')}>返回首页</button>
-      </div>
+      {!activeProgramme && (
+        <div className="page-toolbar-actions">
+          <button className="secondary-action" onClick={() => goBack('/')}>返回首页</button>
+        </div>
+      )}
 
       <div className="filter-panel">
         <div className="filter-row">
@@ -2185,7 +2205,7 @@ function CoursesPage({
         <div className="filter-grid">
           <label>
             <span>项目</span>
-            <select value={programmeId} onChange={(event) => updateCourseFilters({ programmeId: event.target.value })}>
+            <select value={programmeId} onChange={(event) => chooseProgramme(event.target.value)}>
               <option value="">未选择项目</option>
               {programmeOptions.map((programme) => (
                 <option key={programme.id} value={programme.id}>{getProgrammeSelectLabel(programme)}</option>
@@ -2215,7 +2235,7 @@ function CoursesPage({
               </div>
               <div className="programme-grid">
                 {group.programmes.map((programme) => (
-                  <button key={programme.id} className="programme-card" onClick={() => updateCourseFilters({ programmeId: programme.id })}>
+                  <button key={programme.id} className="programme-card" onClick={() => chooseProgramme(programme.id)}>
                     <div className="medium-badge-row">
                       {getProgrammeMediumBadges(programme, programmes).map((medium) => (
                         <span key={medium} className={`medium-badge ${getMediumTone(medium)}`}>{medium}</span>
@@ -2235,8 +2255,13 @@ function CoursesPage({
       )}
 
       {activeProgramme && (
+        <div className="detail-topbar">
+          <button className="back-button detail-back-button" onClick={clearActiveProgramme}>← 返回上一页</button>
+        </div>
+      )}
+
+      {activeProgramme && (
         <section className="programme-summary">
-          <button className="secondary-action" onClick={clearActiveProgramme}>返回专业列表</button>
           <strong>{getProgrammeTitle(activeProgramme)}</strong>
           {getProgrammeSubtitle(activeProgramme) && <em>{getProgrammeSubtitle(activeProgramme)}</em>}
           <p>{activeProgramme.mediumDetail}</p>
@@ -2272,7 +2297,7 @@ function CoursesPage({
       <div className="course-list">
         {courses.map((course) => (
           <article key={course.id} className="course-card">
-            <button className="course-main" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
+            <button className="course-main" onClick={() => openCourseDetail(course)}>
               <div className="course-head">
                 <strong>{getCourseTitle(course)}</strong>
                 <span>{formatCreditsText(course)}</span>
@@ -2314,11 +2339,12 @@ function CourseDetailPage({
   const course = getCourse(id);
 
   if (!course) return <EmptyPage title="没有找到这门课程" />;
+  const courseProgrammePath = course.programmeId ? `/courses?programme=${encodeURIComponent(course.programmeId)}` : '/courses';
 
   return (
     <article className="detail-page course-detail-page">
       <div className="detail-topbar">
-        <button className="back-button detail-back-button" onClick={() => goBack('/courses')}>← 返回上一页</button>
+        <button className="back-button detail-back-button" onClick={() => goBack(courseProgrammePath)}>← 返回上一页</button>
         <button className={`detail-save-button ${favoriteCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onToggleFavoriteCourse(course.id)}>
           {favoriteCourseIds.includes(course.id) ? '已收藏' : '收藏课程'}
         </button>
