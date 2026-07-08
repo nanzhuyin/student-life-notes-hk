@@ -22,7 +22,8 @@
 - 本次目标专业下拉选择版本：`v1.44`
 - 本次专业导入统计提示修复版本：`v1.45`
 - 本次 AI 推荐权限限制版本：`v1.46`
-- 下一次修改：`v1.47`
+- 本次 AI 推荐后端权限校验版本：`v1.47`
+- 下一次修改：`v1.48`
 
 每次版本递增时至少同步这些位置：
 
@@ -75,6 +76,23 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.47
+
+日期：2026-07-08
+
+改动范围：
+
+- 普通注册和登录接口新增返回用户 session token。
+- 前端保存普通用户 token，调用 `/api/recommend-programmes` 时携带 `Authorization: Bearer ...`。
+- `/api/recommend-programmes` 后端增加权限校验：只有注册用户 token 或管理员 token 可调用。
+- 未带有效凭证的请求返回 `AUTH_REQUIRED`，避免游客绕过页面直接调用 DeepSeek。
+- 同步本次部署版本号为 `v1.47`。
+
+测试：
+
+- `node --check server/index.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.46
 

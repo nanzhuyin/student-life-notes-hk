@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.46';
+const APP_VERSION = 'v1.47';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -27,6 +27,7 @@ const SCROLL_STORAGE_PREFIX = 'student-life-notes:scroll:';
 const ANALYTICS_STORAGE_KEY = 'student-life-notes:analytics-events';
 const ANALYTICS_SESSION_KEY = 'student-life-notes:analytics-session';
 const USER_STORAGE_KEY = 'student-life-notes:user';
+const USER_TOKEN_STORAGE_KEY = 'student-life-notes:user-token';
 const LOCAL_USERS_STORAGE_KEY = 'student-life-notes:local-users';
 const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
@@ -167,6 +168,11 @@ type RegisteredUser = {
   schoolId: SchoolId;
   createdAt?: string;
   updatedAt?: string;
+};
+
+type UserAuthResult = {
+  user: RegisteredUser;
+  token: string;
 };
 
 type SupportTicket = {
@@ -369,13 +375,13 @@ async function registerUser(input: { email: string; username: string; password: 
     };
     writeLocalRegisteredUsers(existingByEmail ? users.map((item) => item.email.toLowerCase() === email ? user : item) : users.concat(user));
     const { passwordHash: _, ...publicUser } = user;
-    return publicUser;
+    return { user: publicUser, token: 'local-user-token' };
   }
-  const data = await apiRequest<{ user: RegisteredUser }>('/api/register', {
+  const data = await apiRequest<UserAuthResult>('/api/register', {
     method: 'POST',
     body: JSON.stringify({ ...input, email, username })
   });
-  return data.user;
+  return data;
 }
 
 async function loginUser(input: { account: string; password: string }) {
@@ -384,13 +390,13 @@ async function loginUser(input: { account: string; password: string }) {
     if (!user) throw new Error('本机没有这个账号记录，请先注册');
     if (user.passwordHash && user.passwordHash !== await hashText(input.password)) throw new Error('账号或密码不正确');
     const { passwordHash: _, ...publicUser } = user;
-    return publicUser;
+    return { user: publicUser, token: 'local-user-token' };
   }
-  const data = await apiRequest<{ user: RegisteredUser }>('/api/login', {
+  const data = await apiRequest<UserAuthResult>('/api/login', {
     method: 'POST',
     body: JSON.stringify(input)
   });
-  return data.user;
+  return data;
 }
 
 async function fetchMailbox(user: RegisteredUser) {
@@ -1205,7 +1211,7 @@ function RegistrationPage({
   onRegistered
 }: {
   activeSchoolId: SchoolId;
-  onRegistered: (user: RegisteredUser) => void;
+  onRegistered: (auth: UserAuthResult) => void;
 }) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -1230,8 +1236,8 @@ function RegistrationPage({
     }
     setSaving(true);
     try {
-      const user = await registerUser({ email: email.trim(), username: username.trim(), password, schoolId });
-      onRegistered(user);
+      const auth = await registerUser({ email: email.trim(), username: username.trim(), password, schoolId });
+      onRegistered(auth);
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
     } finally {
@@ -1277,7 +1283,7 @@ function RegistrationPage({
   );
 }
 
-function LoginPage({ onLoggedIn }: { onLoggedIn: (user: RegisteredUser) => void }) {
+function LoginPage({ onLoggedIn }: { onLoggedIn: (auth: UserAuthResult) => void }) {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -1295,8 +1301,8 @@ function LoginPage({ onLoggedIn }: { onLoggedIn: (user: RegisteredUser) => void 
     }
     setSaving(true);
     try {
-      const user = await loginUser({ account: account.trim(), password });
-      onLoggedIn(user);
+      const auth = await loginUser({ account: account.trim(), password });
+      onLoggedIn(auth);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
@@ -2719,7 +2725,7 @@ function PolicyPage() {
   );
 }
 
-function ProgrammeRecommenderPage({ canUseAi }: { canUseAi: boolean }) {
+function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; authToken: string }) {
   const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [undergraduateMajor, setUndergraduateMajor] = useState('');
@@ -2751,7 +2757,7 @@ function ProgrammeRecommenderPage({ canUseAi }: { canUseAi: boolean }) {
     setError('');
     setResult(null);
     if (!canUseAi) {
-      setError('请先登录或使用管理员身份进入，游客不能使用 AI 专业推荐分析。');
+      setError('请先登录或重新登录；游客不能使用 AI 专业推荐分析。');
       return;
     }
     if (!API_BASE_URL) {
@@ -2787,6 +2793,7 @@ function ProgrammeRecommenderPage({ canUseAi }: { canUseAi: boolean }) {
     try {
       const response = await apiRequest<RecommendationApiResponse>('/api/recommend-programmes', {
         method: 'POST',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
         body: JSON.stringify(request)
       });
       if (!response.ok) throw new Error(response.message);
@@ -2820,7 +2827,7 @@ function ProgrammeRecommenderPage({ canUseAi }: { canUseAi: boolean }) {
           {!canUseAi && (
             <div className="support-login-prompt recommender-auth-prompt">
               <strong>请先登录</strong>
-              <span>游客可以浏览课程和生活内容；AI 专业推荐分析仅对注册用户和管理员开放。</span>
+              <span>游客可以浏览课程和生活内容；AI 专业推荐分析仅对注册用户和管理员开放。如果你已登录但仍看到此提示，请退出后重新登录。</span>
               <div className="inline-actions">
                 <button className="primary-action" onClick={() => go('/login')}>去登录</button>
                 <button className="secondary-action" onClick={() => go('/register')}>注册账号</button>
@@ -3419,11 +3426,16 @@ export default function App() {
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [activeSchoolId, setActiveSchoolId] = useStoredState<SchoolId>('student-life-notes:active-school', 'eduhk');
   const [currentUser, setCurrentUser] = useStoredState<RegisteredUser | null>(USER_STORAGE_KEY, null);
+  const [userToken, setUserToken] = useStoredState(USER_TOKEN_STORAGE_KEY, '');
   const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
   const [adminSession, setAdminSession] = useStoredState('student-life-notes:admin-session', false);
   const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
   const activeSchool = getSchool(activeSchoolId);
   const isAdminAuthenticated = Boolean(adminToken || adminSession);
+  const recommenderAuthToken = adminToken || userToken;
+  const canUseAiRecommender = API_BASE_URL
+    ? Boolean((currentUser && userToken) || adminToken)
+    : Boolean(currentUser || isAdminAuthenticated);
   const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
     id: isAdminAuthenticated ? 'admin-browser' : 'guest-browser',
     email: '',
@@ -3577,6 +3589,7 @@ export default function App() {
         isLoggedIn={Boolean(currentUser || isAdminAuthenticated)}
         onLogout={() => {
           setCurrentUser(null);
+          setUserToken('');
           setAdminToken('');
           setAdminSession(false);
           if (route.name === 'admin' || route.name === 'login' || route.name === 'register') go('/');
@@ -3623,18 +3636,20 @@ export default function App() {
         {route.name === 'register' && (
           <RegistrationPage
             activeSchoolId={activeSchoolId}
-            onRegistered={(user) => {
-              setCurrentUser(user);
-              setActiveSchoolId(user.schoolId);
+            onRegistered={(auth) => {
+              setCurrentUser(auth.user);
+              setUserToken(auth.token);
+              setActiveSchoolId(auth.user.schoolId);
               go('/');
             }}
           />
         )}
         {route.name === 'login' && (
           <LoginPage
-            onLoggedIn={(user) => {
-              setCurrentUser(user);
-              setActiveSchoolId(user.schoolId);
+            onLoggedIn={(auth) => {
+              setCurrentUser(auth.user);
+              setUserToken(auth.token);
+              setActiveSchoolId(auth.user.schoolId);
               go('/');
             }}
           />
@@ -3646,7 +3661,7 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage canUseAi={Boolean(currentUser || isAdminAuthenticated)} />}
+        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage canUseAi={canUseAiRecommender} authToken={recommenderAuthToken} />}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}

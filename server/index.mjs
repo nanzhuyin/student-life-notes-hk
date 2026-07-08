@@ -23,6 +23,7 @@ const storage = createStorage({
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 });
 const adminTokens = new Map();
+const userTokens = new Map();
 const adminAccounts = process.env.ADMIN_ACCOUNTS_JSON ? JSON.parse(process.env.ADMIN_ACCOUNTS_JSON) : [];
 
 function hashText(value) {
@@ -145,6 +146,18 @@ function requireAdmin(req) {
   return token && adminTokens.has(token);
 }
 
+function createUserToken(user) {
+  const token = randomBytes(24).toString('hex');
+  userTokens.set(token, { createdAt: Date.now(), userId: user.id, username: user.username });
+  return token;
+}
+
+function requireRecommendationUser(req) {
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  return adminTokens.has(token) || userTokens.has(token);
+}
+
 async function loadBundledProgrammes() {
   return JSON.parse(await readFile(PROGRAMMES_JSON_FILE, 'utf8'));
 }
@@ -247,7 +260,7 @@ async function route(req, res) {
     }
     user = await storage.upsertUser(user);
     const { passwordHash: _, ...publicUser } = user;
-    sendJson(req, res, 200, { user: publicUser });
+    sendJson(req, res, 200, { user: publicUser, token: createUserToken(publicUser) });
     return;
   }
 
@@ -260,7 +273,7 @@ async function route(req, res) {
     let user = account.includes('@') ? await storage.findUserByEmail(account) : await storage.findUserByUsername(account);
     if (!user || !safeCompare(user.passwordHash || '', hashText(password))) throw new Error('账号或密码不正确');
     const { passwordHash: _, ...publicUser } = user;
-    sendJson(req, res, 200, { user: publicUser });
+    sendJson(req, res, 200, { user: publicUser, token: createUserToken(publicUser) });
     return;
   }
 
@@ -312,6 +325,10 @@ async function route(req, res) {
 
   if (req.method === 'POST' && url.pathname === '/api/recommend-programmes') {
     try {
+      if (!requireRecommendationUser(req)) {
+        sendJson(req, res, 401, { ok: false, message: '请先登录或使用管理员身份进入后再使用 AI 专业推荐。', code: 'AUTH_REQUIRED' });
+        return;
+      }
       const profile = validateStudentProfile(await readJson(req));
       const programmes = await listProgrammeKnowledgeBase();
       const candidates = findProgrammeCandidates(programmes, profile, 5).map((candidate) => candidate.programme);
