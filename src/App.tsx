@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.48';
+const APP_VERSION = 'v1.49';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -331,7 +331,7 @@ async function apiRequest<T>(path: string, options: RequestInit = {}) {
     }
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || '请求失败');
+  if (!response.ok) throw new Error(data.message || data.error || '请求失败');
   return data as T;
 }
 
@@ -2729,6 +2729,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
   const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [undergraduateMajor, setUndergraduateMajor] = useState('');
+  const [masterMajor, setMasterMajor] = useState('');
   const [mainCourses, setMainCourses] = useState('');
   const [skills, setSkills] = useState('');
   const [interests, setInterests] = useState('');
@@ -2764,8 +2765,12 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
       setError('前端尚未配置后端地址。请先在 GitHub Actions Variables 设置 VITE_API_BASE_URL。');
       return;
     }
-    if (!undergraduateMajor.trim() && !mainCourses.trim() && !interests.trim() && !careerGoals.trim()) {
-      setError('请至少填写本科专业、主修课程、兴趣方向或职业目标中的一项。');
+    if (!undergraduateMajor.trim()) {
+      setError('请填写本科专业。');
+      return;
+    }
+    if (!masterMajor.trim()) {
+      setError('请填写硕士专业；如果没有硕士经历，可以填写“暂无”。');
       return;
     }
     if (hasChosenProgramme && !selectedProgramme) {
@@ -2778,12 +2783,15 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
       selectedProgrammeId: hasChosenProgramme ? selectedProgramme?.id || '' : '',
       selectedProgrammeName: hasChosenProgramme ? selectedProgramme?.programmeName || '' : '',
       undergraduateMajor: undergraduateMajor.trim(),
+      masterMajor: masterMajor.trim(),
       mainCourses: splitProfileList(mainCourses),
       skills: splitProfileList(skills),
       interests: splitProfileList(interests),
       careerGoals: splitProfileList(careerGoals),
       preferredDirections: splitProfileList(preferredDirections),
-      targetDegreeLevels: targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
+      targetDegreeLevels: hasChosenProgramme && selectedProgramme
+        ? [selectedProgramme.degreeLevel as StudentProfile['targetDegreeLevels'][number]]
+        : targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
       studyPreferences: splitProfileList(studyPreferences),
       concerns: splitProfileList(concerns),
       workExperience: splitProfileList(workExperience)
@@ -2859,56 +2867,62 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前知识库收录 {programmeOptions.length} 个专业；选择后系统会优先分析这个目标专业是否适合你。
+                当前知识库收录 {programmeOptions.length} 个专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
 
           <div className="recommender-form-grid">
             <label className="recommender-field">
-              <span>本科专业</span>
+              <span>本科专业（必填）</span>
               <input value={undergraduateMajor} onChange={(event) => setUndergraduateMajor(event.target.value)} placeholder="例如：Business Administration" />
             </label>
             <label className="recommender-field">
-              <span>目标学位层级</span>
-              <select value={targetDegreeLevel} onChange={(event) => setTargetDegreeLevel(event.target.value)}>
-                <option value="">不限</option>
-                <option value="Master">Master</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Postgraduate Diploma">Postgraduate Diploma</option>
-                <option value="Other">Other</option>
-              </select>
+              <span>硕士专业（必填）</span>
+              <input value={masterMajor} onChange={(event) => setMasterMajor(event.target.value)} placeholder="例如：Marketing / Education / 暂无" />
             </label>
+            {!hasChosenProgramme && (
+              <label className="recommender-field">
+                <span>目标学位层级（选填）</span>
+                <select value={targetDegreeLevel} onChange={(event) => setTargetDegreeLevel(event.target.value)}>
+                  <option value="">不限</option>
+                  <option value="Master">Master</option>
+                  <option value="Doctor">Doctor</option>
+                  <option value="Postgraduate Diploma">Postgraduate Diploma</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+            )}
             <label className="recommender-field wide">
-              <span>主修课程</span>
+              <span>主修课程（选填）</span>
               <textarea value={mainCourses} onChange={(event) => setMainCourses(event.target.value)} placeholder="每行或用逗号分隔，例如：Marketing, Statistics, Data Analysis" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>技能</span>
+              <span>技能（选填）</span>
               <textarea value={skills} onChange={(event) => setSkills(event.target.value)} placeholder="例如：Excel, Python, Research" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>兴趣方向</span>
+              <span>兴趣方向（选填）</span>
               <textarea value={interests} onChange={(event) => setInterests(event.target.value)} placeholder="例如：business analytics, management" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>职业目标</span>
+              <span>职业目标（选填）</span>
               <textarea value={careerGoals} onChange={(event) => setCareerGoals(event.target.value)} placeholder="例如：business analyst, consultant" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>偏好方向</span>
+              <span>偏好方向（选填）</span>
               <textarea value={preferredDirections} onChange={(event) => setPreferredDirections(event.target.value)} placeholder="例如：data science, marketing, public policy" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>学习偏好</span>
+              <span>学习偏好（选填）</span>
               <textarea value={studyPreferences} onChange={(event) => setStudyPreferences(event.target.value)} placeholder="例如：full-time, taught, research-oriented" rows={3}></textarea>
             </label>
             <label className="recommender-field">
-              <span>担心的问题</span>
+              <span>担心的问题（选填）</span>
               <textarea value={concerns} onChange={(event) => setConcerns(event.target.value)} placeholder="例如：编程基础不足、跨专业申请不确定" rows={3}></textarea>
             </label>
             <label className="recommender-field wide">
-              <span>实习 / 工作 / 科研经历</span>
+              <span>实习 / 工作 / 科研经历（选填）</span>
               <textarea value={workExperience} onChange={(event) => setWorkExperience(event.target.value)} placeholder="例如：marketing internship, research assistant" rows={3}></textarea>
             </label>
           </div>

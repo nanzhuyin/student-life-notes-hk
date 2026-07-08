@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { resolveMx } from 'node:dns/promises';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -23,8 +23,8 @@ const storage = createStorage({
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 });
 const adminTokens = new Map();
-const userTokens = new Map();
 const adminAccounts = process.env.ADMIN_ACCOUNTS_JSON ? JSON.parse(process.env.ADMIN_ACCOUNTS_JSON) : [];
+const sessionSecret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.DEEPSEEK_API_KEY || 'otter-local-session-secret';
 
 function hashText(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -147,15 +147,27 @@ function requireAdmin(req) {
 }
 
 function createUserToken(user) {
-  const token = randomBytes(24).toString('hex');
-  userTokens.set(token, { createdAt: Date.now(), userId: user.id, username: user.username });
-  return token;
+  const payload = Buffer.from(JSON.stringify({
+    userId: user.id,
+    username: user.username,
+    issuedAt: Date.now()
+  })).toString('base64url');
+  const signature = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
+  return `user.${payload}.${signature}`;
+}
+
+function isValidUserToken(token) {
+  if (!token.startsWith('user.')) return false;
+  const [, payload, signature] = token.split('.');
+  if (!payload || !signature) return false;
+  const expected = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
+  return safeCompare(signature, expected);
 }
 
 function requireRecommendationUser(req) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return false;
-  return adminTokens.has(token) || userTokens.has(token);
+  return adminTokens.has(token) || isValidUserToken(token);
 }
 
 async function loadBundledProgrammes() {
@@ -345,6 +357,7 @@ async function route(req, res) {
         selectedProgrammeId: profile.selectedProgrammeId,
         selectedProgrammeName: profile.selectedProgrammeName,
         undergraduateMajor: profile.undergraduateMajor,
+        masterMajor: profile.masterMajor,
         mainCourses: profile.mainCourses,
         skills: profile.skills,
         interests: profile.interests,

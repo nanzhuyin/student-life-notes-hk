@@ -156,6 +156,7 @@ export function validateStudentProfile(body) {
     selectedProgrammeId: trimString(body.selectedProgrammeId, 160),
     selectedProgrammeName: trimString(body.selectedProgrammeName, 240),
     undergraduateMajor: trimString(body.undergraduateMajor, 160),
+    masterMajor: trimString(body.masterMajor, 160),
     mainCourses: trimList(body.mainCourses),
     skills: trimList(body.skills),
     interests: trimList(body.interests),
@@ -170,6 +171,7 @@ export function validateStudentProfile(body) {
     profile.selectedProgrammeId,
     profile.selectedProgrammeName,
     profile.undergraduateMajor,
+    profile.masterMajor,
     ...profile.mainCourses,
     ...profile.skills,
     ...profile.interests,
@@ -197,6 +199,7 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
   const terms = {
     selectedProgramme: unique([profile.selectedProgrammeId, profile.selectedProgrammeName]),
     undergraduateMajor: unique([profile.undergraduateMajor]),
+    masterMajor: unique([profile.masterMajor]),
     mainCourses: unique(profile.mainCourses),
     skills: unique(profile.skills),
     interests: unique([...(profile.interests || []), ...(profile.preferredDirections || []), ...(profile.studyPreferences || [])]),
@@ -208,6 +211,7 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
   const allTerms = unique([
     ...terms.selectedProgramme,
     ...terms.undergraduateMajor,
+    ...terms.masterMajor,
     ...terms.mainCourses,
     ...terms.skills,
     ...terms.interests,
@@ -225,8 +229,8 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
         const fieldTerms =
           field.field === 'programmeName' ? [...terms.selectedProgramme, ...terms.interests, ...terms.careerGoals]
             : field.field === 'degreeLevel' ? terms.targetDegreeLevels
-          : field.field === 'suitableBackgrounds' ? terms.undergraduateMajor
-            : field.field === 'coreCourses' || field.field === 'courseDescriptions' || field.field === 'importantCourses' ? [...terms.mainCourses, ...terms.undergraduateMajor, ...terms.careerGoals]
+          : field.field === 'suitableBackgrounds' ? [...terms.undergraduateMajor, ...terms.masterMajor]
+            : field.field === 'coreCourses' || field.field === 'courseDescriptions' || field.field === 'importantCourses' ? [...terms.mainCourses, ...terms.undergraduateMajor, ...terms.masterMajor, ...terms.careerGoals]
               : field.field === 'skillsDeveloped' ? terms.skills
                 : field.field === 'careerDirections' ? terms.careerGoals
                   : field.field === 'keywords' || field.field === 'learningObjectives' || field.field === 'summary' ? [...terms.interests, ...terms.careerGoals, ...terms.skills, ...terms.concerns, ...terms.workExperience]
@@ -261,6 +265,7 @@ export function buildDeepSeekUserPrompt(profile, candidateProgrammes) {
 - Selected programme id: ${profile.selectedProgrammeId}
 - Selected programme name: ${profile.selectedProgrammeName}
 - Undergraduate major: ${profile.undergraduateMajor}
+- Master's major: ${profile.masterMajor}
 - Main courses: ${JSON.stringify(profile.mainCourses)}
 - Skills: ${JSON.stringify(profile.skills)}
 - Interests: ${JSON.stringify(profile.interests)}

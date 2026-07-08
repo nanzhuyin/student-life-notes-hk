@@ -55,6 +55,7 @@ export interface StudentProfile {
   selectedProgrammeId: string;
   selectedProgrammeName: string;
   undergraduateMajor: string;
+  masterMajor: string;
   mainCourses: string[];
   skills: string[];
   interests: string[];
@@ -119,5 +120,5 @@ export type RecommendationApiResponse =
   | {
       ok: false;
       message: string;
-      code: 'VALIDATION_ERROR' | 'NO_CANDIDATE_PROGRAMMES' | 'MODEL_API_ERROR' | 'MODEL_OUTPUT_INVALID' | 'INTERNAL_ERROR';
+      code: 'VALIDATION_ERROR' | 'AUTH_REQUIRED' | 'NO_CANDIDATE_PROGRAMMES' | 'MODEL_API_ERROR' | 'MODEL_OUTPUT_INVALID' | 'INTERNAL_ERROR';
     };

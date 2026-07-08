@@ -40,6 +40,7 @@ test('validateStudentProfile preserves selected programme and richer student con
     selectedProgrammeId: 'msc-data-science',
     selectedProgrammeName: 'Master of Science in Data Science',
     undergraduateMajor: 'Statistics',
+    masterMajor: 'Marketing',
     mainCourses: ['Python', 'Database'],
     skills: ['SQL'],
     interests: ['AI'],
@@ -54,6 +55,7 @@ test('validateStudentProfile preserves selected programme and richer student con
   assert.equal(profile.hasChosenProgramme, true);
   assert.equal(profile.selectedProgrammeId, 'msc-data-science');
   assert.equal(profile.selectedProgrammeName, 'Master of Science in Data Science');
+  assert.equal(profile.masterMajor, 'Marketing');
   assert.deepEqual(profile.targetDegreeLevels, ['Master']);
   assert.deepEqual(profile.studyPreferences, ['full-time']);
   assert.deepEqual(profile.concerns, ['weak programming background']);
@@ -97,6 +99,7 @@ test('buildDeepSeekUserPrompt includes selected programme status and concerns', 
     hasChosenProgramme: true,
     selectedProgrammeName: 'Master of Science in Data Science',
     undergraduateMajor: 'Statistics',
+    masterMajor: 'Marketing',
     concerns: ['not sure if programming is enough']
   });
 
@@ -104,6 +107,7 @@ test('buildDeepSeekUserPrompt includes selected programme status and concerns', 
 
   assert.match(prompt, /Has chosen programme: true/);
   assert.match(prompt, /Selected programme name: Master of Science in Data Science/);
+  assert.match(prompt, /Master's major: Marketing/);
   assert.match(prompt, /Concerns: \["not sure if programming is enough"\]/);
 });
 

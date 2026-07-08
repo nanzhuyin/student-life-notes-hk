@@ -247,6 +247,7 @@ function toRecommendationLogRow(log) {
     selected_programme_id: log.selectedProgrammeId || '',
     selected_programme_name: log.selectedProgrammeName || '',
     undergraduate_major: log.undergraduateMajor || '',
+    master_major: log.masterMajor || '',
     main_courses: log.mainCourses || [],
     skills: log.skills || [],
     interests: log.interests || [],

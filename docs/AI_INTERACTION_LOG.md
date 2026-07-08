@@ -24,7 +24,8 @@
 - 本次 AI 推荐权限限制版本：`v1.46`
 - 本次 AI 推荐后端权限校验版本：`v1.47`
 - 本次 AI 推荐文字和租房详情图修复版本：`v1.48`
-- 下一次修改：`v1.49`
+- 本次 AI 推荐请求失败和表单简化版本：`v1.49`
+- 下一次修改：`v1.50`
 
 每次版本递增时至少同步这些位置：
 
@@ -77,6 +78,26 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.49
+
+日期：2026-07-08
+
+改动范围：
+
+- 修复前端 API 错误处理只读取 `error`、不读取后端 `message`，导致推荐失败只显示“请求失败”的问题。
+- 普通用户推荐 token 改为后端签名 token，避免 Render 重启后内存 token 丢失导致已登录用户无法生成推荐。
+- 专业推荐表单新增“硕士专业”必填字段；本科专业和硕士专业为必填，其余字段均标为选填。
+- 用户已选择目标专业时，自动使用该专业的学位层级，不再显示目标学位层级下拉。
+- 推荐检索、DeepSeek prompt 和 recommendation_logs 增加硕士专业字段。
+- 同步本次部署版本号为 `v1.49`。
+
+测试：
+
+- `node --check server/index.mjs` 通过。
+- `node --check server/programme-recommender.mjs` 通过。
+- `node --check server/storage.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.48
 

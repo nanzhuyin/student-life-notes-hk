@@ -135,6 +135,7 @@ create table if not exists public.recommendation_logs (
   selected_programme_id text,
   selected_programme_name text,
   undergraduate_major text,
+  master_major text,
   main_courses text[] default '{}',
   skills text[] default '{}',
   interests text[] default '{}',
@@ -152,6 +153,7 @@ create table if not exists public.recommendation_logs (
 alter table public.recommendation_logs add column if not exists has_chosen_programme boolean default false;
 alter table public.recommendation_logs add column if not exists selected_programme_id text;
 alter table public.recommendation_logs add column if not exists selected_programme_name text;
+alter table public.recommendation_logs add column if not exists master_major text;
 alter table public.recommendation_logs add column if not exists target_degree_levels text[] default '{}';
 alter table public.recommendation_logs add column if not exists study_preferences text[] default '{}';
 alter table public.recommendation_logs add column if not exists concerns text[] default '{}';
