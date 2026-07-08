@@ -121,6 +121,11 @@ export interface Course {
   courseCode: string;
   tags: string[];
   notes?: string;
+  learnerFit?: string[];
+  learningGains?: string[];
+  careerLinks?: string[];
+  selectionAdvice?: string;
+  materialBasis?: string[];
 }
 
 export interface SharedPost {

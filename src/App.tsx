@@ -709,7 +709,11 @@ function courseMatches(course: Course, keyword: string) {
     course.type,
     course.medium,
     course.programmeTitle,
-    course.tags.join(' ')
+    course.tags.join(' '),
+    course.selectionAdvice || '',
+    (course.learnerFit || []).join(' '),
+    (course.learningGains || []).join(' '),
+    (course.careerLinks || []).join(' ')
   ]
     .join(' ')
     .toLowerCase()
@@ -873,6 +877,48 @@ function formatFacultyName(value = '') {
 
 function displayCourseInfo(value: string) {
   return value.trim() || '以项目说明为准';
+}
+
+function CourseInsightBlock({ course }: { course: Course }) {
+  const hasInsight = Boolean(
+    course.selectionAdvice ||
+    course.learnerFit?.length ||
+    course.learningGains?.length ||
+    course.careerLinks?.length ||
+    course.materialBasis?.length
+  );
+  if (!hasInsight) return null;
+
+  const blocks = [
+    { title: '适合哪些学生', items: course.learnerFit || [] },
+    { title: '能获得什么', items: course.learningGains || [] },
+    { title: '和就业怎么连接', items: course.careerLinks || [] }
+  ].filter((block) => block.items.length);
+
+  return (
+    <section className="course-insight-panel">
+      <h2>选课解析</h2>
+      {course.selectionAdvice && <p className="course-insight-lead">{course.selectionAdvice}</p>}
+      {blocks.length > 0 && (
+        <div className="course-insight-grid">
+          {blocks.map((block) => (
+            <div key={block.title} className="course-insight-block">
+              <h3>{block.title}</h3>
+              <ul>
+                {block.items.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+      {course.materialBasis?.length ? (
+        <div className="course-material-basis">
+          <strong>整理依据</strong>
+          <span>{course.materialBasis.join('、')}</span>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 function getUnitText(item: { faculty?: string; unitName?: string; unitLabel?: string; parentUnit?: string }) {
@@ -1733,6 +1779,7 @@ function CoursesPage({
               {getCourseSubtitle(course) && <em>{getCourseSubtitle(course)}</em>}
               {course.courseCode && <small>{course.courseCode}</small>}
               <p>{previewText(course.description)}</p>
+              {course.selectionAdvice && <p className="course-advice-preview">{course.selectionAdvice}</p>}
               <div className="tag-row">
                 <span>{course.type}</span>
                 <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
@@ -1832,6 +1879,7 @@ function CourseDetailPage({
             )}
           </>
         )}
+        <CourseInsightBlock course={course} />
         <h2>选课信息</h2>
         <dl className="info-list">
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
