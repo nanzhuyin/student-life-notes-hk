@@ -2574,6 +2574,15 @@ p {
   width: 100%;
 }
 
+.recommender-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.recommender-auth-prompt .inline-actions {
+  margin-top: 0.15rem;
+}
+
 .recommender-note,
 .recommender-disclaimer,
 .result-summary {

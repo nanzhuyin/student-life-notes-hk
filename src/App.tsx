@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.45';
+const APP_VERSION = 'v1.46';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2719,7 +2719,7 @@ function PolicyPage() {
   );
 }
 
-function ProgrammeRecommenderPage() {
+function ProgrammeRecommenderPage({ canUseAi }: { canUseAi: boolean }) {
   const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [undergraduateMajor, setUndergraduateMajor] = useState('');
@@ -2750,6 +2750,10 @@ function ProgrammeRecommenderPage() {
   const submit = async () => {
     setError('');
     setResult(null);
+    if (!canUseAi) {
+      setError('请先登录或使用管理员身份进入，游客不能使用 AI 专业推荐分析。');
+      return;
+    }
     if (!API_BASE_URL) {
       setError('前端尚未配置后端地址。请先在 GitHub Actions Variables 设置 VITE_API_BASE_URL。');
       return;
@@ -2812,6 +2816,17 @@ function ProgrammeRecommenderPage() {
             </div>
             <span className="recommender-status">{API_BASE_URL ? '已连接后端' : '待配置后端'}</span>
           </div>
+
+          {!canUseAi && (
+            <div className="support-login-prompt recommender-auth-prompt">
+              <strong>请先登录</strong>
+              <span>游客可以浏览课程和生活内容；AI 专业推荐分析仅对注册用户和管理员开放。</span>
+              <div className="inline-actions">
+                <button className="primary-action" onClick={() => go('/login')}>去登录</button>
+                <button className="secondary-action" onClick={() => go('/register')}>注册账号</button>
+              </div>
+            </div>
+          )}
 
           <label className="recommender-toggle">
             <input
@@ -2891,7 +2906,7 @@ function ProgrammeRecommenderPage() {
             </label>
           </div>
 
-          <button className="primary-action recommender-submit" onClick={submit} disabled={loading}>{loading ? '生成中' : '生成推荐'}</button>
+          <button className="primary-action recommender-submit" onClick={submit} disabled={loading || !canUseAi}>{loading ? '生成中' : canUseAi ? '生成推荐' : '登录后生成推荐'}</button>
           {error && <p className="form-error">{error}</p>}
           <p className="recommender-note">结果仅基于已采集的公开官网资料。课程描述不足时，系统会提示信息不足，不会补写官网没有的课程内容。</p>
         </section>
@@ -3631,7 +3646,7 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage />}
+        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage canUseAi={Boolean(currentUser || isAdminAuthenticated)} />}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
