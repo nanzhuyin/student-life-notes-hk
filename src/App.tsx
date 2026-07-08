@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.62';
+const APP_VERSION = 'v1.61';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1371,10 +1371,11 @@ function buildCourseAdvisorPromptScript(course: Course, profile: CourseAdvisorPr
 
 async function requestCourseAdvisor(course: Course, profile: CourseAdvisorProfile, authToken: string) {
   if (!API_BASE_URL) return buildLocalCourseAdvisor(course, profile);
+  if (!authToken) throw new Error('请先登录或使用管理员身份进入后再使用 AI 课程顾问。');
   try {
     const data = await apiRequest<{ ok: true; data: CourseAdvisorResult }>('/api/course-advisor', {
       method: 'POST',
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      headers: { Authorization: `Bearer ${authToken}` },
       body: JSON.stringify({
         courseId: course.id,
         age: profile.age,
@@ -1387,10 +1388,7 @@ async function requestCourseAdvisor(course: Course, profile: CourseAdvisorProfil
     });
     return data.data;
   } catch (error) {
-    return {
-      ...buildLocalCourseAdvisor(course, profile),
-      modelNote: error instanceof Error ? error.message : '后端暂不可用，已使用本地规则库。'
-    };
+    throw new Error(error instanceof Error ? error.message : '暂时无法生成建议');
   }
 }
 
@@ -2298,10 +2296,12 @@ function CoursesPage({
 
 function CourseDetailPage({
   id,
+  authToken,
   favoriteCourseIds,
   onToggleFavoriteCourse
 }: {
   id: string;
+  authToken: string;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
 }) {
@@ -2405,7 +2405,7 @@ function CourseDetailPage({
             </section>
           )}
           <CourseInsightBlock course={course} />
-          <CourseAdvisorPanel course={course} />
+          <CourseAdvisorPanel course={course} authToken={authToken} />
         </div>
 
         <aside className="course-detail-side">
@@ -2427,7 +2427,7 @@ function CourseDetailPage({
   );
 }
 
-function CourseAdvisorPanel({ course }: { course: Course }) {
+function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: string }) {
   const [profile, setProfile] = useState<CourseAdvisorProfile>(COURSE_ADVISOR_EMPTY_PROFILE);
   const [result, setResult] = useState<CourseAdvisorResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -2457,15 +2457,18 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
     const currentProfile = profileOverride || profile;
     setError('');
     if (!hasCourseAdvisorProfileInput(currentProfile)) {
-      setError('请至少填写一个背景信息，规则库才能按你的情况匹配课程。');
+      setError('请至少填写一个背景信息，AI 课程顾问才能按你的情况匹配课程。');
+      return;
+    }
+    if (API_BASE_URL && !authToken) {
+      setError('请先登录或使用管理员身份进入后再使用 AI 课程顾问。');
       return;
     }
     setLoading(true);
     try {
       setResult(null);
       setLastAdvisorQuestion(currentProfile.question.trim() || '根据当前画像生成课程建议');
-      await new Promise((resolve) => window.setTimeout(resolve, 120));
-      setResult(buildLocalCourseAdvisor(course, currentProfile));
+      setResult(await requestCourseAdvisor(course, currentProfile, authToken));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : '暂时无法生成建议');
     } finally {
@@ -2536,9 +2539,9 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
   return (
     <section className="course-ai-advisor">
       <div className="course-ai-head">
-        <span>Rule-based Course Advisor</span>
-        <h2>规则型课程建议</h2>
-        <p>内测阶段先不依赖 AI 接口。系统会按固定画像和课程资料判断：必修课学什么重点，选修课适合谁、怎样衔接就业或职业升级。</p>
+        <span>AI Course Advisor</span>
+        <h2>AI 课程建议</h2>
+        <p>登录后通过后端课程顾问接口生成建议。系统会结合课程资料、固定规则和知识库判断：必修课学什么重点，选修课适合谁、怎样衔接就业或职业升级。</p>
         <div className="course-ai-presets" aria-label="快速画像示例">
           {exampleProfiles.map((item) => (
             <button key={item.label} onClick={() => usePreset(item.profile)}>{item.label}</button>
@@ -2578,7 +2581,7 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
       {error && <p className="course-ai-error">{error}</p>}
       <div className="course-ai-actions">
         <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成课程建议'}</button>
-        <small>当前使用固定规则库，结果更稳定；后续可接 DeepSeek 做更细的连续追问。</small>
+        <small>注册用户和管理员可用；游客需要先登录后才能生成课程建议。</small>
       </div>
       <div className="course-ai-privacy">
         <strong>隐私与 AI 说明</strong>
@@ -4562,6 +4565,7 @@ export default function App() {
           <CourseDetailPage
             id={route.id}
             favoriteCourseIds={favoriteCourseIds}
+            authToken={recommenderAuthToken}
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
