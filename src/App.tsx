@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.55';
+const APP_VERSION = 'v1.56';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2772,6 +2772,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
   const [studyPreferences, setStudyPreferences] = useState('');
   const [concerns, setConcerns] = useState('');
   const [workExperience, setWorkExperience] = useState('');
+  const [otherContext, setOtherContext] = useState('');
   const [result, setResult] = useState<ProgrammeRecommendationResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -2830,7 +2831,8 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
         : targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
       studyPreferences: splitProfileList(studyPreferences),
       concerns: splitProfileList(concerns),
-      workExperience: splitProfileList(workExperience)
+      workExperience: splitProfileList(workExperience),
+      otherContext: otherContext.trim()
     };
 
     setLoading(true);
@@ -2963,6 +2965,10 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
               <span>实习 / 工作 / 科研经历（选填）</span>
               <textarea value={workExperience} onChange={(event) => setWorkExperience(event.target.value)} placeholder="例如：marketing internship, research assistant" rows={3}></textarea>
             </label>
+            <label className="recommender-field wide">
+              <span>其他情况（选填）</span>
+              <textarea value={otherContext} onChange={(event) => setOtherContext(event.target.value)} placeholder="例如：转专业原因、地区偏好、预算压力、签证/时间安排、家庭情况、已经拿到的 offer 等" rows={3}></textarea>
+            </label>
           </div>
 
           <button className="primary-action recommender-submit" onClick={submit} disabled={loading || !canUseAi}>{loading ? '生成中' : canUseAi ? '生成推荐' : '登录后生成推荐'}</button>
@@ -3038,6 +3044,18 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                     <div className="recommendation-section">
                       <strong>入学前准备</strong>
                       <ul>{item.suggestedPreparations.map((text) => <li key={text}>{text}</li>)}</ul>
+                    </div>
+                  )}
+                  {item.careerFit.length > 0 && (
+                    <div className="recommendation-section">
+                      <strong>职业匹配</strong>
+                      <ul>{item.careerFit.map((text) => <li key={text}>{text}</li>)}</ul>
+                    </div>
+                  )}
+                  {item.futureOutcomes?.length > 0 && (
+                    <div className="recommendation-section">
+                      <strong>未来去向 / 职业方向参考</strong>
+                      <ul>{item.futureOutcomes.map((text) => <li key={text}>{text}</li>)}</ul>
                     </div>
                   )}
                 </article>

@@ -24,6 +24,10 @@ const baseProgramme = {
   importantCourses: [],
   skillsDeveloped: [],
   careerDirections: [],
+  graduateOutcomeSummary: '',
+  graduateOutcomes: [],
+  graduateOutcomeInformationInsufficient: true,
+  graduateOutcomeInformationLimits: ['The official programme pages do not provide year-by-year graduate destination data.'],
   admissionNotes: '',
   informationInsufficient: true,
   informationLimits: ['The official page does not provide detailed course information.'],
@@ -49,7 +53,8 @@ test('validateStudentProfile preserves selected programme and richer student con
     targetDegreeLevels: ['Master'],
     studyPreferences: ['full-time'],
     concerns: ['weak programming background'],
-    workExperience: ['research assistant']
+    workExperience: ['research assistant'],
+    otherContext: 'prefers policy and data roles'
   });
 
   assert.equal(profile.hasChosenProgramme, true);
@@ -60,6 +65,7 @@ test('validateStudentProfile preserves selected programme and richer student con
   assert.deepEqual(profile.studyPreferences, ['full-time']);
   assert.deepEqual(profile.concerns, ['weak programming background']);
   assert.deepEqual(profile.workExperience, ['research assistant']);
+  assert.equal(profile.otherContext, 'prefers policy and data roles');
 });
 
 test('findProgrammeCandidates keeps a selected programme in the candidate set for suitability analysis', () => {
@@ -100,7 +106,8 @@ test('buildDeepSeekUserPrompt includes selected programme status and concerns', 
     selectedProgrammeName: 'Master of Science in Data Science',
     undergraduateMajor: 'Statistics',
     masterMajor: 'Marketing',
-    concerns: ['not sure if programming is enough']
+    concerns: ['not sure if programming is enough'],
+    otherContext: 'family location preference in Hong Kong'
   });
 
   const prompt = buildDeepSeekUserPrompt(profile, [baseProgramme]);
@@ -109,6 +116,9 @@ test('buildDeepSeekUserPrompt includes selected programme status and concerns', 
   assert.match(prompt, /Selected programme name: Master of Science in Data Science/);
   assert.match(prompt, /Master's major: Marketing/);
   assert.match(prompt, /Concerns: \["not sure if programming is enough"\]/);
+  assert.match(prompt, /Other context: family location preference in Hong Kong/);
+  assert.match(prompt, /at least three recommended programmes/);
+  assert.match(prompt, /Future career or graduate outcome directions/);
 });
 
 test('DeepSeek prompt requires Simplified Chinese user-facing output', () => {

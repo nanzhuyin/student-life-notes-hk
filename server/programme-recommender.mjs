@@ -18,7 +18,10 @@ Rules:
 11. The recommendation is for reference only, and final decisions should be based on official programme websites.
 12. Output valid JSON only.
 13. All user-facing explanations, summaries, reasons, preparation advice, career-fit text, gaps, and information-limit messages must be written in Simplified Chinese.
-14. Preserve official programme names, course names, IDs, URLs, and enum values exactly as provided in the candidate data. Do not translate or rewrite official names.`;
+14. Preserve official programme names, course names, IDs, URLs, and enum values exactly as provided in the candidate data. Do not translate or rewrite official names.
+15. You must only describe graduate outcomes, future directions, employers, sectors, or career prospects that are present in the provided candidate data.
+16. If year-by-year graduate destination data is insufficient, clearly state that the official graduate outcome information is insufficient.
+17. When at least three candidate programmes are provided, recommend at least three programmes.`;
 
 const OUTPUT_SHAPE = {
   summary: 'string',
@@ -51,6 +54,7 @@ const OUTPUT_SHAPE = {
       potentialGaps: ['string'],
       suggestedPreparations: ['string'],
       careerFit: ['string'],
+      futureOutcomes: ['string'],
       sourceUrl: 'string'
     }
   ],
@@ -118,6 +122,7 @@ function buildWeightedFields(programme) {
     { field: 'importantCourses', weight: 12, values: (programme.importantCourses || []).flatMap((course) => [course.courseName, course.whyImportant, ...(course.relatedStudentBackgrounds || []), ...(course.relatedCareerGoals || [])]) },
     { field: 'skillsDeveloped', weight: 9, values: programme.skillsDeveloped || [] },
     { field: 'careerDirections', weight: 13, values: programme.careerDirections || [] },
+    { field: 'graduateOutcomes', weight: 14, values: [programme.graduateOutcomeSummary, ...(programme.graduateOutcomes || []).flatMap((outcome) => [outcome.description, ...(outcome.roles || []), ...(outcome.sectors || []), ...(outcome.employers || [])])] },
     { field: 'keywords', weight: 7, values: programme.keywords || [] },
     { field: 'learningObjectives', weight: 7, values: programme.learningObjectives || [] },
     { field: 'summary', weight: 5, values: [programme.summary] },
@@ -142,6 +147,10 @@ function safeProgrammeForModel(programme) {
     importantCourses: programme.importantCourses || [],
     skillsDeveloped: programme.skillsDeveloped || [],
     careerDirections: programme.careerDirections || [],
+    graduateOutcomeSummary: programme.graduateOutcomeSummary || '',
+    graduateOutcomes: programme.graduateOutcomes || [],
+    graduateOutcomeInformationInsufficient: Boolean(programme.graduateOutcomeInformationInsufficient),
+    graduateOutcomeInformationLimits: programme.graduateOutcomeInformationLimits || [],
     admissionNotes: programme.admissionNotes,
     informationInsufficient: Boolean(programme.informationInsufficient),
     informationLimits: programme.informationLimits || [],
@@ -165,7 +174,8 @@ export function validateStudentProfile(body) {
     targetDegreeLevels: trimList(body.targetDegreeLevels, 8),
     studyPreferences: trimList(body.studyPreferences, 12),
     concerns: trimList(body.concerns, 12, 200),
-    workExperience: trimList(body.workExperience, 12, 200)
+    workExperience: trimList(body.workExperience, 12, 200),
+    otherContext: trimString(body.otherContext, 1000)
   };
   const totalSignals = [
     profile.selectedProgrammeId,
@@ -180,9 +190,10 @@ export function validateStudentProfile(body) {
     ...profile.targetDegreeLevels,
     ...profile.studyPreferences,
     ...profile.concerns,
-    ...profile.workExperience
+    ...profile.workExperience,
+    profile.otherContext
   ].filter(Boolean).length;
-  if (!totalSignals) throw new RecommendationError('VALIDATION_ERROR', 'Please provide at least one student background field.');
+  if (!totalSignals) throw new RecommendationError('VALIDATION_ERROR', '请至少填写一个学生背景字段。');
   for (const key of ['mainCourses', 'skills', 'interests', 'careerGoals', 'preferredDirections', 'targetDegreeLevels', 'studyPreferences', 'concerns', 'workExperience']) {
     if (profile[key].length > 20) throw new RecommendationError('VALIDATION_ERROR', `${key} supports up to 20 items.`);
   }
@@ -206,7 +217,8 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
     careerGoals: unique(profile.careerGoals),
     targetDegreeLevels: unique(profile.targetDegreeLevels || []),
     concerns: unique(profile.concerns || []),
-    workExperience: unique(profile.workExperience || [])
+    workExperience: unique(profile.workExperience || []),
+    otherContext: unique([profile.otherContext])
   };
   const allTerms = unique([
     ...terms.selectedProgramme,
@@ -218,7 +230,8 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
     ...terms.careerGoals,
     ...terms.targetDegreeLevels,
     ...terms.concerns,
-    ...terms.workExperience
+    ...terms.workExperience,
+    ...terms.otherContext
   ]);
 
   const ranked = programmes
@@ -232,8 +245,8 @@ export function findProgrammeCandidates(programmes, profile, limit = 5) {
           : field.field === 'suitableBackgrounds' ? [...terms.undergraduateMajor, ...terms.masterMajor]
             : field.field === 'coreCourses' || field.field === 'courseDescriptions' || field.field === 'importantCourses' ? [...terms.mainCourses, ...terms.undergraduateMajor, ...terms.masterMajor, ...terms.careerGoals]
               : field.field === 'skillsDeveloped' ? terms.skills
-                : field.field === 'careerDirections' ? terms.careerGoals
-                  : field.field === 'keywords' || field.field === 'learningObjectives' || field.field === 'summary' ? [...terms.interests, ...terms.careerGoals, ...terms.skills, ...terms.concerns, ...terms.workExperience]
+                : field.field === 'careerDirections' || field.field === 'graduateOutcomes' ? [...terms.careerGoals, ...terms.interests, ...terms.workExperience, ...terms.otherContext]
+                  : field.field === 'keywords' || field.field === 'learningObjectives' || field.field === 'summary' ? [...terms.interests, ...terms.careerGoals, ...terms.skills, ...terms.concerns, ...terms.workExperience, ...terms.otherContext]
                     : allTerms;
         const matchedTerms = fieldContainsAny(field.values, fieldTerms);
         if (!matchedTerms.length) continue;
@@ -275,6 +288,7 @@ export function buildDeepSeekUserPrompt(profile, candidateProgrammes) {
 - Study preferences: ${JSON.stringify(profile.studyPreferences)}
 - Concerns: ${JSON.stringify(profile.concerns)}
 - Work experience: ${JSON.stringify(profile.workExperience)}
+- Other context: ${profile.otherContext}
 
 Candidate programmes from knowledge base:
 ${JSON.stringify(candidateProgrammes.map(safeProgrammeForModel), null, 2)}
@@ -282,6 +296,7 @@ ${JSON.stringify(candidateProgrammes.map(safeProgrammeForModel), null, 2)}
 Task:
 Recommend the most suitable programmes based only on the candidate programme data.
 If the student has already chosen a programme and it is present in candidate data, evaluate whether that chosen programme is suitable before comparing alternatives.
+When at least three candidate programmes are provided, include at least three recommended programmes.
 
 For each recommended programme, explain:
 1. Why this programme is recommended;
@@ -289,13 +304,17 @@ For each recommended programme, explain:
 3. Which courses in this programme are most important for this student;
 4. Why those courses matter;
 5. What the student should prepare before entering the programme;
-6. What potential gaps the student may have.
+6. What potential gaps the student may have;
+7. Future career or graduate outcome directions based only on graduateOutcomes, graduateOutcomeSummary, and careerDirections in the candidate data.
 
 Important restrictions:
 - Do not invent course names.
 - Do not invent programme information.
+- Do not invent graduate destinations, employers, industries, or future outcomes.
+- If official year-by-year graduate destination information is insufficient, say that graduate outcome information is insufficient.
+- Treat publicSocial source items as reference material only and do not present them as official university outcomes.
 - If the candidate programme does not include course information, say that course information is insufficient.
-- Write all user-facing text values in Simplified Chinese, including summary, reasons, explanations, preparation advice, potential gaps, career fit, informationLimits, and notRecommended reasons.
+- Write all user-facing text values in Simplified Chinese, including summary, reasons, explanations, preparation advice, potential gaps, career fit, future outcomes, informationLimits, and notRecommended reasons.
 - Preserve official programme names and course names exactly as provided in candidate data.
 - Output valid JSON only.
 
@@ -327,6 +346,9 @@ export function validateRecommendationOutput(output, candidates) {
   assertArray(output.notRecommended, 'notRecommended');
   assertArray(output.informationLimits, 'informationLimits');
   if (output.disclaimer !== RECOMMENDATION_DISCLAIMER) throw new RecommendationError('MODEL_OUTPUT_INVALID', 'Model output disclaimer is missing or changed.');
+  if (candidates.length >= 3 && output.recommendations.length < 3) {
+    throw new RecommendationError('MODEL_OUTPUT_INVALID', 'Model output must include at least three recommendations when at least three candidates are provided.');
+  }
 
   const candidateById = new Map(candidates.map((programme) => [programme.id, programme]));
   const allowedCourseNames = new Map(candidates.map((programme) => [
@@ -348,6 +370,8 @@ export function validateRecommendationOutput(output, candidates) {
     if (!['high', 'medium', 'low'].includes(recommendation.matchLevel)) throw new RecommendationError('MODEL_OUTPUT_INVALID', 'matchLevel must be high, medium, or low.');
     assertArray(recommendation.whyRecommended, `recommendations[${index}].whyRecommended`);
     assertArray(recommendation.importantCoursesForThisStudent, `recommendations[${index}].importantCoursesForThisStudent`);
+    assertArray(recommendation.careerFit, `recommendations[${index}].careerFit`);
+    assertArray(recommendation.futureOutcomes, `recommendations[${index}].futureOutcomes`);
     if (programme.informationInsufficient && !(programme.importantCourses || []).length && recommendation.importantCoursesForThisStudent.length) {
       throw new RecommendationError('MODEL_OUTPUT_INVALID', `Model invented courses for information-insufficient programme: ${programme.programmeName}`);
     }

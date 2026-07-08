@@ -312,7 +312,109 @@
     ],
     "sourceHash": "8d3fdd3487f6d87afc9921041d6b6982bfb5f2707304a9b32f0dddabd4c57e66",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:13:23.603Z"
+    "lastUpdatedAt": "2026-07-07T13:13:23.603Z",
+    "graduateOutcomeSummary": "Upon completion of the programme, graduates will be well-positioned for careers in different fields, including positions blending AI technology with artistic or humanistic pursuits. With industries increasingly integrating ethical considerations into their AI strategies, our graduates will also find ample opportunities in tech, healthcare, finance, and government sectors, both in Hong Kong and abroad. Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, MAAIF graduates will be well-positioned for careers that blend AI technology with artistic and humanistic pursuits, such as AI Ethicist or Analyst, AI Developer or Art Creator, Educator, and AI Consultant or Strategist.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Upon completion of the programme, graduates will be well-positioned for careers in different fields, including positions blending AI technology with artistic or humanistic pursuits.",
+        "roles": [
+          "positions blending AI technology with artistic",
+          "humanistic pursuits"
+        ],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/philoso/hkcrc/maaif/programme-information/programme-highlight",
+        "sourceText": "Upon completion of the programme, graduates will be well-positioned for careers in different fields, including positions blending AI technology with artistic or humanistic pursuits."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With industries increasingly integrating ethical considerations into their AI strategies, our graduates will also find ample opportunities in tech, healthcare, finance, and government sectors, both in Hong Kong and abroad.",
+        "roles": [],
+        "sectors": [
+          "tech",
+          "healthcare",
+          "finance",
+          "government"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/philoso/hkcrc/maaif/programme-information/programme-highlight",
+        "sourceText": "With industries increasingly integrating ethical considerations into their AI strategies, our graduates will also find ample opportunities in tech, healthcare, finance, and government sectors, both in Hong Kong and abroad."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, MAAIF graduates will be well-positioned for careers that blend AI technology with artistic and humanistic pursuits, such as AI Ethicist or Analyst, AI Developer or Art Creator, Educator, and AI Consultant or Strategist.",
+        "roles": [
+          "AI Ethicist",
+          "Analyst",
+          "AI Developer",
+          "Art Creator",
+          "Educator",
+          "AI Consultant",
+          "Strategist"
+        ],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/philoso/hkcrc/maaif/programme-information/overview",
+        "sourceText": "Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, MAAIF graduates will be well-positioned for careers that blend AI technology with artistic and humanistic pursuits, such as AI Ethicist or Analyst, AI Developer or Art Creator, Educator, and AI Consultant or Strategist."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With industries increasingly integrating ethical considerations into their AI strategies, our graduates will find ample opportunities in tech, healthcare, finance, and government sectors, both in Hong Kong and abroad.",
+        "roles": [],
+        "sectors": [
+          "tech",
+          "healthcare",
+          "finance",
+          "government"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/philoso/hkcrc/maaif/programme-information/overview",
+        "sourceText": "With industries increasingly integrating ethical considerations into their AI strategies, our graduates will find ample opportunities in tech, healthcare, finance, and government sectors, both in Hong Kong and abroad."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Our graduates will be especially well-positioned to take up jobs that combine AI technology with artistic or humanistic pursuits. Examples of career paths include:",
+        "roles": [],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/philoso/hkcrc/maaif/programme-information/overview",
+        "sourceText": "Our graduates will be especially well-positioned to take up jobs that combine AI technology with artistic or humanistic pursuits. Examples of career paths include:"
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-chinese",
@@ -620,7 +722,27 @@
     ],
     "sourceHash": "10221b9213d495d9fd1079dc31906424fb56e5039d1dfa6941612f08a3473132",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:13:29.030Z"
+    "lastUpdatedAt": "2026-07-07T13:13:29.030Z",
+    "graduateOutcomeSummary": "Pursue further postgraduate studies.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Pursue further postgraduate studies.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/chi/machi",
+        "sourceText": "Pursue further postgraduate studies."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-creative-and-media-industries",
@@ -943,7 +1065,14 @@
     ],
     "sourceHash": "a67065215ef7b2c37878f70bdcdd6c0e1e44d2ed0de8f47d60a5d22e0f3146e2",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:13:40.027Z"
+    "lastUpdatedAt": "2026-07-07T13:13:40.027Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-curating-and-art-history",
@@ -1277,7 +1406,60 @@
     ],
     "sourceHash": "02e2da0885f7377d5f4ce618cdf55f88b30f3b09302e9b8d5b90377a10e9d6a8",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:14:00.527Z"
+    "lastUpdatedAt": "2026-07-07T13:14:00.527Z",
+    "graduateOutcomeSummary": "Graduates can seek employment in the cultural and arts industries, which include private and public museums, galleries, auction houses, arts media, educational institutions, arts and cultural trust foundations, and art fairs. Alumni from MACAH have worked in galleries, museums, auction houses, and a variety of other industries. This undoubtedly transformed the once challenging time into something worthwhile and has given me the confidence to face even greater challenges in my future career pathways.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Graduates can seek employment in the cultural and arts industries, which include private and public museums, galleries, auction houses, arts media, educational institutions, arts and cultural trust foundations, and art fairs. Alumni from MACAH have worked in galleries, museums, auction houses, and a variety of other industries.",
+        "roles": [
+          "private",
+          "public museums",
+          "galleries",
+          "auction houses",
+          "arts media",
+          "educational institutions",
+          "arts",
+          "cultural trust foundations",
+          "art fairs. Alumni from MACAH have worked in galleries",
+          "museums",
+          "a variety of other industries"
+        ],
+        "sectors": [
+          "education",
+          "museums",
+          "galleries",
+          "auction houses",
+          "arts media",
+          "cultural",
+          "media"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/daci/macah",
+        "sourceText": "Graduates can seek employment in the cultural and arts industries, which include private and public museums, galleries, auction houses, arts media, educational institutions, arts and cultural trust foundations, and art fairs. Alumni from MACAH have worked in galleries, museums, auction houses, and a variety of other industries."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "This undoubtedly transformed the once challenging time into something worthwhile and has given me the confidence to face even greater challenges in my future career pathways.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/daci/macah/programme/award-and-scholarship/scholarship",
+        "sourceText": "This undoubtedly transformed the once challenging time into something worthwhile and has given me the confidence to face even greater challenges in my future career pathways."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-digital-english-studies",
@@ -1573,7 +1755,14 @@
     ],
     "sourceHash": "a7368f99e0fdd50091ba2115a30e5a09f7f27c5cc109a95898c6430905a60277",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:14:05.628Z"
+    "lastUpdatedAt": "2026-07-07T13:14:05.628Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-digital-history-in-global-asia",
@@ -1882,7 +2071,71 @@
     ],
     "sourceHash": "37cafbe067732aa9006ead4844c3bf371062b90d697e98f30d80192c20afbda7",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:14:10.711Z"
+    "lastUpdatedAt": "2026-07-07T13:14:10.711Z",
+    "graduateOutcomeSummary": "Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, DHGA graduates will be well-positioned for careers that will be in demand in a range of fields such as education, the creative media, cultural management, heritage preservation, information science, programming, and academia. Our graduates will be especially well-positioned to take up jobs in education, academia and data analyst. As a recognized taught postgraduate programme, our graduates are eligible to apply for official CSCSE certification (留服认证) upon graduation.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, DHGA graduates will be well-positioned for careers that will be in demand in a range of fields such as education, the creative media, cultural management, heritage preservation, information science, programming, and academia.",
+        "roles": [
+          "education",
+          "the creative media",
+          "cultural management",
+          "heritage preservation",
+          "information science",
+          "programming",
+          "academia"
+        ],
+        "sectors": [
+          "education",
+          "academia",
+          "cultural",
+          "creative media",
+          "heritage",
+          "media"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/history/programmes/dhga",
+        "sourceText": "Designed to align with the Level-6 parameters of Hong Kong Qualification Framework, DHGA graduates will be well-positioned for careers that will be in demand in a range of fields such as education, the creative media, cultural management, heritage preservation, information science, programming, and academia."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Our graduates will be especially well-positioned to take up jobs in education, academia and data analyst.",
+        "roles": [],
+        "sectors": [
+          "education",
+          "academia"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/history/programmes/dhga",
+        "sourceText": "Our graduates will be especially well-positioned to take up jobs in education, academia and data analyst."
+      },
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "As a recognized taught postgraduate programme, our graduates are eligible to apply for official CSCSE certification (留服认证) upon graduation.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/history/programmes/dhga",
+        "sourceText": "As a recognized taught postgraduate programme, our graduates are eligible to apply for official CSCSE certification (留服认证) upon graduation."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-translation-studies",
@@ -2195,7 +2448,14 @@
     ],
     "sourceHash": "28939553ccb7aa1d8464ec9ba5cbd9df76ea5a14c27b5d2f9b72b8ff6c88ade1",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:14:21.196Z"
+    "lastUpdatedAt": "2026-07-07T13:14:21.196Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-cultural-studies",
@@ -2752,7 +3012,137 @@
     ],
     "sourceHash": "bdc87073664602ff97b1e44fb47ae22649f70b3eabc51d7090b19b87c27ef8ee",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:14:42.269Z"
+    "lastUpdatedAt": "2026-07-07T13:14:42.269Z",
+    "graduateOutcomeSummary": "2. The professional fields of MCS students and graduates include, but are not limited to: Lingnan graduates will have breadth and depth of vision, the desire and capacity for public service, an awareness of the complexities that characterize enduring human dilemmas, and, accordingly, maturity of judgement. Excellent as leaders and employees, Lingnan graduates will be the beneficiaries of a multi-dimensional approach to learning.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "2. The professional fields of MCS students and graduates include, but are not limited to:",
+        "roles": [
+          "but are not limited to:"
+        ],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/",
+        "sourceText": "2. The professional fields of MCS students and graduates include, but are not limited to:"
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Lingnan graduates will have breadth and depth of vision, the desire and capacity for public service, an awareness of the complexities that characterize enduring human dilemmas, and, accordingly, maturity of judgement.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Lingnan graduates will have breadth and depth of vision, the desire and capacity for public service, an awareness of the complexities that characterize enduring human dilemmas, and, accordingly, maturity of judgement."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Excellent as leaders and employees, Lingnan graduates will be the beneficiaries of a multi-dimensional approach to learning.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Excellent as leaders and employees, Lingnan graduates will be the beneficiaries of a multi-dimensional approach to learning."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "For taught postgraduate programmes, Lingnan graduates are expected to possess the following attributes:",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "For taught postgraduate programmes, Lingnan graduates are expected to possess the following attributes:"
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Independent and Critical Scholar: LU graduates will possess in-depth discipline specific knowledge as well as a diverse range of a professional and scholarship skills.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Independent and Critical Scholar: LU graduates will possess in-depth discipline specific knowledge as well as a diverse range of a professional and scholarship skills."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Advanced Professional Problem-solver: LU graduates will have a deep understanding of discipline knowledge to creatively solve complex problems and provide innovative solutions.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Advanced Professional Problem-solver: LU graduates will have a deep understanding of discipline knowledge to creatively solve complex problems and provide innovative solutions."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Critical and Creative: LU graduates will be critically analytical and have a creative perspective and outlook in their research areas / professional discipline.",
+        "roles": [],
+        "sectors": [
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Critical and Creative: LU graduates will be critically analytical and have a creative perspective and outlook in their research areas / professional discipline."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Skilled Communicator: LU graduates will be advanced communicators and be able to articulate clearly and coherently in written, digital and oral forms.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Skilled Communicator: LU graduates will be advanced communicators and be able to articulate clearly and coherently in written, digital and oral forms."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Ethically and Socially Responsible Researcher/Professional: LU graduates will be reflective, ethical and socially responsible in conducting their research / professional practice.",
+        "roles": [],
+        "sectors": [
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/cultural/programmes/mcs/programme",
+        "sourceText": "Ethically and Socially Responsible Researcher/Professional: LU graduates will be reflective, ethical and socially responsible in conducting their research / professional practice."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "doctor-of-business-administration-in-global-digital-economy-and-governance",
@@ -2886,7 +3276,14 @@
     ],
     "sourceHash": "54310a5ea55af12a7438d9d567ba5edebe6996d1dcc71ce39dda878e7093dcb8",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-08T01:49:28.628Z"
+    "lastUpdatedAt": "2026-07-08T01:49:28.628Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "doctor-of-business-studies",
@@ -3176,7 +3573,27 @@
     ],
     "sourceHash": "1d7e6ebffb52e803cca823519499ff5c2611d57cf27ea070aa5745533f4815cb",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:15:29.722Z"
+    "lastUpdatedAt": "2026-07-07T13:15:29.722Z",
+    "graduateOutcomeSummary": "Dual Career Pathways: The DBS programme offers academic enrichment for ambitious individuals to thrive in both academic and industry settings.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Dual Career Pathways: The DBS programme offers academic enrichment for ambitious individuals to thrive in both academic and industry settings.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/fb/dbs",
+        "sourceText": "Dual Career Pathways: The DBS programme offers academic enrichment for ambitious individuals to thrive in both academic and industry settings."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-accountancy",
@@ -3693,7 +4110,133 @@
     ],
     "sourceHash": "220252bca59d27045175a79182bbec5ef516230ddf229166d8e2408f15298f81",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:16:56.168Z"
+    "lastUpdatedAt": "2026-07-07T13:16:56.168Z",
+    "graduateOutcomeSummary": "A master’s degree in accountancy opens the doors to job and career opportunities in a number of fields. We’ll give you the tools to take control of your career, putting you on an upward trajectory and giving you a head start to become an accounting professional. Some graduates have also pursued their careers in civil servants, education sector as well as other sizable companies / organizations in the Mainland China, Hong Kong or overseas. Awardees of the PGDA are eligible to apply for direct entry into the Institute’s QP, provided they hold a recognized first degree.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "A master’s degree in accountancy opens the doors to job and career opportunities in a number of fields. We’ll give you the tools to take control of your career, putting you on an upward trajectory and giving you a head start to become an accounting professional.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/career-prospects",
+        "sourceText": "A master’s degree in accountancy opens the doors to job and career opportunities in a number of fields. We’ll give you the tools to take control of your career, putting you on an upward trajectory and giving you a head start to become an accounting professional."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Some graduates have also pursued their careers in civil servants, education sector as well as other sizable companies / organizations in the Mainland China, Hong Kong or overseas.",
+        "roles": [],
+        "sectors": [
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/career-prospects",
+        "sourceText": "Some graduates have also pursued their careers in civil servants, education sector as well as other sizable companies / organizations in the Mainland China, Hong Kong or overseas."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Awardees of the PGDA are eligible to apply for direct entry into the Institute’s QP, provided they hold a recognized first degree.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/professional-recognition",
+        "sourceText": "Awardees of the PGDA are eligible to apply for direct entry into the Institute’s QP, provided they hold a recognized first degree."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "MAcc graduates are exempted from the first 16 units of the ICMA professional examination and may apply for the Graduate Management Accountant (GMA) designation upon graduation.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/professional-recognition",
+        "sourceText": "MAcc graduates are exempted from the first 16 units of the ICMA professional examination and may apply for the Graduate Management Accountant (GMA) designation upon graduation."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "PGDA graduates are also exempted from taking 15 units of the ICMA examination.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/professional-recognition",
+        "sourceText": "PGDA graduates are also exempted from taking 15 units of the ICMA examination."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "MAcc graduates are eligible for exemptions from the CIMA examinations at the Certificate Level and Operational Level, allowing them to start directly at the Management Level for the CIMA exam.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/professional-recognition",
+        "sourceText": "MAcc graduates are eligible for exemptions from the CIMA examinations at the Certificate Level and Operational Level, allowing them to start directly at the Management Level for the CIMA exam."
+      },
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "MAcc graduates are eligible for exemptions from two papers of The Taxation Institute of Hong Kong’s Chartered Tax Adviser (CTA) Qualifying Examination.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/professional-recognition",
+        "sourceText": "MAcc graduates are eligible for exemptions from two papers of The Taxation Institute of Hong Kong’s Chartered Tax Adviser (CTA) Qualifying Examination."
+      },
+      {
+        "year": "2023-24",
+        "outcomeType": "careerProspect",
+        "description": "MAcc 2023-24 Alumni Sharing Series#1: Roadmap to Data Science- Implications for professional accountants",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/Programme-Overview/student-activities",
+        "sourceText": "MAcc 2023-24 Alumni Sharing Series#1: Roadmap to Data Science- Implications for professional accountants"
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "As a proud graduate of Lingnan University with a Master’s degree in Accountancy, I can confidently say that the MAcc programme significantly enhanced my financial expertise and opened numerous career opportunities.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "http://ln.edu.hk/acct/macc/about-us/graduates-sharing",
+        "sourceText": "As a proud graduate of Lingnan University with a Master’s degree in Accountancy, I can confidently say that the MAcc programme significantly enhanced my financial expertise and opened numerous career opportunities."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-arts-technology-and-business",
@@ -3840,7 +4383,14 @@
     ],
     "sourceHash": "06c4b2b14ff6f52d346ca1696c81899c328a30afb233677c8235703859bc589b",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-08T01:49:28.628Z"
+    "lastUpdatedAt": "2026-07-08T01:49:28.628Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-business-innovation-and-entrepreneurship",
@@ -3988,7 +4538,14 @@
     ],
     "sourceHash": "2a9fbc1423729686c7efd068745995a50710c596d54987716fd3d72e90d175ed",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:17:22.004Z"
+    "lastUpdatedAt": "2026-07-07T13:17:22.004Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-ebusiness-and-supply-chain-management",
@@ -4341,7 +4898,151 @@
     ],
     "sourceHash": "cce04596907cf0111252d1f2f0467ee0b4eb433d31298175482a62e107af3af6",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:17:42.075Z"
+    "lastUpdatedAt": "2026-07-07T13:17:42.075Z",
+    "graduateOutcomeSummary": "Ms. ZHUO Siying (2025 Graduate) Senior project engineer; Siemens Ltd（HK） Ms SHAN Baohui (2024 Graduate) Import Business Administrator, China Courier Services Limited (HK) Ms.XU Haoning(2024 Graduate) Business Analyst, IT Solution Ltd (Bank Of China (HK))",
+    "graduateOutcomes": [
+      {
+        "year": "2025",
+        "outcomeType": "graduateDestination",
+        "description": "Ms. ZHUO Siying (2025 Graduate) Senior project engineer; Siemens Ltd（HK）",
+        "roles": [],
+        "sectors": [],
+        "employers": [
+          "Siemens Ltd（HK）"
+        ],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms. ZHUO Siying (2025 Graduate) Senior project engineer; Siemens Ltd（HK）"
+      },
+      {
+        "year": "2024",
+        "outcomeType": "graduateDestination",
+        "description": "Ms SHAN Baohui (2024 Graduate) Import Business Administrator, China Courier Services Limited (HK)",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms SHAN Baohui (2024 Graduate) Import Business Administrator, China Courier Services Limited (HK)"
+      },
+      {
+        "year": "2024",
+        "outcomeType": "graduateDestination",
+        "description": "Ms.XU Haoning(2024 Graduate) Business Analyst, IT Solution Ltd (Bank Of China (HK))",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms.XU Haoning(2024 Graduate) Business Analyst, IT Solution Ltd (Bank Of China (HK))"
+      },
+      {
+        "year": "2024",
+        "outcomeType": "furtherStudy",
+        "description": "Ms. YANG Huijie (2024 Graduate) Shanghai University of International Business and Economics, Industrial Economics, PHD",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms. YANG Huijie (2024 Graduate) Shanghai University of International Business and Economics, Industrial Economics, PHD"
+      },
+      {
+        "year": "2024",
+        "outcomeType": "careerProspect",
+        "description": "Ms. DAI Yanyan (2024 Graduate) Operation Assistant, Celestial Asia Securities Holdings Limited",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms. DAI Yanyan (2024 Graduate) Operation Assistant, Celestial Asia Securities Holdings Limited"
+      },
+      {
+        "year": "2024",
+        "outcomeType": "employmentSector",
+        "description": "Mr. MA Herui (2024 Graduate) Delivery Engineer, Shenzhen SDMC technology co.,Ltd",
+        "roles": [],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Mr. MA Herui (2024 Graduate) Delivery Engineer, Shenzhen SDMC technology co.,Ltd"
+      },
+      {
+        "year": "2023",
+        "outcomeType": "careerProspect",
+        "description": "Mr. WAN Yu (2023 Graduate) Category Executive of DFI Retail Group",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Mr. WAN Yu (2023 Graduate) Category Executive of DFI Retail Group"
+      },
+      {
+        "year": "2023",
+        "outcomeType": "careerProspect",
+        "description": "Mr. WANG Chenglong (2023 Graduate) Management Trainee at Sa Sa Dot Com Limited (Hong Kong)",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Mr. WANG Chenglong (2023 Graduate) Management Trainee at Sa Sa Dot Com Limited (Hong Kong)"
+      },
+      {
+        "year": "2023",
+        "outcomeType": "careerProspect",
+        "description": "Ms. YE Xiuxia (2023 Graduate) Graduate Trainee of DSV Air&Sea Ltd.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Ms. YE Xiuxia (2023 Graduate) Graduate Trainee of DSV Air&Sea Ltd."
+      },
+      {
+        "year": "2022",
+        "outcomeType": "careerProspect",
+        "description": "Mr. LIN Wenxin (2022 Graduate) Sourcing Manager of the Procurement Qualification Department, Huawei Technologies Co., Ltd.",
+        "roles": [],
+        "sectors": [
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/ebscm",
+        "sourceText": "Mr. LIN Wenxin (2022 Graduate) Sourcing Manager of the Procurement Qualification Department, Huawei Technologies Co., Ltd."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages provide selected graduate examples, but not a complete year-by-year destination dataset for every cohort."
+    ]
   },
   {
     "id": "master-of-science-in-environmental-social-and-governance-management",
@@ -4734,7 +5435,40 @@
     ],
     "sourceHash": "2f002396d2976425e33c9561d9a5622cdf7be54dd5782a30742531b7f2137d23",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:18:08.187Z"
+    "lastUpdatedAt": "2026-07-07T13:18:08.187Z",
+    "graduateOutcomeSummary": "Related positions include ESG analyst, ESG manager, ESG and sustainability officer, ESG consultant, risk management officer/consultant, chief sustainability officer (CSO), ESG strategy director, CSR director, ESG consulting consultant/manager, etc.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Related positions include ESG analyst, ESG manager, ESG and sustainability officer, ESG consultant, risk management officer/consultant, chief sustainability officer (CSO), ESG strategy director, CSR director, ESG consulting consultant/manager, etc.",
+        "roles": [
+          "ESG analyst",
+          "ESG manager",
+          "ESG",
+          "sustainability officer",
+          "ESG consultant",
+          "risk management officer/consultant",
+          "chief sustainability officer (CSO)",
+          "ESG strategy director",
+          "CSR director",
+          "ESG consulting consultant/manager"
+        ],
+        "sectors": [
+          "consulting"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/acct/mscesgm/programme-overview/career-prospects",
+        "sourceText": "Related positions include ESG analyst, ESG manager, ESG and sustainability officer, ESG consultant, risk management officer/consultant, chief sustainability officer (CSO), ESG strategy director, CSR director, ESG consulting consultant/manager, etc."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-finance",
@@ -4878,7 +5612,73 @@
     ],
     "sourceHash": "299633f0813bfefc458a268c9c9a193d8bbccb946e555b573f23d85bc5e001b6",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:18:27.448Z"
+    "lastUpdatedAt": "2026-07-07T13:18:27.448Z",
+    "graduateOutcomeSummary": "The Programme will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations The degree will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations. Our staff have professional qualifications in accounting, actuarial science, financial analysis and investment, insurance, risk management, and tax. This attests to the professional relevance of our teaching and enables us to provide the best guidance to students who want to take the major professional qualifications in finance.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "The Programme will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations",
+        "roles": [
+          "the CFA",
+          "CIIA",
+          "FRM",
+          "CII designations"
+        ],
+        "sectors": [
+          "finance",
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/fin/mfin",
+        "sourceText": "The Programme will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations"
+      },
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "The degree will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations.",
+        "roles": [
+          "the CFA",
+          "CIIA",
+          "FRM",
+          "CII designations"
+        ],
+        "sectors": [
+          "finance",
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/fin/mfin/overview",
+        "sourceText": "The degree will provide a comprehensive education for students who wish to attempt the major professional qualifications in finance such as the CFA, CIIA, FRM, and CII designations."
+      },
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "Our staff have professional qualifications in accounting, actuarial science, financial analysis and investment, insurance, risk management, and tax. This attests to the professional relevance of our teaching and enables us to provide the best guidance to students who want to take the major professional qualifications in finance.",
+        "roles": [],
+        "sectors": [
+          "finance",
+          "insurance",
+          "actuarial"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/fin/mfin/overview",
+        "sourceText": "Our staff have professional qualifications in accounting, actuarial science, financial analysis and investment, insurance, risk management, and tax. This attests to the professional relevance of our teaching and enables us to provide the best guidance to students who want to take the major professional qualifications in finance."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-human-resource-and-organisational-management",
@@ -5360,7 +6160,108 @@
     ],
     "sourceHash": "7abcc7d47e03d03f4edd52a324aa00ba663614a9d1031fe6ff6f672912d5caa3",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:18:49.978Z"
+    "lastUpdatedAt": "2026-07-07T13:18:49.978Z",
+    "graduateOutcomeSummary": "With a rich history of academic excellence, our programme stands out for its deep-rooted commitment to advancing the field of human resource management. We take pride in offering a curriculum that has evolved with the industry, ensuring that our graduates are equipped with both timeless principles and the latest insights in HR. Our programme benefits from a strong alumni network and robust corporate partnerships, which provide valuable opportunities for professional growth and networking. We are dedicated to innovation in our curriculum, ensuring our graduates are not only prepared for the future of work but are also positioned to define it as strategic leaders in the evolving field of HR.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With a rich history of academic excellence, our programme stands out for its deep-rooted commitment to advancing the field of human resource management. We take pride in offering a curriculum that has evolved with the industry, ensuring that our graduates are equipped with both timeless principles and the latest insights in HR.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom",
+        "sourceText": "With a rich history of academic excellence, our programme stands out for its deep-rooted commitment to advancing the field of human resource management. We take pride in offering a curriculum that has evolved with the industry, ensuring that our graduates are equipped with both timeless principles and the latest insights in HR."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Our programme benefits from a strong alumni network and robust corporate partnerships, which provide valuable opportunities for professional growth and networking.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom",
+        "sourceText": "Our programme benefits from a strong alumni network and robust corporate partnerships, which provide valuable opportunities for professional growth and networking."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "We are dedicated to innovation in our curriculum, ensuring our graduates are not only prepared for the future of work but are also positioned to define it as strategic leaders in the evolving field of HR.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom",
+        "sourceText": "We are dedicated to innovation in our curriculum, ensuring our graduates are not only prepared for the future of work but are also positioned to define it as strategic leaders in the evolving field of HR."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "HR Analytics Specialist Graduates can pursue careers as HR analytics specialists, where they will use data-driven approaches to influence hiring decisions, employee retention strategies, and optimize workforce management. This role is increasingly vital as businesses seek to make strategic decisions based on robust analytical insights.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom/hradt/career-prospects",
+        "sourceText": "HR Analytics Specialist Graduates can pursue careers as HR analytics specialists, where they will use data-driven approaches to influence hiring decisions, employee retention strategies, and optimize workforce management. This role is increasingly vital as businesses seek to make strategic decisions based on robust analytical insights."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "HR Technology Consultant With a solid grounding in AI and HRIS (Human Resource Information Systems), graduates can work as consultants, helping organizations to implement and optimize new technologies and systems within their HR departments.",
+        "roles": [],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom/hradt/career-prospects",
+        "sourceText": "HR Technology Consultant With a solid grounding in AI and HRIS (Human Resource Information Systems), graduates can work as consultants, helping organizations to implement and optimize new technologies and systems within their HR departments."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Talent Acquisition Manager Utilizing AI and analytics, graduates can oversee talent acquisition strategies, leveraging algorithms and machine learning to streamline recruitment processes and improve the quality of hires.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom/hradt/career-prospects",
+        "sourceText": "Talent Acquisition Manager Utilizing AI and analytics, graduates can oversee talent acquisition strategies, leveraging algorithms and machine learning to streamline recruitment processes and improve the quality of hires."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Employee Experience Manager Graduates can specialize in enhancing employee engagement and satisfaction through data analytics, crafting personalized employee experiences and predicting workforce trends.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mgt/hrom/hradt/career-prospects",
+        "sourceText": "Employee Experience Manager Graduates can specialize in enhancing employee engagement and satisfaction through data analytics, crafting personalized employee experiences and predicting workforce trends."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-marketing-and-international-business",
@@ -5800,7 +6701,27 @@
     ],
     "sourceHash": "bd1bed300ddf090b62eefd8123f3e1fd53cf445b8729ae5b87b2a7718e451d6b",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:19:17.501Z"
+    "lastUpdatedAt": "2026-07-07T13:19:17.501Z",
+    "graduateOutcomeSummary": "The equivalence of academic and professional qualification will be considered on a case-by-case basis.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "The equivalence of academic and professional qualification will be considered on a case-by-case basis.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/mkt/mscmib/admission/admission-requirements",
+        "sourceText": "The equivalence of academic and professional qualification will be considered on a case-by-case basis."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-risk-insurance-and-actuarial-analytics",
@@ -6098,7 +7019,49 @@
     ],
     "sourceHash": "af5a36892ad458a498f72141b5d80943e7446e131ffb1987b9d4a0ca59680e68",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:19:35.158Z"
+    "lastUpdatedAt": "2026-07-07T13:19:35.158Z",
+    "graduateOutcomeSummary": "The degree helps students obtain professional qualifications such as Chartered Insurance Institute (CII), Financial Risk Manager (FRM) and actuarial science related qualifications, e.g. Associate of the Society of Actuaries (ASA) / Fellow of the Society of Actuaries (FSA). Graduates of MScRIAA programme have been employed by various reputable companies including but are not limited to:",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "The degree helps students obtain professional qualifications such as Chartered Insurance Institute (CII), Financial Risk Manager (FRM) and actuarial science related qualifications, e.g. Associate of the Society of Actuaries (ASA) / Fellow of the Society of Actuaries (FSA).",
+        "roles": [
+          "Chartered Insurance Institute (CII)",
+          "Financial Risk Manager (FRM)",
+          "actuarial science related qualifications"
+        ],
+        "sectors": [
+          "insurance",
+          "actuarial"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/mscriaa",
+        "sourceText": "The degree helps students obtain professional qualifications such as Chartered Insurance Institute (CII), Financial Risk Manager (FRM) and actuarial science related qualifications, e.g. Associate of the Society of Actuaries (ASA) / Fellow of the Society of Actuaries (FSA)."
+      },
+      {
+        "year": "",
+        "outcomeType": "graduateDestination",
+        "description": "Graduates of MScRIAA programme have been employed by various reputable companies including but are not limited to:",
+        "roles": [
+          "but are not limited to:"
+        ],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/orm/mscriaa/career-prospects",
+        "sourceText": "Graduates of MScRIAA programme have been employed by various reputable companies including but are not limited to:"
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-international-affairs",
@@ -6407,7 +7370,14 @@
     ],
     "sourceHash": "e0e8002a6c9ed9b738d544a94bd81bff33889d8e60dcca883dc7f04f1fa250a2",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:19:58.178Z"
+    "lastUpdatedAt": "2026-07-07T13:19:58.178Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-international-and-development-economics",
@@ -6674,7 +7644,109 @@
     ],
     "sourceHash": "97edd955b7ec3627c52138c563650c7988d5084f7ce8ff769fa16c2e09605e60",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:20:23.598Z"
+    "lastUpdatedAt": "2026-07-07T13:20:23.598Z",
+    "graduateOutcomeSummary": "LU graduates are expected to possess the following attributes: LU graduates will possess in-depth discipline specific knowledge as well as a diverse range of professional and scholarship skills. LU graduates will have a deep understanding of discipline knowledge to creatively solve complex problems and provide innovative solutions.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates are expected to possess the following attributes:",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates are expected to possess the following attributes:"
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates will possess in-depth discipline specific knowledge as well as a diverse range of professional and scholarship skills.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates will possess in-depth discipline specific knowledge as well as a diverse range of professional and scholarship skills."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates will have a deep understanding of discipline knowledge to creatively solve complex problems and provide innovative solutions.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates will have a deep understanding of discipline knowledge to creatively solve complex problems and provide innovative solutions."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates will be critically analytical and have a creative perspective and outlook in their research areas / professional discipline.",
+        "roles": [],
+        "sectors": [
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates will be critically analytical and have a creative perspective and outlook in their research areas / professional discipline."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates will be advanced communicators and be able to articulate clearly and coherently in written, digital and oral forms.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates will be advanced communicators and be able to articulate clearly and coherently in written, digital and oral forms."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "LU graduates will be reflective, ethical and socially responsible in conducting their research / professional practice.",
+        "roles": [],
+        "sectors": [
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/graduate-attributes",
+        "sourceText": "LU graduates will be reflective, ethical and socially responsible in conducting their research / professional practice."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Graduates will be invited to share and communicate with peers.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mide/programme-overview/orientation-programme",
+        "sourceText": "Graduates will be invited to share and communicate with peers."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-international-banking-and-finance",
@@ -7107,7 +8179,40 @@
     ],
     "sourceHash": "8f14be0e971f8ce5bc5c61ac89a592646cdc436d545bc25263ce824b0545ed24",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:20:45.147Z"
+    "lastUpdatedAt": "2026-07-07T13:20:45.147Z",
+    "graduateOutcomeSummary": "Be well positioned to take advantage of the career opportunities upon graduation and have the long-term perspective for further career planning and developmen Finally, the Programme has a strong alumni network, providing abundant job opportunities to the graduates.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Be well positioned to take advantage of the career opportunities upon graduation and have the long-term perspective for further career planning and developmen",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mibf/aboutus/graduate-attributes-and-programme-intended-learning-outcomes",
+        "sourceText": "Be well positioned to take advantage of the career opportunities upon graduation and have the long-term perspective for further career planning and developmen"
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Finally, the Programme has a strong alumni network, providing abundant job opportunities to the graduates.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/econ/mibf/aboutus/graduates-sharing",
+        "sourceText": "Finally, the Programme has a strong alumni network, providing abundant job opportunities to the graduates."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-work-and-organisational-psychology",
@@ -7406,7 +8511,53 @@
     ],
     "sourceHash": "ff9b515f53c4d50d40b4b21b5ab4a6ee6c88b96f2a9b7ce02385fa88cbeff5af",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:21:05.877Z"
+    "lastUpdatedAt": "2026-07-07T13:21:05.877Z",
+    "graduateOutcomeSummary": "Graduates of this programme with other requirements are eligible to apply for Registered Psychologist membership awarded by the Hong Kong Psychological Society (HKPS). Non-local graduates can be granted two-year extension of visa to search for job. Graduates with a Bachelor degree in Psychology with other requirements are eligible to apply for the Registered Psychologist membership award by the Hong Kong Psychological Society (HKPS).",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Graduates of this programme with other requirements are eligible to apply for Registered Psychologist membership awarded by the Hong Kong Psychological Society (HKPS).",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/psy/mwop",
+        "sourceText": "Graduates of this programme with other requirements are eligible to apply for Registered Psychologist membership awarded by the Hong Kong Psychological Society (HKPS)."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Non-local graduates can be granted two-year extension of visa to search for job.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/psy/mwop",
+        "sourceText": "Non-local graduates can be granted two-year extension of visa to search for job."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Graduates with a Bachelor degree in Psychology with other requirements are eligible to apply for the Registered Psychologist membership award by the Hong Kong Psychological Society (HKPS).",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/psy/mwop/programme-overview/career-prospects",
+        "sourceText": "Graduates with a Bachelor degree in Psychology with other requirements are eligible to apply for the Registered Psychologist membership award by the Hong Kong Psychological Society (HKPS)."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-applied-psychology",
@@ -7553,7 +8704,37 @@
     ],
     "sourceHash": "6b1165e4a8f2a904731eeb0f2139328b33dd743fbc125211d9f21732b9868005",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-08T01:49:28.628Z"
+    "lastUpdatedAt": "2026-07-08T01:49:28.628Z",
+    "graduateOutcomeSummary": "MAP graduates can go on to enrol in professional programmes, such as those in clinical, educational, and industrial and organisational, psychology, as well as in counselling. Alternatively, they can apply to doctoral research programmes. They will also be eligible to join the Hong Kong Psychological Society (HKPS).",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "furtherStudy",
+        "description": "MAP graduates can go on to enrol in professional programmes, such as those in clinical, educational, and industrial and organisational, psychology, as well as in counselling. Alternatively, they can apply to doctoral research programmes. They will also be eligible to join the Hong Kong Psychological Society (HKPS).",
+        "roles": [
+          "those in clinical",
+          "educational",
+          "industrial",
+          "organisational",
+          "psychology",
+          "as well as in counselling. Alternatively"
+        ],
+        "sectors": [
+          "education",
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/psy/mssap/home",
+        "sourceText": "MAP graduates can go on to enrol in professional programmes, such as those in clinical, educational, and industrial and organisational, psychology, as well as in counselling. Alternatively, they can apply to doctoral research programmes. They will also be eligible to join the Hong Kong Psychological Society (HKPS)."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-comparative-social-policy-international",
@@ -8075,7 +9256,65 @@
     ],
     "sourceHash": "43aaf5e43723341621cbc9883af4827e11117c5171108a827a265c6990f13e6f",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:21:31.998Z"
+    "lastUpdatedAt": "2026-07-07T13:21:31.998Z",
+    "graduateOutcomeSummary": "IMCSP graduates pursue careers in government, NGOs, social enterprises, think tanks, financial services, insurance, and education across Hong Kong, Mainland China, and internationally. The IMCSP programme will train you to become a social policy researcher possibly employed by the government as a civil servant, a think tank, a local or international NGO, a political party, or a university research centre. The IMCSP programme endowed me with a global perspective, which opened up many career opportunities in the financial and education industries for me.”",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "IMCSP graduates pursue careers in government, NGOs, social enterprises, think tanks, financial services, insurance, and education across Hong Kong, Mainland China, and internationally.",
+        "roles": [],
+        "sectors": [
+          "government",
+          "education",
+          "ngo",
+          "insurance"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/socsp/imcsp/programme-overview",
+        "sourceText": "IMCSP graduates pursue careers in government, NGOs, social enterprises, think tanks, financial services, insurance, and education across Hong Kong, Mainland China, and internationally."
+      },
+      {
+        "year": "",
+        "outcomeType": "graduateDestination",
+        "description": "The IMCSP programme will train you to become a social policy researcher possibly employed by the government as a civil servant, a think tank, a local or international NGO, a political party, or a university research centre.",
+        "roles": [],
+        "sectors": [
+          "government",
+          "policy",
+          "ngo",
+          "research"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/socsp/imcsp/student-stories/careers",
+        "sourceText": "The IMCSP programme will train you to become a social policy researcher possibly employed by the government as a civil servant, a think tank, a local or international NGO, a political party, or a university research centre."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "The IMCSP programme endowed me with a global perspective, which opened up many career opportunities in the financial and education industries for me.”",
+        "roles": [],
+        "sectors": [
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/socsp/imcsp/student-stories/careers",
+        "sourceText": "The IMCSP programme endowed me with a global perspective, which opened up many career opportunities in the financial and education industries for me.”"
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-organisational-psychology-and-education-management",
@@ -8610,7 +9849,32 @@
     ],
     "sourceHash": "eceb67b71d76a0f9a503f52e7d3972f8645529a6f0e66a51e45cae6f1ce089b4",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:21:51.612Z"
+    "lastUpdatedAt": "2026-07-07T13:21:51.612Z",
+    "graduateOutcomeSummary": "OPEM graduates could follow a range of careers in education policy and administration in schools, tertiary institutes, government, NGOs, think tanks, as well as in the field of human resource management.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "OPEM graduates could follow a range of careers in education policy and administration in schools, tertiary institutes, government, NGOs, think tanks, as well as in the field of human resource management.",
+        "roles": [],
+        "sectors": [
+          "government",
+          "education",
+          "policy",
+          "ngo"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/psy/opem",
+        "sourceText": "OPEM graduates could follow a range of careers in education policy and administration in schools, tertiary institutes, government, NGOs, think tanks, as well as in the field of human resource management."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-sociology-and-data-analytics",
@@ -8907,7 +10171,14 @@
     ],
     "sourceHash": "e9fc0d7f219d9b9a17568c23a941a2ef4e09292715dcb01b0fc71516709b186b",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:22:05.891Z"
+    "lastUpdatedAt": "2026-07-07T13:22:05.891Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "doctor-of-artificial-intelligence-studies",
@@ -9110,7 +10381,14 @@
     ],
     "sourceHash": "7e68869858a18bdd11d8dae3a73eac51f7948c55762860babc0a291ebabb041b",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:22:22.158Z"
+    "lastUpdatedAt": "2026-07-07T13:22:22.158Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-research-in-advanced-data-science",
@@ -9403,7 +10681,14 @@
     ],
     "sourceHash": "54a50e4cab66ec45a25b13f073506e92d5132b2ab35ef714f5178b9033270224",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:22:40.016Z"
+    "lastUpdatedAt": "2026-07-07T13:22:40.016Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-artificial-intelligence-and-business-analytics",
@@ -9793,7 +11078,27 @@
     ],
     "sourceHash": "2604158a018ec1e9dd0f84a6754139b01ad2a38026d6cf3df26ad31a4f8cd834",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:23:02.333Z"
+    "lastUpdatedAt": "2026-07-07T13:23:02.333Z",
+    "graduateOutcomeSummary": "Graduates will be able to meet and exceed the expectations of their current and future employers by working in different roles (e.g., business analysts, data analysts, project managers, AI consultants/experts, and data scientists) for various organisations.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Graduates will be able to meet and exceed the expectations of their current and future employers by working in different roles (e.g., business analysts, data analysts, project managers, AI consultants/experts, and data scientists) for various organisations.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sds/dai/mscaiba/programme-overview/aims-and-learning-outcomes",
+        "sourceText": "Graduates will be able to meet and exceed the expectations of their current and future employers by working in different roles (e.g., business analysts, data analysts, project managers, AI consultants/experts, and data scientists) for various organisations."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-data-science",
@@ -10137,7 +11442,29 @@
     ],
     "sourceHash": "35c34db4d6266327bda56fc989564d7db0efc3d3982209560babc218690eafc4",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:23:20.383Z"
+    "lastUpdatedAt": "2026-07-07T13:23:20.383Z",
+    "graduateOutcomeSummary": "Our programme equips students with cutting-edge technical skills in big data analytics, AI, and machine learning through practical, industry-relevant coursework designed to maximize career prospects in Hong Kong's growing data science sector.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Our programme equips students with cutting-edge technical skills in big data analytics, AI, and machine learning through practical, industry-relevant coursework designed to maximize career prospects in Hong Kong's growing data science sector.",
+        "roles": [],
+        "sectors": [
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sds/dai/mscds",
+        "sourceText": "Our programme equips students with cutting-edge technical skills in big data analytics, AI, and machine learning through practical, industry-relevant coursework designed to maximize career prospects in Hong Kong's growing data science sector."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-industrial-data-analytics",
@@ -10415,7 +11742,14 @@
     ],
     "sourceHash": "4f864cee40ab6549e693dbcc85ff91aed339692f2c9455a3d2472f8f06577a9a",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:23:41.171Z"
+    "lastUpdatedAt": "2026-07-07T13:23:41.171Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-innovative-design-and-artificial-intelligence",
@@ -10683,7 +12017,34 @@
     ],
     "sourceHash": "355e2846528400f59ee698683b2fe9c90531a9f69fa367b5cf33e4a5636f6c6b",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:24:02.039Z"
+    "lastUpdatedAt": "2026-07-07T13:24:02.039Z",
+    "graduateOutcomeSummary": "Offering a full-cycle experience from conceptual design to project deployment, graduates are well-prepared to excel in highly sought-after core roles such as AI Product Managers and AI System Architects, or to embark on their own technology entrepreneurial journeys.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Offering a full-cycle experience from conceptual design to project deployment, graduates are well-prepared to excel in highly sought-after core roles such as AI Product Managers and AI System Architects, or to embark on their own technology entrepreneurial journeys.",
+        "roles": [
+          "AI Product Managers",
+          "AI System Architects",
+          "to embark on their own technology entrepreneurial journeys"
+        ],
+        "sectors": [
+          "technology",
+          "tech"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sds/dids/idai/programme-overview/programme-highlights",
+        "sourceText": "Offering a full-cycle experience from conceptual design to project deployment, graduates are well-prepared to excel in highly sought-after core roles such as AI Product Managers and AI System Architects, or to embark on their own technology entrepreneurial journeys."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-smart-city-technologies-and-applications",
@@ -10953,7 +12314,40 @@
     ],
     "sourceHash": "d2204a140088068e2b6a46815cfca7121319798fa554e6ce12a31aa924324149",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:24:25.718Z"
+    "lastUpdatedAt": "2026-07-07T13:24:25.718Z",
+    "graduateOutcomeSummary": "Explore your future study and career pathways With the integration of AI in every industry, our graduates are able to achieve significant advantages in society and stay one step ahead at all times.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Explore your future study and career pathways",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sds/dids/scta",
+        "sourceText": "Explore your future study and career pathways"
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With the integration of AI in every industry, our graduates are able to achieve significant advantages in society and stay one step ahead at all times.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sds/dids/scta/programme-overview/sharing-from-graduates",
+        "sourceText": "With the integration of AI in every industry, our graduates are able to achieve significant advantages in society and stay one step ahead at all times."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "doctor-of-policy-studies",
@@ -11254,7 +12648,14 @@
     ],
     "sourceHash": "fbed6ad491d9a1c5863acfbae267aeea99f43c992c1af6722600459944686c49",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:24:51.788Z"
+    "lastUpdatedAt": "2026-07-07T13:24:51.788Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-arts-and-cultural-heritage-management",
@@ -11686,7 +13087,14 @@
     ],
     "sourceHash": "ed03545186e3550fc51a9b2506976db808d25638322737339b6d484f1729fd4c",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:25:13.394Z"
+    "lastUpdatedAt": "2026-07-07T13:25:13.394Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-international-higher-education-and-management",
@@ -12020,7 +13428,55 @@
     ],
     "sourceHash": "438e6f28ec88108a2509446b81d6c247ffd3df9fb1b157dee797bdbfcee82140",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:25:31.902Z"
+    "lastUpdatedAt": "2026-07-07T13:25:31.902Z",
+    "graduateOutcomeSummary": "The 2023 AAC&U employer survey, which included 1,010 executives and hiring managers, found that while 8 in 10 employers believe higher education prepares graduates for the workforce, only half believe graduates are “very prepared” in critical skills such as oral and written communication, critical thinking, and complex problem-solving. This ensures graduates are well-prepared for the demands of the modern workforce in higher education and beyond.",
+    "graduateOutcomes": [
+      {
+        "year": "2023",
+        "outcomeType": "careerProspect",
+        "description": "The 2023 AAC&U employer survey, which included 1,010 executives and hiring managers, found that while 8 in 10 employers believe higher education prepares graduates for the workforce, only half believe graduates are “very prepared” in critical skills such as oral and written communication, critical thinking, and complex problem-solving.",
+        "roles": [
+          "d 1",
+          "010 executives",
+          "hiring managers",
+          "only half believe graduates are “very prepared” in critical skills such as oral",
+          "written communication",
+          "critical thinking",
+          "complex problem-solving"
+        ],
+        "sectors": [
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/ihem/programme-overview/educational-technology-and-digital-transformation-edtech-concentration",
+        "sourceText": "The 2023 AAC&U employer survey, which included 1,010 executives and hiring managers, found that while 8 in 10 employers believe higher education prepares graduates for the workforce, only half believe graduates are “very prepared” in critical skills such as oral and written communication, critical thinking, and complex problem-solving."
+      },
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "This ensures graduates are well-prepared for the demands of the modern workforce in higher education and beyond.",
+        "roles": [
+          "the demands of the modern workforce in higher education",
+          "beyond"
+        ],
+        "sectors": [
+          "education"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/ihem/programme-overview/educational-technology-and-digital-transformation-edtech-concentration",
+        "sourceText": "This ensures graduates are well-prepared for the demands of the modern workforce in higher education and beyond."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-arts-in-social-entrepreneurship-and-innovation-management",
@@ -12415,7 +13871,27 @@
     ],
     "sourceHash": "99aee16ba7ae2ac0c066f852b3f1c6bdbaa2267424a6b5dea814c30b603a8916",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:26:01.845Z"
+    "lastUpdatedAt": "2026-07-07T13:26:01.845Z",
+    "graduateOutcomeSummary": "Unlocking Diverse Career Opportunities Across a Wide Range of Sectors",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "Unlocking Diverse Career Opportunities Across a Wide Range of Sectors",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/seim/student-and-career",
+        "sourceText": "Unlocking Diverse Career Opportunities Across a Wide Range of Sectors"
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-china-and-regional-development-studies",
@@ -12695,7 +14171,27 @@
     ],
     "sourceHash": "7cff2030162454f6bb6393a9769313d600f56f3c124a6eb3ea8d2b5103b97c7a",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:26:24.576Z"
+    "lastUpdatedAt": "2026-07-07T13:26:24.576Z",
+    "graduateOutcomeSummary": "Upon completion of the programme, students will be equipped with critical analytical skills in a wide range of areas, particularly related to regional development, enriching their career prospects.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Upon completion of the programme, students will be equipped with critical analytical skills in a wide range of areas, particularly related to regional development, enriching their career prospects.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/crds/career-prospect/career-prospect",
+        "sourceText": "Upon completion of the programme, students will be equipped with critical analytical skills in a wide range of areas, particularly related to regional development, enriching their career prospects."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-cities-and-governance",
@@ -13052,7 +14548,53 @@
     ],
     "sourceHash": "1d7a6bfebd32f65d653de421e039b2e5fc0c01961b76288d45e841477e14fd70",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:26:49.062Z"
+    "lastUpdatedAt": "2026-07-07T13:26:49.062Z",
+    "graduateOutcomeSummary": "The programme equips graduates for careers in urban governance and public policy across government, non-governmental, and corporate sectors, with a particular focus on integrating Hong Kong into the Greater Bay Area following its 2018 framework announcement. With guidance from global partnerships and expert faculty, graduates are prepared for impactful roles in government, NGOs, think tanks, and corporations that shape city futures in Hong Kong, Mainland China, and beyond.",
+    "graduateOutcomes": [
+      {
+        "year": "2018",
+        "outcomeType": "employmentSector",
+        "description": "The programme equips graduates for careers in urban governance and public policy across government, non-governmental, and corporate sectors, with a particular focus on integrating Hong Kong into the Greater Bay Area following its 2018 framework announcement.",
+        "roles": [],
+        "sectors": [
+          "government",
+          "policy"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/mcg/",
+        "sourceText": "The programme equips graduates for careers in urban governance and public policy across government, non-governmental, and corporate sectors, with a particular focus on integrating Hong Kong into the Greater Bay Area following its 2018 framework announcement."
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With guidance from global partnerships and expert faculty, graduates are prepared for impactful roles in government, NGOs, think tanks, and corporations that shape city futures in Hong Kong, Mainland China, and beyond.",
+        "roles": [
+          "impactful roles in government",
+          "NGOs",
+          "think tanks",
+          "corporations that shape city futures in Hong Kong",
+          "Mainland China",
+          "beyond"
+        ],
+        "sectors": [
+          "government",
+          "ngo"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/mcg/programme-overview/mcg-programme-information-with-es-concentration",
+        "sourceText": "With guidance from global partnerships and expert faculty, graduates are prepared for impactful roles in government, NGOs, think tanks, and corporations that shape city futures in Hong Kong, Mainland China, and beyond."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-housing-policy-and-management",
@@ -13360,7 +14902,27 @@
     ],
     "sourceHash": "5e8042339ac64a795a033ed586ee8627b08e10447cfca3f05abb20d55b033934",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:27:11.138Z"
+    "lastUpdatedAt": "2026-07-07T13:27:11.138Z",
+    "graduateOutcomeSummary": "The programme is accredited by the Chartered Institute of Housing (CIH), graduates are eligible for admission to CIH’s Chartered Membership",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "professionalAccreditation",
+        "description": "The programme is accredited by the Chartered Institute of Housing (CIH), graduates are eligible for admission to CIH’s Chartered Membership",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/mhpm/programme-overview/unique-features",
+        "sourceText": "The programme is accredited by the Chartered Institute of Housing (CIH), graduates are eligible for admission to CIH’s Chartered Membership"
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-health-analytics-and-management",
@@ -13653,7 +15215,14 @@
     ],
     "sourceHash": "cc2627bffa25f61cba4364bdb3a104707b1a0ba5e60ae266c689bb45f3932058",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:27:34.573Z"
+    "lastUpdatedAt": "2026-07-07T13:27:34.573Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-global-humanitarian-innovation-and-technology",
@@ -13990,7 +15559,40 @@
     ],
     "sourceHash": "71516b96c6c4c0240bb76069ffba6ac6e62f0ac0d6f4e23c4ec4fd5f499c5930",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:27:54.821Z"
+    "lastUpdatedAt": "2026-07-07T13:27:54.821Z",
+    "graduateOutcomeSummary": "Targeted career prospects bridging management and engineering in local and international contexts With strong industry connections and a hands-on learning approach, GHIT opens doors to exciting opportunities in Hong Kong, the Greater Bay Area, and global markets. Our graduates are not only job-ready—they’re future-ready.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Targeted career prospects bridging management and engineering in local and international contexts",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/ghit/about-us/programme-overview",
+        "sourceText": "Targeted career prospects bridging management and engineering in local and international contexts"
+      },
+      {
+        "year": "",
+        "outcomeType": "employmentSector",
+        "description": "With strong industry connections and a hands-on learning approach, GHIT opens doors to exciting opportunities in Hong Kong, the Greater Bay Area, and global markets. Our graduates are not only job-ready—they’re future-ready.",
+        "roles": [],
+        "sectors": [],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/sgs/ghit/career",
+        "sourceText": "With strong industry connections and a hands-on learning approach, GHIT opens doors to exciting opportunities in Hong Kong, the Greater Bay Area, and global markets. Our graduates are not only job-ready—they’re future-ready."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-smart-ageing-and-gerontology",
@@ -14113,7 +15715,14 @@
     ],
     "sourceHash": "0172a1e092caa77f34ffc72ae34f4c98e18a89f0e7598f4ebae00b8dd42f17a3",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-08T01:49:28.628Z"
+    "lastUpdatedAt": "2026-07-08T01:49:28.628Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-comparative-public-administration",
@@ -14505,7 +16114,14 @@
     ],
     "sourceHash": "aaf49226e85cd88632aec6e42de8d5ad9a2d75b1be3a5c6e39717ffa94eaf00f",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:28:19.672Z"
+    "lastUpdatedAt": "2026-07-07T13:28:19.672Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-social-sciences-in-health-and-social-services-management",
@@ -14786,7 +16402,14 @@
     ],
     "sourceHash": "b9928ef0b0341b3ab1f569589e8a970b57a7bc055f8ede61a4d24287de4be9ba",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:28:43.213Z"
+    "lastUpdatedAt": "2026-07-07T13:28:43.213Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "doctor-of-smart-manufacturing",
@@ -15089,7 +16712,14 @@
     ],
     "sourceHash": "22099f6c3063b1cd64b9d9c40d231e5622f22dc325255414c966c5c82a41ffb6",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:28:55.092Z"
+    "lastUpdatedAt": "2026-07-07T13:28:55.092Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-liberal-sciences",
@@ -15453,7 +17083,35 @@
     ],
     "sourceHash": "f8ea84ecb144c7eb43a0d4faee526d4d948540daf62d7fcf2a2aad5bb4a86ffe",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:29:13.826Z"
+    "lastUpdatedAt": "2026-07-07T13:29:13.826Z",
+    "graduateOutcomeSummary": "Graduates are prepared for careers in sports coaching, fitness training, health education, and sports events/business management.",
+    "graduateOutcomes": [
+      {
+        "year": "",
+        "outcomeType": "careerProspect",
+        "description": "Graduates are prepared for careers in sports coaching, fitness training, health education, and sports events/business management.",
+        "roles": [
+          "careers in sports coaching",
+          "fitness training",
+          "health education",
+          "sports events/business management"
+        ],
+        "sectors": [
+          "education",
+          "sports"
+        ],
+        "employers": [],
+        "sourceType": "official",
+        "sourceName": "Lingnan University official programme pages",
+        "sourceReliability": "official",
+        "sourceUrl": "https://www.ln.edu.hk/wjysis/mls/programme-overview",
+        "sourceText": "Graduates are prepared for careers in sports coaching, fitness training, health education, and sports events/business management."
+      }
+    ],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official programme pages provide career prospects, but do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-cross-disciplinary-technologies",
@@ -15896,7 +17554,14 @@
     ],
     "sourceHash": "9e9d56ff35f01954819b5e604223675969653a870e29258c6da2b2647901c54d",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-07T13:29:27.940Z"
+    "lastUpdatedAt": "2026-07-07T13:29:27.940Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   },
   {
     "id": "master-of-science-in-sustainability-and-environmental-analytics",
@@ -16027,6 +17692,13 @@
     ],
     "sourceHash": "2c5ea6f6dd071d6dc93ad33ce69c2c7385b838f262306c95d3a73f2ebe5429e9",
     "sourceUpdatedAt": "",
-    "lastUpdatedAt": "2026-07-08T01:49:28.628Z"
+    "lastUpdatedAt": "2026-07-08T01:49:28.628Z",
+    "graduateOutcomeSummary": "",
+    "graduateOutcomes": [],
+    "graduateOutcomeInformationInsufficient": true,
+    "graduateOutcomeInformationLimits": [
+      "The official pages do not provide programme-specific graduate destination or career outcome details.",
+      "The official programme pages do not provide year-by-year graduate destination data."
+    ]
   }
 ]

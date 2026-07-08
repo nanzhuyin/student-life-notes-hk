@@ -42,11 +42,17 @@ async function main() {
   const withDetailedCourseDescriptions = saved.filter((programme) =>
     (programme.courseDescriptions || []).some((course) => String(course.description || '').trim())
   ).length;
+  const withGraduateOutcomes = saved.filter((programme) => (programme.graduateOutcomes || []).length > 0).length;
+  const withYearGraduateExamples = saved.filter((programme) =>
+    (programme.graduateOutcomes || []).some((outcome) => outcome.year && outcome.outcomeType === 'graduateDestination')
+  ).length;
   console.log(`Imported ${saved.length} programmes into Supabase.`);
   console.log(`With course names or programme structure: ${withCourseNamesOrStructure}`);
   console.log(`Without any course names or programme structure: ${saved.length - withCourseNamesOrStructure}`);
   console.log(`With course description rows: ${withCourseDescriptionRows}`);
   console.log(`With detailed non-empty course descriptions: ${withDetailedCourseDescriptions}`);
+  console.log(`With official career or graduate outcome text: ${withGraduateOutcomes}`);
+  console.log(`With selected year-labelled graduate examples: ${withYearGraduateExamples}`);
 }
 
 main().catch((error) => {

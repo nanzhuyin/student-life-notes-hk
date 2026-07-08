@@ -6,6 +6,10 @@ export type ImportanceLevel = 'high' | 'medium' | 'low';
 
 export type MatchLevel = 'high' | 'medium' | 'low';
 
+export type GraduateOutcomeType = 'graduateDestination' | 'careerProspect' | 'employmentSector' | 'furtherStudy' | 'professionalAccreditation' | 'unknown';
+
+export type ProgrammeSourceType = 'official' | 'officialSocial' | 'publicSocial';
+
 export interface CourseDescription {
   courseName: string;
   description: string;
@@ -24,6 +28,20 @@ export interface ImportantCourse {
   sourceUrl: string;
 }
 
+export interface GraduateOutcome {
+  year: string;
+  outcomeType: GraduateOutcomeType;
+  description: string;
+  roles: string[];
+  sectors: string[];
+  employers: string[];
+  sourceType: ProgrammeSourceType;
+  sourceName: string;
+  sourceReliability: 'official' | 'verified-public' | 'public-reference';
+  sourceUrl: string;
+  sourceText: string;
+}
+
 export interface Programme {
   id: string;
   programmeName: string;
@@ -40,6 +58,10 @@ export interface Programme {
   importantCourses: ImportantCourse[];
   skillsDeveloped: string[];
   careerDirections: string[];
+  graduateOutcomeSummary: string;
+  graduateOutcomes: GraduateOutcome[];
+  graduateOutcomeInformationInsufficient: boolean;
+  graduateOutcomeInformationLimits: string[];
   admissionNotes: string;
   informationInsufficient: boolean;
   informationLimits: string[];
@@ -65,6 +87,7 @@ export interface StudentProfile {
   studyPreferences: string[];
   concerns: string[];
   workExperience: string[];
+  otherContext: string;
 }
 
 export interface ImportantCourseForStudent {
@@ -95,6 +118,7 @@ export interface ProgrammeRecommendation {
   potentialGaps: string[];
   suggestedPreparations: string[];
   careerFit: string[];
+  futureOutcomes: string[];
   sourceUrl: string;
 }
 

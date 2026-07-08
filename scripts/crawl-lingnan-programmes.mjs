@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
+import { extractGraduateOutcomes } from './enrich-programme-graduate-outcomes.mjs';
 
 const ENTRY_URL = 'https://www.ln.edu.hk/sgs/programmes-on-offer';
 const OUT_PATH = 'src/data/programmes.json';
@@ -453,6 +454,11 @@ function buildProgramme(entry, pages, lastUpdatedAt) {
     (summary.match(/(?:offered|managed) by the ([^.]+)\./i)?.[1] || '');
 
   const sourceText = combinedText.slice(0, 60_000);
+  const graduateOutcomeData = extractGraduateOutcomes({
+    ...entry,
+    officialUrl: entry.officialUrl,
+    sourceText
+  });
 
   return {
     id: entry.id,
@@ -470,6 +476,7 @@ function buildProgramme(entry, pages, lastUpdatedAt) {
     importantCourses: hasCourses ? buildImportantCourses(courses, sourceText) : [],
     skillsDeveloped,
     careerDirections,
+    ...graduateOutcomeData,
     admissionNotes,
     informationInsufficient: limits.length > 0,
     informationLimits: limits,
@@ -561,6 +568,13 @@ async function main() {
         importantCourses: [],
         skillsDeveloped: [],
         careerDirections: [],
+        graduateOutcomeSummary: '',
+        graduateOutcomes: [],
+        graduateOutcomeInformationInsufficient: true,
+        graduateOutcomeInformationLimits: [
+          'The official pages do not provide programme-specific graduate destination or career outcome details.',
+          'The official programme pages do not provide year-by-year graduate destination data.'
+        ],
         admissionNotes: '',
         informationInsufficient: true,
         informationLimits: ['The official page does not provide detailed course information.', `Crawler could not parse this programme page: ${error.message}`],
@@ -587,9 +601,14 @@ async function main() {
   await fs.writeFile(RAW_OUT_PATH, `${JSON.stringify(raw, null, 2)}\n`);
 
   const withCourses = programmes.filter((programme) => programme.courseDescriptions.length > 0).length;
+  const withGraduateOutcomes = programmes.filter((programme) => (programme.graduateOutcomes || []).length > 0).length;
+  const withYearGraduateExamples = programmes.filter((programme) =>
+    (programme.graduateOutcomes || []).some((outcome) => outcome.year && outcome.outcomeType === 'graduateDestination')
+  ).length;
   console.log(`Wrote ${OUT_PATH}`);
   console.log(`Wrote ${RAW_OUT_PATH}`);
   console.log(`Programmes: ${programmes.length}; with course information: ${withCourses}; without course information: ${programmes.length - withCourses}`);
+  console.log(`With official career or graduate outcome text: ${withGraduateOutcomes}; with selected year-labelled graduate examples: ${withYearGraduateExamples}`);
 }
 
 main().catch((error) => {

@@ -206,6 +206,10 @@ function toProgrammeRow(programme) {
     important_courses: programme.importantCourses || [],
     skills_developed: programme.skillsDeveloped || [],
     career_directions: programme.careerDirections || [],
+    graduate_outcome_summary: programme.graduateOutcomeSummary || '',
+    graduate_outcomes: programme.graduateOutcomes || [],
+    graduate_outcome_information_insufficient: Boolean(programme.graduateOutcomeInformationInsufficient),
+    graduate_outcome_information_limits: programme.graduateOutcomeInformationLimits || [],
     admission_notes: programme.admissionNotes || '',
     information_insufficient: Boolean(programme.informationInsufficient),
     information_limits: programme.informationLimits || [],
@@ -235,6 +239,10 @@ function fromProgrammeRow(row) {
     importantCourses: row.important_courses || [],
     skillsDeveloped: row.skills_developed || [],
     careerDirections: row.career_directions || [],
+    graduateOutcomeSummary: row.graduate_outcome_summary || '',
+    graduateOutcomes: row.graduate_outcomes || [],
+    graduateOutcomeInformationInsufficient: Boolean(row.graduate_outcome_information_insufficient),
+    graduateOutcomeInformationLimits: row.graduate_outcome_information_limits || [],
     admissionNotes: row.admission_notes || '',
     informationInsufficient: Boolean(row.information_insufficient),
     informationLimits: row.information_limits || [],
@@ -262,14 +270,16 @@ function toRecommendationLogRow(log) {
     study_preferences: log.studyPreferences || [],
     concerns: log.concerns || [],
     work_experience: log.workExperience || [],
+    other_context: log.otherContext || '',
     retrieved_programme_ids: log.retrievedProgrammeIds || [],
     model_output: log.modelOutput || null
   };
 }
 
-function withoutMasterMajor(row) {
-  const { master_major, ...rest } = row;
+function withoutNewRecommendationColumns(row) {
+  const { master_major, other_context, ...rest } = row;
   void master_major;
+  void other_context;
   return rest;
 }
 
@@ -544,11 +554,11 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
           body: JSON.stringify(recommendationRow)
         });
       } catch (error) {
-        if (!String(error?.message || '').includes('master_major')) throw error;
+        if (!/master_major|other_context/.test(String(error?.message || ''))) throw error;
         [row] = await supabaseRequest('/recommendation_logs?select=*', {
           method: 'POST',
           headers: { Prefer: 'return=representation' },
-          body: JSON.stringify(withoutMasterMajor(recommendationRow))
+          body: JSON.stringify(withoutNewRecommendationColumns(recommendationRow))
         });
       }
       return row;

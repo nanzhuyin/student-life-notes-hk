@@ -382,6 +382,7 @@ async function route(req, res) {
         studyPreferences: profile.studyPreferences,
         concerns: profile.concerns,
         workExperience: profile.workExperience,
+        otherContext: profile.otherContext,
         retrievedProgrammeIds: candidates.map((programme) => programme.id),
         modelOutput: data
       });

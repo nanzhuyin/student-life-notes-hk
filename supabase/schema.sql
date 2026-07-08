@@ -105,6 +105,10 @@ create table if not exists public.programmes (
   important_courses jsonb not null default '[]'::jsonb,
   skills_developed text[] default '{}',
   career_directions text[] default '{}',
+  graduate_outcome_summary text default '',
+  graduate_outcomes jsonb not null default '[]'::jsonb,
+  graduate_outcome_information_insufficient boolean not null default false,
+  graduate_outcome_information_limits text[] default '{}',
   admission_notes text,
   information_insufficient boolean not null default false,
   information_limits text[] default '{}',
@@ -145,6 +149,7 @@ create table if not exists public.recommendation_logs (
   study_preferences text[] default '{}',
   concerns text[] default '{}',
   work_experience text[] default '{}',
+  other_context text default '',
   retrieved_programme_ids text[] default '{}',
   model_output jsonb,
   created_at timestamptz not null default now()
@@ -158,10 +163,17 @@ alter table public.recommendation_logs add column if not exists target_degree_le
 alter table public.recommendation_logs add column if not exists study_preferences text[] default '{}';
 alter table public.recommendation_logs add column if not exists concerns text[] default '{}';
 alter table public.recommendation_logs add column if not exists work_experience text[] default '{}';
+alter table public.recommendation_logs add column if not exists other_context text default '';
+
+alter table public.programmes add column if not exists graduate_outcome_summary text default '';
+alter table public.programmes add column if not exists graduate_outcomes jsonb not null default '[]'::jsonb;
+alter table public.programmes add column if not exists graduate_outcome_information_insufficient boolean not null default false;
+alter table public.programmes add column if not exists graduate_outcome_information_limits text[] default '{}';
 
 create index if not exists programmes_degree_level_idx on public.programmes (degree_level);
 create index if not exists programmes_school_idx on public.programmes (school);
 create index if not exists programmes_source_hash_idx on public.programmes (source_hash);
+create index if not exists programmes_graduate_outcomes_gin_idx on public.programmes using gin (graduate_outcomes);
 create index if not exists programmes_updated_idx on public.programmes (last_updated_at desc);
 create index if not exists programme_sync_logs_programme_idx on public.programme_sync_logs (programme_id);
 create index if not exists programme_sync_logs_detected_idx on public.programme_sync_logs (detected_at desc);
