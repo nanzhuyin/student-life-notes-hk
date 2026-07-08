@@ -136,10 +136,9 @@ Server environment variables:
 ```bash
 DEEPSEEK_API_KEY="..."
 DEEPSEEK_BASE_URL="https://api.deepseek.com"
-DEEPSEEK_MODEL="deepseek-v4-flash"
 ```
 
-The API key must not be exposed in React code or GitHub Pages. If the DeepSeek call fails, the endpoint returns `MODEL_API_ERROR`; it does not fabricate a fallback recommendation.
+The backend is locked to `deepseek-v4-flash`; do not configure `DEEPSEEK_MODEL` or expose model selection in the frontend. The API key must not be exposed in React code or GitHub Pages. If the DeepSeek call fails, the endpoint returns `MODEL_API_ERROR`; it does not fabricate a fallback recommendation.
 
 ## Recommendation Flow
 

@@ -216,6 +216,24 @@ type CourseAdvisorResult = {
   modelNote?: string;
 };
 
+const COURSE_ADVISOR_EMPTY_PROFILE: CourseAdvisorProfile = {
+  age: '',
+  workExperience: '',
+  isFreshGraduate: false,
+  background: '',
+  goals: '',
+  question: ''
+};
+
+const COURSE_ADVISOR_AGE_OPTIONS = [
+  { value: '', label: '请选择年龄' },
+  ...Array.from({ length: 43 }, (_, index) => {
+    const age = index + 18;
+    return { value: String(age), label: `${age} 岁` };
+  }),
+  { value: '61', label: '60 岁以上' }
+];
+
 let pendingScrollMode: ScrollMode | null = null;
 let appNavigationDepth = 0;
 
@@ -1045,12 +1063,12 @@ function scoreCourseAgainstProfile(course: Course, profile: CourseAdvisorProfile
   ['数据', '分析', '产品', '媒体', '内容', '教育', '管理', '就业', '求职', '作品', '安全', '隐私', '政策', '机器人', '空间', '模型', '部署', 'llm', 'rag', 'agent'].forEach((keyword) => {
     if (profileText.includes(keyword) && courseText.includes(keyword)) score += 8;
   });
-  if (profile.isFreshGraduate && courseText.includes('就业')) score += 14;
+  if (profile.isFreshGraduate && courseText.includes('就业')) score += 10;
   if (normalize(profile.goals).includes('就业')) score += 10;
   if (normalize(profile.workExperience).includes('媒体') && courseText.includes('媒体')) score += 12;
   if (/(媒体|传媒|内容|编辑|记者|传播)/.test(profileText) && /(data science|数据科学|数据分析|回归|聚类)/.test(courseText)) {
     const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化)/.test(profileText);
-    score += hasQuantReadiness ? 8 : -22;
+    score += hasQuantReadiness ? 8 : -26;
   }
   if (/(教育|老师|教师|学校|公共服务|政策)/.test(profileText) && /(数据|分析|评估|学习)/.test(courseText)) score += 14;
   if (/(管理|主管|负责人|总监|创业|老板|资深)/.test(profileText) && /(决策|评估|管理|策略|数据|风险|政策)/.test(courseText)) score += 12;
@@ -1115,6 +1133,8 @@ function getCourseAdvisorAudienceRule(course: Course, profile: CourseAdvisorProf
   const isManagerProfile = /(管理|主管|负责人|总监|创业|老板|资深|8年|10年|多年)/.test(profileText) || age >= 28;
   const isTechnicalProfile = /(计算机|数据|统计|编程|python|r语言|算法|工程|开发)/.test(profileText);
   const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化|机器学习基础)/.test(profileText);
+  const hasDataCareerGoal = /(数据分析|数据科学|统计学|商业分析|bi|business intelligence|机器学习|算法|ai产品|ai 产品|产品分析|运营分析|用户研究|量化|研究助理)/.test(profileText);
+  const wantsMathChallenge = /(挑战数学|想学数学|补数学|补统计|愿意补|不怕数学|数学能力|统计能力|算法能力|技术路线)/.test(profileText);
 
   if (isMediaProfile && isDataCourse && !hasQuantReadiness) {
     return {
@@ -1131,6 +1151,40 @@ function getCourseAdvisorAudienceRule(course: Course, profile: CourseAdvisorProf
         '更推荐：Privacy, Security, and Policy（隐私、安全与政策）',
         '更推荐：Trends in Artificial Intelligence at Workplace and at Home（工作与家庭中的人工智能趋势）',
         '可结合必修 Humanities and Artificial Intelligence，把媒体经验转成 AI 伦理、社会影响和公共传播能力'
+      ]
+    };
+  }
+
+  if (profile.isFreshGraduate && isDataCourse && (hasQuantReadiness || hasDataCareerGoal || wantsMathChallenge)) {
+    return {
+      label: '应届生 / 数据统计就业导向',
+      scoreBoost: 16,
+      summary: `${getCourseTitle(course)} 适合想走数据、统计、产品分析或技术路线的应届生，尤其是愿意挑战数学、统计和基础编程的人。这门课的核心不是泛泛了解 AI，而是用回归、分类、聚类等统计与算法方法解决问题，并把结果转成作品集和面试案例。`,
+      reasons: [
+        'Data Science 更接近统计学和算法应用，需要面对数学、统计、编程和模型评估，不适合作为轻松视野课。',
+        '应届生如果缺少工作经验，可以把课程项目转成简历里的数据分析案例、用户研究案例或产品分析案例。',
+        '适合把学习目标设为“能处理数据、解释模型、讲清业务含义”，而不是只写“了解 AI”。'
+      ],
+      focus: ['统计学基础', 'R / 数据处理', '回归、分类、聚类', '模型评估', '作品集项目'],
+      career: ['数据分析助理', 'BI / 运营分析', '产品分析', '市场研究', '教育数据分析', 'AI 产品助理']
+    };
+  }
+
+  if (profile.isFreshGraduate && isDataCourse && !hasQuantReadiness && !hasDataCareerGoal && !wantsMathChallenge) {
+    return {
+      label: '应届生 / 未确认量化准备',
+      scoreBoost: -6,
+      summary: `${getCourseTitle(course)} 不建议仅因为“应届生要就业”就直接选择。它偏统计学和算法应用，如果你没有明确的数据岗位目标，也没有准备补数学、统计或编程，建议先考虑更偏 AI 视野、政策、安全或应用趋势的选修课。`,
+      reasons: [
+        '这门课会遇到回归、分类、聚类、模型评估和 R / Shiny，学习压力主要来自统计和编程门槛。',
+        '应届生选课应服务于目标岗位；如果目标不是数据、产品分析或技术相关岗位，投入产出未必最高。',
+        '如果之后决定挑战数学和数据路线，可以先补 Excel、统计概念、Python 或 R 入门，再选择这门课。'
+      ],
+      focus: ['先确认岗位目标', '补统计和编程基础', '避免盲目选择高门槛选修'],
+      career: [
+        '更推荐：Privacy, Security, and Policy（隐私、安全与政策）',
+        '更推荐：Trends in Artificial Intelligence at Workplace and at Home（工作与家庭中的人工智能趋势）',
+        '若目标转为数据方向，再把 Data Science 作为核心选修'
       ]
     };
   }
@@ -1250,6 +1304,69 @@ function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile):
     source: 'local-rules',
     disclaimer: '本建议来自当前内测固定规则库和课程资料，不代表学校官方意见；后续接入 DeepSeek 后可升级为更细的对话式分析。'
   };
+}
+
+function hasCourseAdvisorProfileInput(profile: CourseAdvisorProfile) {
+  return Boolean(
+    profile.age ||
+    profile.workExperience.trim() ||
+    profile.background.trim() ||
+    profile.goals.trim() ||
+    profile.question.trim() ||
+    profile.isFreshGraduate
+  );
+}
+
+function buildCourseAdvisorPromptScript(course: Course, profile: CourseAdvisorProfile, result: CourseAdvisorResult | null) {
+  const courseFacts = [
+    `课程：${getCourseTitle(course)}`,
+    `课程类型：${course.required ? '必修课' : course.type || '选修/项目课程'}`,
+    `授课语言：${course.medium || course.mediumDetail || '以课程页面为准'}`,
+    `所属项目：${course.programmeTitle || '未标注'}`,
+    `资料来源：${course.descriptionSourceUrl || course.sourceUrl || '当前课程库'}`
+  ];
+  const profileFacts = [
+    `年龄：${profile.age ? `${profile.age} 岁左右` : '未填写'}`,
+    `是否应届生：${profile.isFreshGraduate ? '是' : '否/未选择'}`,
+    `专业或学习背景：${profile.background.trim() || '未填写'}`,
+    `工作经验：${profile.workExperience.trim() || '未填写'}`,
+    `目标：${profile.goals.trim() || '未填写'}`,
+    `本次问题：${profile.question.trim() || '未填写'}`
+  ];
+  const rules = [
+    '只基于 Otter 当前课程资料、课程知识库和固定画像规则生成建议。',
+    '必修课不判断“是否要选”，只解释学习重点、能力转化和职业表达。',
+    '选修课会按学生背景、年龄阶段、就业目标、数学/统计/编程准备度判断适配度。',
+    '对于 Data Science 等高技术课程，会明确提示数学、统计、算法和编程门槛。',
+    '不要编造官方录取、就业承诺或课程不存在的信息。',
+    '回答仅供选课参考，不代表任何大学、学院、课程团队或官方立场。'
+  ];
+  const output = result ? [
+    `适配标签：${result.fitLevel} · ${result.fitScore} 分`,
+    `摘要：${result.summary}`,
+    `主要理由：${result.keyReasons.join('；') || '无'}`,
+    `建议深化：${result.recommendedFocus.join('；') || '无'}`
+  ] : ['尚未生成结果。'];
+
+  return [
+    '[生成原脚本 / Prompt Draft]',
+    '',
+    '你是 Otter 的课程建议助手。请根据以下课程资料、用户画像和规则，生成面向学生的选课建议。',
+    '',
+    '【课程资料】',
+    ...courseFacts,
+    '',
+    '【用户画像】',
+    ...profileFacts,
+    '',
+    '【回答规则】',
+    ...rules.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    '【当前规则库输出】',
+    ...output,
+    '',
+    '注：此脚本不包含 API Key、账号密码或用户联系方式。'
+  ].join('\n');
 }
 
 async function requestCourseAdvisor(course: Course, profile: CourseAdvisorProfile, authToken: string) {
@@ -2311,17 +2428,26 @@ function CourseDetailPage({
 }
 
 function CourseAdvisorPanel({ course }: { course: Course }) {
-  const [profile, setProfile] = useState<CourseAdvisorProfile>({
-    age: '',
-    workExperience: '',
-    isFreshGraduate: false,
-    background: '',
-    goals: '',
-    question: ''
-  });
+  const [profile, setProfile] = useState<CourseAdvisorProfile>(COURSE_ADVISOR_EMPTY_PROFILE);
   const [result, setResult] = useState<CourseAdvisorResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastAdvisorQuestion, setLastAdvisorQuestion] = useState('');
+  const [activeFollowUp, setActiveFollowUp] = useState('');
+  const [showPromptScript, setShowPromptScript] = useState(false);
+
+  useEffect(() => {
+    if (!hasCourseAdvisorProfileInput(profile) && !result) return undefined;
+    const timer = window.setTimeout(() => {
+      setProfile(COURSE_ADVISOR_EMPTY_PROFILE);
+      setResult(null);
+      setError('');
+      setLastAdvisorQuestion('');
+      setActiveFollowUp('');
+      setShowPromptScript(false);
+    }, 30 * 60 * 1000);
+    return () => window.clearTimeout(timer);
+  }, [profile, result]);
 
   const updateProfile = <K extends keyof CourseAdvisorProfile>(key: K, value: CourseAdvisorProfile[K]) => {
     setProfile((current) => ({ ...current, [key]: value }));
@@ -2330,30 +2456,28 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
   const runAdvisor = async (profileOverride?: CourseAdvisorProfile) => {
     const currentProfile = profileOverride || profile;
     setError('');
-    const hasInput = Boolean(
-      currentProfile.age ||
-      currentProfile.workExperience.trim() ||
-      currentProfile.background.trim() ||
-      currentProfile.goals.trim() ||
-      currentProfile.question.trim() ||
-      currentProfile.isFreshGraduate
-    );
-    if (!hasInput) {
+    if (!hasCourseAdvisorProfileInput(currentProfile)) {
       setError('请至少填写一个背景信息，规则库才能按你的情况匹配课程。');
       return;
     }
     setLoading(true);
     try {
+      setResult(null);
+      setLastAdvisorQuestion(currentProfile.question.trim() || '根据当前画像生成课程建议');
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
       setResult(buildLocalCourseAdvisor(course, currentProfile));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : '暂时无法生成建议');
     } finally {
       setLoading(false);
+      setActiveFollowUp('');
     }
   };
 
   const usePrompt = (prompt: string) => {
+    if (loading) return;
     const next = { ...profile, question: prompt };
+    setActiveFollowUp(prompt);
     setProfile(next);
     void runAdvisor(next);
   };
@@ -2407,6 +2531,7 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
       : result?.fitLevel === 'medium'
         ? '中度适配'
         : '谨慎选择';
+  const promptScript = buildCourseAdvisorPromptScript(course, profile, result);
 
   return (
     <section className="course-ai-advisor">
@@ -2423,7 +2548,11 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
       <div className="course-ai-form">
         <label>
           <span>年龄</span>
-          <input value={profile.age} onChange={(event) => updateProfile('age', event.target.value)} inputMode="numeric" placeholder="例如：23" />
+          <select value={profile.age} onChange={(event) => updateProfile('age', event.target.value)}>
+            {COURSE_ADVISOR_AGE_OPTIONS.map((item) => (
+              <option key={item.value || 'empty'} value={item.value}>{item.label}</option>
+            ))}
+          </select>
         </label>
         <label className="course-ai-check">
           <input type="checkbox" checked={profile.isFreshGraduate} onChange={(event) => updateProfile('isFreshGraduate', event.target.checked)} />
@@ -2451,12 +2580,18 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
         <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成课程建议'}</button>
         <small>当前使用固定规则库，结果更稳定；后续可接 DeepSeek 做更细的连续追问。</small>
       </div>
+      <div className="course-ai-privacy">
+        <strong>隐私与 AI 说明</strong>
+        <p>本课程建议表单不会窃取任何用户隐私信息。你填写的年龄、背景、工作经验、目标和问题仅用于本次生成，页面内画像会在 30 分钟后自动清理；如需立即清理记录，请联系管理员。</p>
+        <p>请不要填写身份证号、银行卡号、账号密码、验证码、详细住址等敏感信息。当前回答由 AI 规则库生成，仅供选课参考，不代表任何大学、学院、课程团队或官方立场。</p>
+      </div>
       {result && (
         <div className="course-ai-result">
           <div className="course-ai-result-head">
             <span>{sourceLabel}</span>
             <strong>{fitLabel} · {result.fitScore} 分</strong>
           </div>
+          {lastAdvisorQuestion && <p className="course-ai-current-question">本次问题：{lastAdvisorQuestion}</p>}
           {result.mustLearnNote && <p className="course-ai-required">{result.mustLearnNote}</p>}
           <p className="course-ai-summary">{result.summary}</p>
           <div className="course-ai-result-grid">
@@ -2469,10 +2604,18 @@ function CourseAdvisorPanel({ course }: { course: Course }) {
             <div className="course-ai-prompts">
               <strong>继续追问</strong>
               {result.nextQuestionPrompts.map((prompt) => (
-                <button key={prompt} onClick={() => usePrompt(prompt)}>{prompt}</button>
+                <button key={prompt} onClick={() => usePrompt(prompt)} disabled={loading}>
+                  {loading && activeFollowUp === prompt ? '正在生成...' : prompt}
+                </button>
               ))}
             </div>
           )}
+          <div className="course-ai-script">
+            <button type="button" onClick={() => setShowPromptScript((current) => !current)}>
+              {showPromptScript ? '收起生成原脚本' : '查看生成原脚本'}
+            </button>
+            {showPromptScript && <pre>{promptScript}</pre>}
+          </div>
           {result.modelNote && <p className="course-ai-note">{result.modelNote}</p>}
           <small>{result.disclaimer}</small>
         </div>

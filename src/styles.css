@@ -1922,6 +1922,7 @@ p {
 }
 
 .course-ai-form input,
+.course-ai-form select,
 .course-ai-form textarea {
   width: 100%;
   border: 1px solid rgba(49, 45, 43, 0.12);
@@ -1930,6 +1931,16 @@ p {
   color: #242829;
   background: #ffffff;
   resize: vertical;
+}
+
+.course-ai-form select {
+  min-height: 2.8rem;
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, #4d5b5a 50%) right 1rem top 1.22rem / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, #4d5b5a 50%, transparent 50%) right 0.72rem top 1.22rem / 0.42rem 0.42rem no-repeat,
+    #ffffff;
+  cursor: pointer;
 }
 
 .course-ai-check {
@@ -1986,6 +1997,17 @@ p {
 
 .course-ai-result-head strong {
   color: #171b20;
+}
+
+.course-ai-current-question {
+  margin: 0;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid rgba(44, 74, 69, 0.12);
+  border-radius: 0.75rem;
+  color: #28433f !important;
+  background: #eef7f4;
+  font-weight: 850;
+  line-height: 1.6;
 }
 
 .course-ai-required,
@@ -6130,6 +6152,60 @@ body.theme-eduhk {
 
 .course-ai-prompts button {
   text-align: left;
+}
+
+.course-ai-prompts button:disabled {
+  cursor: wait;
+  opacity: 0.74;
+}
+
+.course-ai-privacy {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(73, 85, 96, 0.12);
+  border-radius: 0.9rem;
+  background: #f6f7f5;
+}
+
+.course-ai-privacy strong {
+  color: #1f2a2f;
+  font-size: 0.98rem;
+}
+
+.course-ai-privacy p {
+  margin: 0;
+  color: #4a5358 !important;
+  line-height: 1.7;
+}
+
+.course-ai-script {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.course-ai-script button {
+  justify-self: start;
+  min-height: 2.15rem;
+  border: 1px solid rgba(44, 74, 69, 0.16);
+  border-radius: 999px;
+  padding: 0.42rem 0.78rem;
+  color: #2c4a45;
+  background: #edf5f2;
+  font-weight: 900;
+}
+
+.course-ai-script pre {
+  max-height: 22rem;
+  overflow: auto;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(31, 42, 47, 0.1);
+  border-radius: 0.75rem;
+  color: #243036;
+  background: #fbfcfc;
+  font: 0.82rem/1.65 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
 }
 
 .app-shell.school-theme-eduhk .detail-topbar,
