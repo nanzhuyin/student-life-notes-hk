@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildDeepSeekUserPrompt,
+  DEEPSEEK_SYSTEM_PROMPT,
   findProgrammeCandidates,
+  RECOMMENDATION_DISCLAIMER,
   validateStudentProfile
 } from './programme-recommender.mjs';
 
@@ -103,4 +105,17 @@ test('buildDeepSeekUserPrompt includes selected programme status and concerns', 
   assert.match(prompt, /Has chosen programme: true/);
   assert.match(prompt, /Selected programme name: Master of Science in Data Science/);
   assert.match(prompt, /Concerns: \["not sure if programming is enough"\]/);
+});
+
+test('DeepSeek prompt requires Simplified Chinese user-facing output', () => {
+  const profile = validateStudentProfile({
+    undergraduateMajor: 'Statistics',
+    careerGoals: ['data analyst']
+  });
+
+  const prompt = buildDeepSeekUserPrompt(profile, [baseProgramme]);
+
+  assert.match(DEEPSEEK_SYSTEM_PROMPT, /Simplified Chinese/);
+  assert.match(prompt, /Write all user-facing text values in Simplified Chinese/);
+  assert.equal(RECOMMENDATION_DISCLAIMER, '本推荐仅供参考，最终信息请以官方专业网站为准。');
 });

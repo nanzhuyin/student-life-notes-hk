@@ -1,4 +1,4 @@
-export const RECOMMENDATION_DISCLAIMER = 'This recommendation is for reference only. Please refer to official programme websites for final information.';
+export const RECOMMENDATION_DISCLAIMER = '本推荐仅供参考，最终信息请以官方专业网站为准。';
 
 export const DEEPSEEK_SYSTEM_PROMPT = `You are an education programme recommendation assistant.
 
@@ -16,7 +16,9 @@ Rules:
 9. You must not guarantee admission.
 10. You must not present the result as official university advice.
 11. The recommendation is for reference only, and final decisions should be based on official programme websites.
-12. Output valid JSON only.`;
+12. Output valid JSON only.
+13. All user-facing explanations, summaries, reasons, preparation advice, career-fit text, gaps, and information-limit messages must be written in Simplified Chinese.
+14. Preserve official programme names, course names, IDs, URLs, and enum values exactly as provided in the candidate data. Do not translate or rewrite official names.`;
 
 const OUTPUT_SHAPE = {
   summary: 'string',
@@ -288,6 +290,8 @@ Important restrictions:
 - Do not invent course names.
 - Do not invent programme information.
 - If the candidate programme does not include course information, say that course information is insufficient.
+- Write all user-facing text values in Simplified Chinese, including summary, reasons, explanations, preparation advice, potential gaps, career fit, informationLimits, and notRecommended reasons.
+- Preserve official programme names and course names exactly as provided in candidate data.
 - Output valid JSON only.
 
 Required JSON output shape:

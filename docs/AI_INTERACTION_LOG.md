@@ -17,7 +17,8 @@
 - 本次移动端确认页颜色与性能修复版本：`v1.39`
 - 本次专业推荐助手后端与数据库版本：`v1.40`
 - 本次 AI 专业推荐入口版本：`v1.41`
-- 下一次修改：`v1.42`
+- 本次 DeepSeek 中文输出版本：`v1.42`
+- 下一次修改：`v1.43`
 
 每次版本递增时至少同步这些位置：
 
@@ -70,6 +71,24 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.42
+
+日期：2026-07-08
+
+改动范围：
+
+- DeepSeek 专业推荐输出改为简体中文。
+- 后端 prompt 要求 summary、推荐原因、背景匹配、课程重要性、准备建议、潜在短板、职业匹配、信息限制和未推荐原因使用中文。
+- 官方专业名、课程名、ID、URL 和枚举值保持知识库原文，不翻译、不改写。
+- 免责声明改为中文：`本推荐仅供参考，最终信息请以官方专业网站为准。`
+- 同步本次部署版本号为 `v1.42`。
+
+测试：
+
+- `node --test server/programme-recommender.test.mjs` 通过。
+- `node --check server/programme-recommender.mjs`、`node --check server/index.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.41
 
