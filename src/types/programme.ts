@@ -10,10 +10,28 @@ export type GraduateOutcomeType = 'graduateDestination' | 'careerProspect' | 'em
 
 export type ProgrammeSourceType = 'official' | 'officialSocial' | 'publicSocial';
 
+export interface CourseGuide {
+  sourceBasis: string;
+  suitableBackgrounds: string[];
+  deepenFocus: string[];
+  skillsGained: string[];
+  careerConnections: string[];
+  studentPerspectives: Array<{
+    profile: string;
+    value: string;
+    suggestedFocus: string;
+  }>;
+  preparationAdvice: string[];
+  informationLimits: string[];
+}
+
 export interface CourseDescription {
   courseName: string;
   description: string;
+  descriptionZh?: string;
   courseType: ProgrammeCourseType;
+  descriptionSourceType?: ProgrammeSourceType;
+  courseGuide?: CourseGuide;
   sourceUrl: string;
 }
 

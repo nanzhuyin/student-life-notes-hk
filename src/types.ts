@@ -93,6 +93,24 @@ export interface Course {
   creditsText: string;
   required: boolean;
   description: string;
+  officialDescriptionEn?: string;
+  officialDescriptionZh?: string;
+  descriptionSourceUrl?: string;
+  descriptionSourceType?: 'official' | 'officialSocial' | 'publicSocial';
+  courseGuide?: {
+    sourceBasis: string;
+    suitableBackgrounds: string[];
+    deepenFocus: string[];
+    skillsGained: string[];
+    careerConnections: string[];
+    studentPerspectives: Array<{
+      profile: string;
+      value: string;
+      suggestedFocus: string;
+    }>;
+    preparationAdvice: string[];
+    informationLimits: string[];
+  };
   medium: string;
   mediumDetail: string;
   programmeCodes: string[];

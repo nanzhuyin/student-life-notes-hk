@@ -263,7 +263,7 @@ function looksLikeCourseName(value = '') {
   if (!hasCourseCode && /[.!?。；;]$/.test(text)) return false;
   if (!hasCourseCode && /[=：:]/.test(text) && !/^[A-Z]{2,8}\d{3,5}/.test(text)) return false;
   if (/^(q\d+[:：]|faq|ideal for|students? |you will|learn where|upon graduation|roles in|government |ngos? |policy institutes|ms\.?|mrs\.?|mr\.?|prof\.?|dr\.?|dean of|strengthen |equip |familiarize |expose |foster |as a |the |master of |doctor of |w yl|wyl\d+)/i.test(text)) return false;
-  if (/@|https?:|tuen mun|hong kong|limited|university,|university of|office|telephone|email|seminar|workshop|instructor of|programme director|assistant programme|dean|director|professor|person-in-charge|vice[- ]president|chief data scientist|head of department|associate professor|assistant professor|chair professor|associate director|faculty of|school of|division of|admissions policy|degree programme|public administration|consulting|strategy|research roles|data governance|digital transformation|job duties|career paths|graduate\)|mphil in|phd in|phd\b|engineer|analyst,|data analyst/i.test(text)) return false;
+  if (/@|https?:|tuen mun|hong kong|limited|co\.,?\s*ltd|headquarters|research institute|university,|university of|office|telephone|email|seminar|workshop|instructor of|programme director|assistant programme|dean|director|professor|person-in-charge|vice[- ]president|chief data scientist|head of department|associate professor|assistant professor|chair professor|associate director|faculty of|school of|division of|admissions policy|degree programme|public administration|consulting|strategy|research roles|data governance|digital transformation|job duties|career paths|graduate\)|mphil in|phd in|phd\b|engineer|analyst,|data analyst/i.test(text)) return false;
   if (/^(required courses?|core courses?|elective courses?|course descriptions?|curriculum|programme structure|study scheme|course code|course title|credits?|total|year|semester|term|component|note|students are required|select|choose|the programme|upon completion|admission requirements?|application procedures?|learning outcomes?.*|education|media and creative industries.*|performing arts sector|statistics)$/i.test(text)) return false;
   if (/^(home|about us|contact us|news|events|privacy policy statement|disclaimer|sitemap|search|explore now|visit website|apply now)$/i.test(text)) return false;
   if (hasCourseCode) return true;
@@ -275,7 +275,34 @@ function cleanCourseName(value = '') {
     .replace(/^[-*•–—]\s*/, '')
     .replace(/^\d+[\).、]\s*/, '')
     .replace(/\s+\d+\s*(credits?|units?|cps?)$/i, '')
+    .replace(/\s*[#^*]+\s*$/g, '')
     .trim();
+}
+
+function extractDetailsCourses(html, url) {
+  const courses = [];
+  const detailsPattern = /<details\b[^>]*>\s*<summary\b[^>]*>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/gi;
+
+  for (const match of html.matchAll(detailsPattern)) {
+    const name = cleanCourseName(match[1]);
+    if (!looksLikeCourseName(name)) continue;
+    const start = match.index || 0;
+    const before = html.slice(Math.max(0, start - 3500), start);
+    const headingMatches = [...before.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi)];
+    const heading = stripTags(headingMatches.at(-1)?.[1] || before.slice(-800));
+    const bodyText = htmlToText(match[2])
+      .replace(/^[-\s]+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    courses.push({
+      courseName: name,
+      description: bodyText.length > 25 ? bodyText.slice(0, 2400) : '',
+      courseType: classifyCourseType(`${heading} ${name}`),
+      sourceUrl: url
+    });
+  }
+
+  return courses;
 }
 
 function extractAccordionCourses(html, url) {
@@ -374,6 +401,7 @@ function extractCourses(pages) {
   const all = [];
   for (const page of pages) {
     const mainHtml = extractMainHtml(page.html);
+    all.push(...extractDetailsCourses(mainHtml, page.url));
     all.push(...extractAccordionCourses(mainHtml, page.url));
     all.push(...extractTableCourses(mainHtml, page.url));
     all.push(...extractLineCourses(page.text, page.url));

@@ -112,13 +112,27 @@ function fieldContainsAny(values, terms) {
   return Array.from(matches);
 }
 
+function courseGuideValues(course) {
+  const guide = course.courseGuide || {};
+  return [
+    guide.sourceBasis,
+    ...(guide.suitableBackgrounds || []),
+    ...(guide.deepenFocus || []),
+    ...(guide.skillsGained || []),
+    ...(guide.careerConnections || []),
+    ...(guide.preparationAdvice || []),
+    ...(guide.informationLimits || []),
+    ...(guide.studentPerspectives || []).flatMap((item) => [item.profile, item.value, item.suggestedFocus])
+  ];
+}
+
 function buildWeightedFields(programme) {
   return [
     { field: 'programmeName', weight: 8, values: [programme.programmeName] },
     { field: 'degreeLevel', weight: 6, values: [programme.degreeLevel] },
     { field: 'suitableBackgrounds', weight: 14, values: programme.suitableBackgrounds || [] },
     { field: 'coreCourses', weight: 12, values: programme.coreCourses || [] },
-    { field: 'courseDescriptions', weight: 12, values: (programme.courseDescriptions || []).flatMap((course) => [course.courseName, course.description]) },
+    { field: 'courseDescriptions', weight: 12, values: (programme.courseDescriptions || []).flatMap((course) => [course.courseName, course.description, course.descriptionZh, ...courseGuideValues(course)]) },
     { field: 'importantCourses', weight: 12, values: (programme.importantCourses || []).flatMap((course) => [course.courseName, course.whyImportant, ...(course.relatedStudentBackgrounds || []), ...(course.relatedCareerGoals || [])]) },
     { field: 'skillsDeveloped', weight: 9, values: programme.skillsDeveloped || [] },
     { field: 'careerDirections', weight: 13, values: programme.careerDirections || [] },
@@ -306,10 +320,12 @@ For each recommended programme, explain:
 5. What the student should prepare before entering the programme;
 6. What potential gaps the student may have;
 7. Future career or graduate outcome directions based only on graduateOutcomes, graduateOutcomeSummary, and careerDirections in the candidate data.
+Use courseDescriptions.descriptionZh and courseDescriptions.courseGuide when provided, but treat them as student-facing translations and rule-based guide notes derived from official course descriptions.
 
 Important restrictions:
 - Do not invent course names.
 - Do not invent programme information.
+- Do not expand courseDescriptions.courseGuide beyond what is supported by the official course description and provided guide notes.
 - Do not invent graduate destinations, employers, industries, or future outcomes.
 - If official year-by-year graduate destination information is insufficient, say that graduate outcome information is insufficient.
 - Treat publicSocial source items as reference material only and do not present them as official university outcomes.

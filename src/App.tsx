@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.56';
+const APP_VERSION = 'v1.57';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1002,6 +1002,12 @@ function formatFacultyText(text = '') {
   }).reduce((current, [from, to]) => current.split(from).join(to), text);
 }
 
+function previewText(text = '', maxLength = 220) {
+  const formatted = formatFacultyText(text).replace(/\s+/g, ' ').trim();
+  if (formatted.length <= maxLength) return formatted;
+  return `${formatted.slice(0, maxLength).trim()}...`;
+}
+
 function schoolAbbreviation(school: School) {
   return school.id === 'eduhk' ? 'EdUHK' : 'LU';
 }
@@ -1726,7 +1732,7 @@ function CoursesPage({
               </div>
               {getCourseSubtitle(course) && <em>{getCourseSubtitle(course)}</em>}
               {course.courseCode && <small>{course.courseCode}</small>}
-              <p>{formatFacultyText(course.description)}</p>
+              <p>{previewText(course.description)}</p>
               <div className="tag-row">
                 <span>{course.type}</span>
                 <span className={`medium-badge ${getMediumTone(course.medium)}`}>{course.medium}</span>
@@ -1777,6 +1783,55 @@ function CourseDetailPage({
       <section className="detail-body">
         <h2>课程简介</h2>
         <p>{formatFacultyText(course.description)}</p>
+        {course.officialDescriptionEn && (
+          <>
+            <h2>官网英文原文</h2>
+            <p>{course.officialDescriptionEn}</p>
+          </>
+        )}
+        {course.courseGuide && (
+          <>
+            <h2>学生视角课程指南</h2>
+            <div className="course-guide-grid">
+              <div>
+                <strong>适合背景</strong>
+                <ul>{course.courseGuide.suitableBackgrounds.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+              <div>
+                <strong>建议深化</strong>
+                <ul>{course.courseGuide.deepenFocus.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+              <div>
+                <strong>能力产出</strong>
+                <ul>{course.courseGuide.skillsGained.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+              <div>
+                <strong>就业 / 转型衔接</strong>
+                <ul>{course.courseGuide.careerConnections.map((item) => <li key={item}>{item}</li>)}</ul>
+              </div>
+            </div>
+            {course.courseGuide.studentPerspectives.length > 0 && (
+              <div className="student-perspective-list">
+                {course.courseGuide.studentPerspectives.map((item) => (
+                  <div key={`${item.profile}-${item.value}`}>
+                    <strong>{item.profile}</strong>
+                    <p>{item.value}</p>
+                    <small>学习重点：{item.suggestedFocus}</small>
+                  </div>
+                ))}
+              </div>
+            )}
+            {course.courseGuide.preparationAdvice.length > 0 && (
+              <>
+                <h2>课前准备建议</h2>
+                <ul>{course.courseGuide.preparationAdvice.map((item) => <li key={item}>{item}</li>)}</ul>
+              </>
+            )}
+            {course.courseGuide.informationLimits.length > 0 && (
+              <p className="detail-note">{course.courseGuide.informationLimits.join('；')}</p>
+            )}
+          </>
+        )}
         <h2>选课信息</h2>
         <dl className="info-list">
           <div><dt>所属项目</dt><dd>{course.programmeTitle}</dd></div>
@@ -1785,7 +1840,7 @@ function CourseDetailPage({
           <div><dt>开课学期</dt><dd>{displayCourseInfo(course.semester)}</dd></div>
           <div><dt>先修要求</dt><dd>{displayCourseInfo(course.prerequisites)}</dd></div>
           <div><dt>资料核对</dt><dd>{course.checkedAt}</dd></div>
-          <div><dt>来源</dt><dd>{course.sourceUrl}</dd></div>
+          <div><dt>来源</dt><dd>{course.descriptionSourceUrl || course.sourceUrl}</dd></div>
         </dl>
       </section>
 
