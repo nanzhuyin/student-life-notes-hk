@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.59';
+const APP_VERSION = 'v1.60';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -3266,7 +3266,15 @@ function PolicyPage() {
   );
 }
 
-function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; authToken: string }) {
+function ProgrammeRecommenderPage({
+  activeSchool,
+  canUseAi,
+  authToken
+}: {
+  activeSchool: School;
+  canUseAi: boolean;
+  authToken: string;
+}) {
   const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [undergraduateMajor, setUndergraduateMajor] = useState('');
@@ -3286,6 +3294,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
   const [loading, setLoading] = useState(false);
   const programmeOptions = useMemo(
     () => recommenderProgrammes
+      .filter((programme) => programme.schoolId === activeSchool.id)
       .slice()
       .sort((a, b) => {
         const school = (a.schoolId || a.school).localeCompare(b.schoolId || b.school);
@@ -3294,9 +3303,12 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
         if (level) return level;
         return a.programmeName.localeCompare(b.programmeName);
       }),
-    []
+    [activeSchool.id]
   );
   const selectedProgramme = programmeOptions.find((programme) => programme.id === selectedProgrammeId);
+  useEffect(() => {
+    if (selectedProgrammeId && !selectedProgramme) setSelectedProgrammeId('');
+  }, [selectedProgramme, selectedProgrammeId]);
   const requiresMasterMajor = hasChosenProgramme
     ? selectedProgramme?.degreeLevel === 'Doctor'
     : targetDegreeLevel === 'Doctor';
@@ -3415,7 +3427,7 @@ function ProgrammeRecommenderPage({ canUseAi, authToken }: { canUseAi: boolean; 
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前知识库收录 {programmeOptions.length} 个 EDU / LU 专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
+                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
@@ -4265,7 +4277,13 @@ export default function App() {
             onToggleFavoriteCourse={toggleFavoriteCourse}
           />
         )}
-        {!shouldBlockForAuth && route.name === 'programmeRecommender' && <ProgrammeRecommenderPage canUseAi={canUseAiRecommender} authToken={recommenderAuthToken} />}
+        {!shouldBlockForAuth && route.name === 'programmeRecommender' && (
+          <ProgrammeRecommenderPage
+            activeSchool={activeSchool}
+            canUseAi={canUseAiRecommender}
+            authToken={recommenderAuthToken}
+          />
+        )}
         {route.name === 'admin' && <AdminPage activeSchool={activeSchool} onChooseSchool={chooseSchool} />}
         {route.name === 'about' && <AboutPage />}
         {route.name === 'policy' && <PolicyPage />}
