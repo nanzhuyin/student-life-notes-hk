@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.61';
+const APP_VERSION = 'v1.62';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2094,6 +2094,11 @@ function CoursesPage({
     });
   };
 
+  const clearActiveProgramme = () => {
+    updateCourseFilters({ programmeId: '' });
+    if (routeProgramme) window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/courses`);
+  };
+
   const { programmeId, levelFilter, facultyFilter, typeKey, keyword } = filters;
 
   const levelOptions = useMemo(
@@ -2231,6 +2236,7 @@ function CoursesPage({
 
       {activeProgramme && (
         <section className="programme-summary">
+          <button className="secondary-action" onClick={clearActiveProgramme}>返回专业列表</button>
           <strong>{getProgrammeTitle(activeProgramme)}</strong>
           {getProgrammeSubtitle(activeProgramme) && <em>{getProgrammeSubtitle(activeProgramme)}</em>}
           <p>{activeProgramme.mediumDetail}</p>

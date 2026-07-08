@@ -74,7 +74,14 @@ async function translateToChinese(text) {
     await sleep(TRANSLATE_DELAY_MS);
     translated.push(await translateChunk(chunk));
   }
-  return translated.join(' ').replace(/\s+/g, ' ').trim();
+  return protectAiTermsInChineseTranslation(translated.join(' ').replace(/\s+/g, ' ').trim());
+}
+
+function protectAiTermsInChineseTranslation(text) {
+  return String(text || '')
+    .replace(/学生将了解法学硕士的演变/g, '学生将了解大型语言模型的演变')
+    .replace(/开发和部署法学硕士/g, '开发和部署大型语言模型')
+    .replace(/由法学硕士支持/g, '由大型语言模型支持');
 }
 
 function includesAny(text, keywords) {
