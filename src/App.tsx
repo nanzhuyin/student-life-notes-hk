@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.61';
+const APP_VERSION = 'v1.62';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -3482,6 +3482,7 @@ function ProgrammeRecommenderPage({
   const programmeOptions = useMemo(
     () => recommenderProgrammes
       .filter((programme) => programme.schoolId === activeSchool.id)
+      .filter((programme) => !(activeSchool.id === 'lingnan' && programme.degreeLevel === 'Bachelor'))
       .slice()
       .sort((a, b) => {
         const school = (a.schoolId || a.school).localeCompare(b.schoolId || b.school);
@@ -3525,6 +3526,7 @@ function ProgrammeRecommenderPage({
     }
 
     const request: StudentProfile = {
+      schoolId: activeSchool.id,
       hasChosenProgramme,
       selectedProgrammeId: hasChosenProgramme ? selectedProgramme?.id || '' : '',
       selectedProgrammeName: hasChosenProgramme ? selectedProgramme?.programmeName || '' : '',
@@ -3537,7 +3539,9 @@ function ProgrammeRecommenderPage({
       preferredDirections: splitProfileList(preferredDirections),
       targetDegreeLevels: hasChosenProgramme && selectedProgramme
         ? [selectedProgramme.degreeLevel as StudentProfile['targetDegreeLevels'][number]]
-        : targetDegreeLevel ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]] : [],
+        : targetDegreeLevel
+          ? [targetDegreeLevel as StudentProfile['targetDegreeLevels'][number]]
+          : activeSchool.id === 'lingnan' ? ['Master', 'Doctor'] : [],
       studyPreferences: splitProfileList(studyPreferences),
       concerns: splitProfileList(concerns),
       workExperience: splitProfileList(workExperience),
@@ -3614,7 +3618,7 @@ function ProgrammeRecommenderPage({
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
+                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业{activeSchool.id === 'lingnan' ? '，本科专业暂不纳入 AI 知识库' : ''}；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
@@ -3628,7 +3632,7 @@ function ProgrammeRecommenderPage({
               <label className="recommender-field">
                 <span>目标学位层级（选填）</span>
                 <select value={targetDegreeLevel} onChange={(event) => setTargetDegreeLevel(event.target.value)}>
-                  <option value="">不限</option>
+                  <option value="">{activeSchool.id === 'lingnan' ? '不限（硕博）' : '不限'}</option>
                   <option value="Master">Master</option>
                   <option value="Doctor">Doctor</option>
                   <option value="Postgraduate Diploma">Postgraduate Diploma</option>
