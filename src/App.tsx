@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.52';
+const APP_VERSION = 'v1.53';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -730,6 +730,9 @@ function propertyImage(fileName: string) {
 }
 
 const housingImageRules: Array<{ keywords: string[]; url: string }> = [
+  { keywords: ['NOVO LAND', 'novo land', 'Novo Land'], url: propertyImage('novo-land.jpg') },
+  { keywords: ['兆康苑'], url: propertyImage('siu-hong-court.jpg') },
+  { keywords: ['菁隽', '菁雋', 'T Plus', 't plus'], url: propertyImage('t-plus.jpg') },
   { keywords: ['港湾豪庭'], url: propertyImage('metro-harbour-view.jpg') },
   { keywords: ['叠茵庭一期C座', '叠茵庭'], url: propertyImage('parkland-villas.jpg') },
   { keywords: ['大兴花园一期', '大兴花园'], url: propertyImage('tai-hing-garden.jpg') },
