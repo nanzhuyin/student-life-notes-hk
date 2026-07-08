@@ -18,7 +18,8 @@
 - 本次专业推荐助手后端与数据库版本：`v1.40`
 - 本次 AI 专业推荐入口版本：`v1.41`
 - 本次 DeepSeek 中文输出版本：`v1.42`
-- 下一次修改：`v1.43`
+- 本次专业推荐课程同步版本：`v1.43`
+- 下一次修改：`v1.44`
 
 每次版本递增时至少同步这些位置：
 
@@ -71,6 +72,23 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.43
+
+日期：2026-07-08
+
+改动范围：
+
+- 将网页课程库中已有的 5 个专业课程名同步到 `src/data/programmes.json` 推荐知识库。
+- 新增 `npm run sync:programme-courses`，可从 `src/data/platformData.json` 重新同步这 5 个专业的课程名。
+- 只同步课程名称、类型和来源，不编造课程描述；这些专业仍标记为课程描述不足。
+- 当前推荐知识库无本科专业，统计为 45 个 Master、5 个 Doctor、0 个 Bachelor。
+- 同步本次部署版本号为 `v1.43`。
+
+测试：
+
+- `npm run sync:programme-courses` 通过。
+- `npm run build` 通过。
 
 ### v1.42
 
