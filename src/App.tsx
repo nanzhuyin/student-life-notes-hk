@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.54';
+const APP_VERSION = 'v1.55';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1037,7 +1037,10 @@ function scoreCourseAgainstProfile(course: Course, profile: CourseAdvisorProfile
   if (profile.isFreshGraduate && courseText.includes('就业')) score += 14;
   if (normalize(profile.goals).includes('就业')) score += 10;
   if (normalize(profile.workExperience).includes('媒体') && courseText.includes('媒体')) score += 12;
-  if (/(媒体|传媒|内容|编辑|记者|传播)/.test(profileText) && /(data science|数据科学|数据分析|模型|回归|聚类)/.test(courseText)) score += 22;
+  if (/(媒体|传媒|内容|编辑|记者|传播)/.test(profileText) && /(data science|数据科学|数据分析|回归|聚类)/.test(courseText)) {
+    const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化)/.test(profileText);
+    score += hasQuantReadiness ? 8 : -22;
+  }
   if (/(教育|老师|教师|学校|公共服务|政策)/.test(profileText) && /(数据|分析|评估|学习)/.test(courseText)) score += 14;
   if (/(管理|主管|负责人|总监|创业|老板|资深)/.test(profileText) && /(决策|评估|管理|策略|数据|风险|政策)/.test(courseText)) score += 12;
   if (normalize(profile.background).includes('数据') && courseText.includes('数据')) score += 12;
@@ -1100,16 +1103,36 @@ function getCourseAdvisorAudienceRule(course: Course, profile: CourseAdvisorProf
   const isEducationProfile = /(教育|教师|老师|学校|培训|学生|课程|学习)/.test(profileText);
   const isManagerProfile = /(管理|主管|负责人|总监|创业|老板|资深|8年|10年|多年)/.test(profileText) || age >= 28;
   const isTechnicalProfile = /(计算机|数据|统计|编程|python|r语言|算法|工程|开发)/.test(profileText);
+  const hasQuantReadiness = /(数学|线代|线性代数|统计|概率|微积分|算法|编程|python|r语言|数据分析|建模|量化|机器学习基础)/.test(profileText);
+
+  if (isMediaProfile && isDataCourse && !hasQuantReadiness) {
+    return {
+      label: '媒体 / 内容从业者（数学基础弱）',
+      scoreBoost: -28,
+      summary: `${getCourseTitle(course)} 不建议作为没有数学、统计或编程基础的 30 岁左右媒体/内容从业者的首选选修。这门课会接触算法、回归、分类、聚类和 R / Shiny，学习压力会比较大；如果只是想打开 AI 视野，更适合先选偏文科、政策、伦理和应用趋势的课程。`,
+      reasons: [
+        'Data Science 的核心不是“聊数据”，而是用算法和模型处理问题；没有线代、统计或编程底子时，容易把精力耗在基础门槛上。',
+        '资深媒体人更有优势的是行业判断、叙事、传播、用户理解和公共议题表达，应该把 AI 课程转成这些优势的放大器。',
+        '如果确实要学 Data Science，建议先补 Excel / 统计概念 / R 或 Python 入门，再把目标限定为“能读懂结果、会问问题”，不要一开始追求建模熟练。'
+      ],
+      focus: ['先补统计和编程基础', '理解算法结果而非硬转码', '避免把选修课变成高挫败感课程'],
+      career: [
+        '更推荐：Privacy, Security, and Policy（隐私、安全与政策）',
+        '更推荐：Trends in Artificial Intelligence at Workplace and at Home（工作与家庭中的人工智能趋势）',
+        '可结合必修 Humanities and Artificial Intelligence，把媒体经验转成 AI 伦理、社会影响和公共传播能力'
+      ]
+    };
+  }
 
   if (isMediaProfile && isDataCourse) {
     return {
-      label: '媒体 / 内容从业者',
-      scoreBoost: 18,
-      summary: `${getCourseTitle(course)} 对 30 岁左右的媒体或内容从业者是适合的，但学习目标不是“转成纯程序员”。更好的路线是把它学成“数据判断 + 内容选题 + 用户洞察 + AI 产品表达”的能力。`,
+      label: '媒体 / 内容从业者（有数据基础）',
+      scoreBoost: 8,
+      summary: `${getCourseTitle(course)} 只适合已经愿意补统计、算法和编程基础的媒体或内容从业者。学习目标不是“转成纯程序员”，而是把数据分析能力接到内容选题、用户研究、传播效果评估和 AI 产品表达上。`,
       reasons: [
-        '媒体经验本身有选题、访谈、叙事和用户理解优势；Data Science 能补上数据验证和模型解释。',
+        '媒体经验本身有选题、访谈、叙事和用户理解优势；但 Data Science 需要额外补数据和算法基础。',
         '这类学生最应该把课程成果做成内容数据分析、用户分群、传播效果评估或市场研究案例。',
-        '如果数学和编程基础一般，也可以学，但要把重点放在问题定义、结果解释和可视化表达。'
+        '学习重点应放在问题定义、结果解释和可视化表达，不建议把目标设成短期内精通建模。'
       ],
       focus: ['R / 基础数据处理', '回归、分类、聚类的业务含义', '把模型结果讲给非技术团队', '传播数据或用户数据项目'],
       career: ['内容策略 / 用户研究', '市场研究 / 数据新闻', 'AI 产品运营', '行业研究与咨询']
