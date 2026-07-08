@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.62';
+const APP_VERSION = 'v1.63';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -2589,11 +2589,6 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
         <button className="primary-action" onClick={() => void runAdvisor()} disabled={loading}>{loading ? '分析中...' : '生成课程建议'}</button>
         <small>注册用户和管理员可用；游客需要先登录后才能生成课程建议。</small>
       </div>
-      <div className="course-ai-privacy">
-        <strong>隐私与 AI 说明</strong>
-        <p>本课程建议表单不会窃取任何用户隐私信息。你填写的年龄、背景、工作经验、目标和问题仅用于本次生成，页面内画像会在 30 分钟后自动清理；如需立即清理记录，请联系管理员。</p>
-        <p>请不要填写身份证号、银行卡号、账号密码、验证码、详细住址等敏感信息。当前回答由 AI 规则库生成，仅供选课参考，不代表任何大学、学院、课程团队或官方立场。</p>
-      </div>
       {result && (
         <div className="course-ai-result">
           <div className="course-ai-result-head">
@@ -2629,6 +2624,11 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
           <small>{result.disclaimer}</small>
         </div>
       )}
+      <div className="course-ai-privacy">
+        <strong>隐私与 AI 说明</strong>
+        <p>本课程建议表单不会窃取任何用户隐私信息。你填写的年龄、背景、工作经验、目标和问题仅用于本次生成，页面内画像会在 30 分钟后自动清理；如需立即清理记录，请联系管理员。</p>
+        <p>请不要填写身份证号、银行卡号、账号密码、验证码、详细住址等敏感信息。当前回答由 AI 规则库生成，仅供选课参考，不代表任何大学、学院、课程团队或官方立场。</p>
+      </div>
     </section>
   );
 }
