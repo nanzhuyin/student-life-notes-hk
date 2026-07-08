@@ -20,7 +20,8 @@
 - 本次 DeepSeek 中文输出版本：`v1.42`
 - 本次专业推荐课程同步版本：`v1.43`
 - 本次目标专业下拉选择版本：`v1.44`
-- 下一次修改：`v1.45`
+- 本次专业导入统计提示修复版本：`v1.45`
+- 下一次修改：`v1.46`
 
 每次版本递增时至少同步这些位置：
 
@@ -73,6 +74,23 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.45
+
+日期：2026-07-08
+
+改动范围：
+
+- 修正 `npm run import:programmes` 的导入统计输出。
+- 旧输出只按 `courseDescriptions` 统计，会把只有课程名/课程结构的专业误显示为无课程信息。
+- 新输出拆分为：有课程名或结构、完全无课程名或结构、有课程描述行、有非空详细课程描述。
+- 增加 `SUPABASE_URL` 校验，避免误填 dashboard URL 或 table REST URL。
+- 同步本次部署版本号为 `v1.45`。
+
+测试：
+
+- `node --check scripts/import-programmes-to-supabase.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.44
 
