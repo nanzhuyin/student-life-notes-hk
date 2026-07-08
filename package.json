@@ -1,6 +1,6 @@
 {
   "name": "cowherd-floating-life-notes",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "crawl:programmes": "node scripts/crawl-lingnan-programmes.mjs",
     "sync:programme-courses": "node scripts/sync-programme-courses-from-platform-data.mjs",
+    "build:programme-options": "node scripts/build-programme-options.mjs",
     "import:programmes": "node scripts/import-programmes-to-supabase.mjs",
     "validate:courses": "node scripts/validate-course-data.mjs --write-report"
   },

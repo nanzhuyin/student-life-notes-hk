@@ -1,0 +1,302 @@
+[
+  {
+    "id": "doctor-of-artificial-intelligence-studies",
+    "programmeName": "Doctor of Artificial Intelligence Studies",
+    "degreeLevel": "Doctor",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "doctor-of-business-administration-in-global-digital-economy-and-governance",
+    "programmeName": "Doctor of Business Administration in Global Digital Economy and Governance",
+    "degreeLevel": "Doctor",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "doctor-of-business-studies",
+    "programmeName": "Doctor of Business Studies",
+    "degreeLevel": "Doctor",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "doctor-of-policy-studies",
+    "programmeName": "Doctor of Policy Studies",
+    "degreeLevel": "Doctor",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "doctor-of-smart-manufacturing",
+    "programmeName": "Doctor of Smart Manufacturing",
+    "degreeLevel": "Doctor",
+    "school": "Wu Jieh Yee School of Interdisciplinary Studies"
+  },
+  {
+    "id": "master-of-accountancy",
+    "programmeName": "Master of Accountancy",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-arts-in-artificial-intelligence-and-the-future",
+    "programmeName": "Master of Arts in Artificial Intelligence and the Future",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-arts-and-cultural-heritage-management",
+    "programmeName": "Master of Arts in Arts and Cultural Heritage Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-arts-in-chinese",
+    "programmeName": "Master of Arts in Chinese",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-creative-and-media-industries",
+    "programmeName": "Master of Arts in Creative and Media Industries",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-curating-and-art-history",
+    "programmeName": "Master of Arts in Curating and Art History",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-digital-english-studies",
+    "programmeName": "Master of Arts in Digital English Studies",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-digital-history-in-global-asia",
+    "programmeName": "Master of Arts in Digital History in Global Asia",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-arts-in-international-affairs",
+    "programmeName": "Master of Arts in International Affairs",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-arts-in-international-higher-education-and-management",
+    "programmeName": "Master of Arts in International Higher Education and Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-arts-in-social-entrepreneurship-and-innovation-management",
+    "programmeName": "Master of Arts in Social Entrepreneurship and Innovation Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-arts-in-translation-studies",
+    "programmeName": "Master of Arts in Translation Studies",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-china-and-regional-development-studies",
+    "programmeName": "Master of China and Regional Development Studies",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-cities-and-governance",
+    "programmeName": "Master of Cities and Governance",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-cultural-studies",
+    "programmeName": "Master of Cultural Studies",
+    "degreeLevel": "Master",
+    "school": "Faculty of Arts"
+  },
+  {
+    "id": "master-of-housing-policy-and-management",
+    "programmeName": "Master of Housing Policy and Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-liberal-sciences",
+    "programmeName": "Master of Liberal Sciences",
+    "degreeLevel": "Master",
+    "school": "Wu Jieh Yee School of Interdisciplinary Studies"
+  },
+  {
+    "id": "master-of-research-in-advanced-data-science",
+    "programmeName": "Master of Research in Advanced Data Science",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-artificial-intelligence-and-business-analytics",
+    "programmeName": "Master of Science in Artificial Intelligence and Business Analytics",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-arts-technology-and-business",
+    "programmeName": "Master of Science in Arts Technology and Business",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-business-innovation-and-entrepreneurship",
+    "programmeName": "Master of Science in Business Innovation and Entrepreneurship",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-cross-disciplinary-technologies",
+    "programmeName": "Master of Science in Cross-disciplinary Technologies",
+    "degreeLevel": "Master",
+    "school": "Wu Jieh Yee School of Interdisciplinary Studies"
+  },
+  {
+    "id": "master-of-science-in-data-science",
+    "programmeName": "Master of Science in Data Science",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-ebusiness-and-supply-chain-management",
+    "programmeName": "Master of Science in eBusiness and Supply Chain Management",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-environmental-social-and-governance-management",
+    "programmeName": "Master of Science in Environmental, Social, and Governance Management",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-finance",
+    "programmeName": "Master of Science in Finance",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-global-humanitarian-innovation-and-technology",
+    "programmeName": "Master of Science in Global Humanitarian Innovation and Technology",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-science-in-health-analytics-and-management",
+    "programmeName": "Master of Science in Health Analytics and Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-science-in-human-resource-and-organisational-management",
+    "programmeName": "Master of Science in Human Resource and Organisational Management",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-industrial-data-analytics",
+    "programmeName": "Master of Science in Industrial Data Analytics",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-innovative-design-and-artificial-intelligence",
+    "programmeName": "Master of Science in Innovative Design and Artificial Intelligence",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-international-and-development-economics",
+    "programmeName": "Master of Science in International and Development Economics",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-science-in-international-banking-and-finance",
+    "programmeName": "Master of Science in International Banking and Finance",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-science-in-marketing-and-international-business",
+    "programmeName": "Master of Science in Marketing and International Business",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-risk-insurance-and-actuarial-analytics",
+    "programmeName": "Master of Science in Risk, Insurance and Actuarial Analytics",
+    "degreeLevel": "Master",
+    "school": "Faculty of Business"
+  },
+  {
+    "id": "master-of-science-in-smart-ageing-and-gerontology",
+    "programmeName": "Master of Science in Smart Ageing and Gerontology",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-science-in-smart-city-technologies-and-applications",
+    "programmeName": "Master of Science in Smart City Technologies and Applications",
+    "degreeLevel": "Master",
+    "school": "School of Data Science"
+  },
+  {
+    "id": "master-of-science-in-sustainability-and-environmental-analytics",
+    "programmeName": "Master of Science in Sustainability and Environmental Analytics",
+    "degreeLevel": "Master",
+    "school": "Wu Jieh Yee School of Interdisciplinary Studies"
+  },
+  {
+    "id": "master-of-science-in-work-and-organisational-psychology",
+    "programmeName": "Master of Science in Work and Organisational Psychology",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-social-sciences-in-applied-psychology",
+    "programmeName": "Master of Social Sciences in Applied Psychology",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-social-sciences-in-comparative-public-administration",
+    "programmeName": "Master of Social Sciences in Comparative Public Administration",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-social-sciences-in-comparative-social-policy-international",
+    "programmeName": "Master of Social Sciences in Comparative Social Policy (International)",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-social-sciences-in-health-and-social-services-management",
+    "programmeName": "Master of Social Sciences in Health and Social Services Management",
+    "degreeLevel": "Master",
+    "school": "School of Graduate Studies"
+  },
+  {
+    "id": "master-of-social-sciences-in-organisational-psychology-and-education-management",
+    "programmeName": "Master of Social Sciences in Organisational Psychology and Education Management",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  },
+  {
+    "id": "master-of-social-sciences-in-sociology-and-data-analytics",
+    "programmeName": "Master of Social Sciences in Sociology and Data Analytics",
+    "degreeLevel": "Master",
+    "school": "Faculty of Social Sciences"
+  }
+]

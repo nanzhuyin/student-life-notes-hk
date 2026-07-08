@@ -2539,6 +2539,11 @@ p {
   font-weight: 900;
 }
 
+.recommender-selected-meta {
+  color: #746b64;
+  line-height: 1.5;
+}
+
 .recommender-field textarea {
   resize: vertical;
   line-height: 1.55;

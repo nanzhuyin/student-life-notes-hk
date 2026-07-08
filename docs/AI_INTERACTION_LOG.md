@@ -19,7 +19,8 @@
 - 本次 AI 专业推荐入口版本：`v1.41`
 - 本次 DeepSeek 中文输出版本：`v1.42`
 - 本次专业推荐课程同步版本：`v1.43`
-- 下一次修改：`v1.44`
+- 本次目标专业下拉选择版本：`v1.44`
+- 下一次修改：`v1.45`
 
 每次版本递增时至少同步这些位置：
 
@@ -72,6 +73,22 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.44
+
+日期：2026-07-08
+
+改动范围：
+
+- 专业推荐助手中“已选目标专业”由手填输入改为知识库下拉选择。
+- 前端提交推荐请求时同时传递 `selectedProgrammeId` 和 `selectedProgrammeName`，减少手输错名导致候选专业匹配不到的问题。
+- 目标专业下拉来自 `src/data/programmes.json` 推荐知识库，不允许用户输入知识库外专业名。
+- 新增轻量 `src/data/programmeOptions.json` 和 `npm run build:programme-options`，避免前端为下拉框直接打包完整知识库。
+- 同步本次部署版本号为 `v1.44`。
+
+测试：
+
+- `npm run build` 通过。
 
 ### v1.43
 

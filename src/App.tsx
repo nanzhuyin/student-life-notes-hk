@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import postsData from './data/posts.json';
 import platformDataJson from './data/platformData.json';
+import programmeOptionsJson from './data/programmeOptions.json';
 import type {
   CategoryKey,
   CategoryMeta,
@@ -17,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.43';
+const APP_VERSION = 'v1.44';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -33,6 +34,12 @@ const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const platformData = platformDataJson as PlatformData;
 const legacyPosts = postsData as NotePost[];
+const recommenderProgrammes = programmeOptionsJson as Array<{
+  id: string;
+  programmeName: string;
+  degreeLevel: string;
+  school: string;
+}>;
 
 if (typeof document !== 'undefined') {
   document.title = `${APP_NAME} ${APP_VERSION} 内测版`;
@@ -2714,7 +2721,7 @@ function PolicyPage() {
 
 function ProgrammeRecommenderPage() {
   const [hasChosenProgramme, setHasChosenProgramme] = useState(false);
-  const [selectedProgrammeName, setSelectedProgrammeName] = useState('');
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [undergraduateMajor, setUndergraduateMajor] = useState('');
   const [mainCourses, setMainCourses] = useState('');
   const [skills, setSkills] = useState('');
@@ -2728,6 +2735,17 @@ function ProgrammeRecommenderPage() {
   const [result, setResult] = useState<ProgrammeRecommendationResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const programmeOptions = useMemo(
+    () => recommenderProgrammes
+      .slice()
+      .sort((a, b) => {
+        const level = a.degreeLevel.localeCompare(b.degreeLevel);
+        if (level) return level;
+        return a.programmeName.localeCompare(b.programmeName);
+      }),
+    []
+  );
+  const selectedProgramme = programmeOptions.find((programme) => programme.id === selectedProgrammeId);
 
   const submit = async () => {
     setError('');
@@ -2740,11 +2758,15 @@ function ProgrammeRecommenderPage() {
       setError('请至少填写本科专业、主修课程、兴趣方向或职业目标中的一项。');
       return;
     }
+    if (hasChosenProgramme && !selectedProgramme) {
+      setError('请从知识库中选择一个已收录的目标专业。');
+      return;
+    }
 
     const request: StudentProfile = {
       hasChosenProgramme,
-      selectedProgrammeId: '',
-      selectedProgrammeName: hasChosenProgramme ? selectedProgrammeName.trim() : '',
+      selectedProgrammeId: hasChosenProgramme ? selectedProgramme?.id || '' : '',
+      selectedProgrammeName: hasChosenProgramme ? selectedProgramme?.programmeName || '' : '',
       undergraduateMajor: undergraduateMajor.trim(),
       mainCourses: splitProfileList(mainCourses),
       skills: splitProfileList(skills),
@@ -2792,14 +2814,31 @@ function ProgrammeRecommenderPage() {
           </div>
 
           <label className="recommender-toggle">
-            <input type="checkbox" checked={hasChosenProgramme} onChange={(event) => setHasChosenProgramme(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={hasChosenProgramme}
+              onChange={(event) => {
+                setHasChosenProgramme(event.target.checked);
+                if (!event.target.checked) setSelectedProgrammeId('');
+              }}
+            />
             <span>我已经有想了解的目标专业</span>
           </label>
 
           {hasChosenProgramme && (
             <label className="recommender-field wide">
-              <span>已选专业名称</span>
-              <input value={selectedProgrammeName} onChange={(event) => setSelectedProgrammeName(event.target.value)} placeholder="例如：Master of Science in Data Science" />
+              <span>已选目标专业</span>
+              <select value={selectedProgrammeId} onChange={(event) => setSelectedProgrammeId(event.target.value)}>
+                <option value="">从知识库选择一个专业</option>
+                {programmeOptions.map((programme) => (
+                  <option key={programme.id} value={programme.id}>
+                    {programme.programmeName} · {programme.degreeLevel}
+                  </option>
+                ))}
+              </select>
+              <small className="recommender-selected-meta">
+                当前知识库收录 {programmeOptions.length} 个专业；选择后系统会优先分析这个目标专业是否适合你。
+              </small>
             </label>
           )}
 
