@@ -5818,3 +5818,57 @@ body.theme-eduhk {
   color: #20252a;
   background: #ffffff;
 }
+
+/* Lingnan home typography tuning only; keep its original visual theme. */
+.hero.school-hero.lingnan h1 {
+  max-width: 12.5em;
+  font-size: clamp(1.95rem, 3.35vw, 3.65rem);
+  line-height: 1.12;
+}
+
+.hero.school-hero.lingnan .hero-copy > p {
+  max-width: 42rem;
+  font-size: clamp(0.92rem, 1.04vw, 1rem);
+  line-height: 1.68;
+}
+
+.hero.school-hero.lingnan .eyebrow {
+  font-size: 0.78rem;
+}
+
+.hero.school-hero.lingnan .hero-stats span {
+  font-size: 0.82rem;
+}
+
+.hero.school-hero.lingnan .hero-stats strong {
+  font-size: clamp(1.28rem, 1.75vw, 1.75rem);
+}
+
+.app-shell.school-theme-lingnan .guide-feature-card strong,
+.app-shell.school-theme-lingnan .guide-step-card strong,
+.app-shell.school-theme-lingnan .guide-update-card strong {
+  font-size: 1.02rem;
+}
+
+.app-shell.school-theme-lingnan .guide-feature-card span,
+.app-shell.school-theme-lingnan .guide-update-card small,
+.app-shell.school-theme-lingnan .guide-panel .live-metric-list small {
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .hero.school-hero.lingnan h1 {
+    font-size: clamp(1.6rem, 7.2vw, 2.2rem);
+    line-height: 1.12;
+  }
+
+  .hero.school-hero.lingnan .hero-copy > p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .hero.school-hero.lingnan .hero-stats strong {
+    font-size: 1.08rem;
+  }
+}
