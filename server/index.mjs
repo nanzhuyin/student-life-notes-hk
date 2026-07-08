@@ -143,31 +143,46 @@ async function readJson(req) {
 
 function requireAdmin(req) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  return token && adminTokens.has(token);
+  return token && (adminTokens.has(token) || isValidAdminToken(token));
 }
 
-function createUserToken(user) {
+function createSignedToken(kind, claims) {
   const payload = Buffer.from(JSON.stringify({
-    userId: user.id,
-    username: user.username,
+    ...claims,
     issuedAt: Date.now()
   })).toString('base64url');
   const signature = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
-  return `user.${payload}.${signature}`;
+  return `${kind}.${payload}.${signature}`;
 }
 
-function isValidUserToken(token) {
-  if (!token.startsWith('user.')) return false;
+function isValidSignedToken(token, kind) {
+  if (!token.startsWith(`${kind}.`)) return false;
   const [, payload, signature] = token.split('.');
   if (!payload || !signature) return false;
   const expected = createHmac('sha256', sessionSecret).update(payload).digest('base64url');
   return safeCompare(signature, expected);
 }
 
+function createUserToken(user) {
+  return createSignedToken('user', { userId: user.id, username: user.username });
+}
+
+function isValidUserToken(token) {
+  return isValidSignedToken(token, 'user');
+}
+
+function createAdminToken(account) {
+  return createSignedToken('admin', { username: account.username, role: account.role || 'admin' });
+}
+
+function isValidAdminToken(token) {
+  return isValidSignedToken(token, 'admin');
+}
+
 function requireRecommendationUser(req) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return false;
-  return adminTokens.has(token) || isValidUserToken(token);
+  return adminTokens.has(token) || isValidAdminToken(token) || isValidUserToken(token);
 }
 
 async function loadBundledProgrammes() {
@@ -383,7 +398,7 @@ async function route(req, res) {
     const inputHash = hashText(String(body.password || ''));
     const account = adminAccounts.find((item) => item.username === inputUsername && safeCompare(item.passwordHash, inputHash));
     if (account) {
-      const token = randomBytes(24).toString('hex');
+      const token = createAdminToken(account);
       adminTokens.set(token, { createdAt: Date.now(), username: account.username, role: account.role || 'admin' });
       sendJson(req, res, 200, { token, admin: { username: account.username, role: account.role || 'admin' } });
       return;

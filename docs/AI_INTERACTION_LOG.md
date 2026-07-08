@@ -27,7 +27,8 @@
 - 本次 AI 推荐请求失败和表单简化版本：`v1.49`
 - 本次 AI 推荐日志 schema 兼容版本：`v1.50`
 - 本次 AI 推荐博士方向硕士专业条件必填版本：`v1.51`
-- 下一次修改：`v1.52`
+- 本次刷新后登录态与 AI 权限修复版本：`v1.52`
+- 下一次修改：`v1.53`
 
 每次版本递增时至少同步这些位置：
 
@@ -80,6 +81,23 @@ push 前说明建议格式：
 
 - `npm run build` 通过。
 - `node --check server/index.mjs` 和 `node --check server/storage.mjs` 通过。
+
+### v1.52
+
+日期：2026-07-08
+
+改动范围：
+
+- 管理员 token 改为后端签名 token，避免 Render 重启或刷新后前端状态仍在但后端不认 token。
+- `/api/admin/*` 和 `/api/recommend-programmes` 同时接受新的签名管理员 token。
+- 前端只把 `user.` / `admin.` 签名 token 视为线上有效登录态。
+- 刷新页面后如果发现旧版用户信息或旧版管理员 session 没有有效 token，会自动清理过期登录态，避免显示已登录但 AI 不可用。
+- 同步本次部署版本号为 `v1.52`。
+
+测试：
+
+- `node --check server/index.mjs` 通过。
+- `npm run build` 通过。
 
 ### v1.51
 

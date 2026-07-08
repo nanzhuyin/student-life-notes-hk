@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.51';
+const APP_VERSION = 'v1.52';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -351,6 +351,14 @@ function statusLabel(status: string) {
     closed: '已关闭',
     new: '待处理'
   }[status] || status;
+}
+
+function isSignedUserToken(token: string) {
+  return token.startsWith('user.');
+}
+
+function isSignedAdminToken(token: string) {
+  return token.startsWith('admin.');
 }
 
 async function registerUser(input: { email: string; username: string; password: string; schoolId: SchoolId }) {
@@ -3450,10 +3458,13 @@ export default function App() {
   const [adminSession, setAdminSession] = useStoredState('student-life-notes:admin-session', false);
   const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
   const activeSchool = getSchool(activeSchoolId);
-  const isAdminAuthenticated = Boolean(adminToken || adminSession);
+  const hasValidUserToken = !API_BASE_URL || isSignedUserToken(userToken);
+  const hasValidAdminToken = !API_BASE_URL || isSignedAdminToken(adminToken);
+  const isAdminAuthenticated = API_BASE_URL ? Boolean(adminToken && hasValidAdminToken) : Boolean(adminToken || adminSession);
+  const isRegisteredAuthenticated = Boolean(currentUser && hasValidUserToken);
   const recommenderAuthToken = adminToken || userToken;
   const canUseAiRecommender = API_BASE_URL
-    ? Boolean((currentUser && userToken) || adminToken)
+    ? Boolean(isRegisteredAuthenticated || isAdminAuthenticated)
     : Boolean(currentUser || isAdminAuthenticated);
   const effectiveUser = useMemo<RegisteredUser>(() => currentUser || {
     id: isAdminAuthenticated ? 'admin-browser' : 'guest-browser',
@@ -3464,7 +3475,7 @@ export default function App() {
     updatedAt: new Date().toISOString()
   }, [activeSchoolId, currentUser, isAdminAuthenticated]);
   const [favoriteCourseIds, setFavoriteCourseIds] = useStoredState<string[]>(getStorageKey('favorite-courses', activeSchoolId), []);
-  const userRole: AnalyticsEvent['userRole'] = isAdminAuthenticated ? 'admin' : currentUser ? 'registered' : 'guest';
+  const userRole: AnalyticsEvent['userRole'] = isAdminAuthenticated ? 'admin' : isRegisteredAuthenticated ? 'registered' : 'guest';
   const shouldBlockForAuth = false;
   const shouldBypassAgreementForLocalAdmin = route.name === 'admin' && isLocalPreviewHost();
   const shouldUseLocalDebugUser = isLocalPreviewHost() && route.name !== 'admin';
@@ -3474,6 +3485,18 @@ export default function App() {
     setDynamicPosts(posts);
     writeLocalDynamicPosts(posts);
   };
+
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+    if (currentUser && !hasValidUserToken) {
+      setCurrentUser(null);
+      setUserToken('');
+    }
+    if ((adminToken || adminSession) && !hasValidAdminToken) {
+      setAdminToken('');
+      setAdminSession(false);
+    }
+  }, [adminSession, adminToken, currentUser, hasValidAdminToken, hasValidUserToken]);
 
   useLayoutEffect(() => {
     if (!hasAcceptedAgreement) return;
@@ -3592,7 +3615,7 @@ export default function App() {
           onAccountEnter={() => {
             if (!agreementChecked) return;
             setHasAcceptedAgreement(true);
-            go(currentUser || isAdminAuthenticated ? '/' : '/login');
+            go(isRegisteredAuthenticated || isAdminAuthenticated ? '/' : '/login');
           }}
         />
       </div>
@@ -3605,7 +3628,7 @@ export default function App() {
         activeSchool={activeSchool}
         onChooseSchool={chooseSchool}
         isAdmin={userRole === 'admin'}
-        isLoggedIn={Boolean(currentUser || isAdminAuthenticated)}
+        isLoggedIn={Boolean(isRegisteredAuthenticated || isAdminAuthenticated)}
         onLogout={() => {
           setCurrentUser(null);
           setUserToken('');
