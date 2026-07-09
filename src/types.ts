@@ -10,20 +10,6 @@ export type SchoolId = 'eduhk' | 'lingnan';
 
 export type CourseTypeKey = 'core' | 'elective' | 'project' | 'general';
 
-export interface NotePost {
-  id: string;
-  title: string;
-  category: CategoryKey;
-  categoryName: string;
-  summary: string;
-  content: string[];
-  tags: string[];
-  region: string;
-  source: string;
-  updatedAt: string;
-  recommended: boolean;
-}
-
 export interface CategoryMeta {
   key: CategoryKey;
   name: string;

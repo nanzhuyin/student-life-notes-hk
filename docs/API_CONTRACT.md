@@ -3,7 +3,7 @@
 项目名称：放牛娃的浮生日记  
 英文副名：Student Life Notes in Hong Kong
 
-本文定义未来 REST API 的前后端交互约定。当前版本仍是 GitHub Pages 纯静态网页，前端直接读取 `src/data/posts.json`，暂不接入后端。
+本文定义 REST API 的前后端交互约定。当前前端以 `src/data/platformData.json` 作为主要静态数据源，并通过后端逐步接入登录、投稿、管理和 AI 功能。
 
 免责声明固定文案：
 
@@ -503,10 +503,10 @@ Response 示例：
 
 ## 6. 当前静态 JSON 如何模拟接口
 
-当前前端直接导入：
+当前前端主要静态数据源：
 
 ```ts
-import postsData from './data/posts.json';
+import platformDataJson from './data/platformData.json';
 ```
 
 当前静态字段和未来 API 字段映射：
@@ -539,7 +539,7 @@ export async function fetchPosts(query: {
   page?: number;
   pageSize?: number;
 }) {
-  // 当前版本：从 src/data/posts.json 过滤和分页
+  // 当前版本：从 src/data/platformData.json 的 posts 数据过滤和分页
   // 后端接入后：替换为 fetch('/api/posts?...')
 }
 ```
@@ -549,7 +549,7 @@ export async function fetchPosts(query: {
 建议替换步骤：
 
 1. 前端新增 `src/services/api.ts`，把列表、详情、分类、标签读取都集中到服务层。
-2. 当前服务层先读取 `src/data/posts.json` 并模拟 REST 返回结构。
+2. 当前服务层先读取 `src/data/platformData.json` 并模拟 REST 返回结构。
 3. 后端完成 `/api/posts`、`/api/posts/:id`、`/api/categories`、`/api/tags` 后，前端只替换服务层实现。
 4. 保持页面组件只依赖统一的 `Post`、`Category`、`Tag` 类型，不直接依赖后端数据库字段。
 5. 管理员接口上线前，不在公开页面暴露任何发布入口。

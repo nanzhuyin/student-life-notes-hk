@@ -163,7 +163,7 @@ npm run preview
 │   ├── main.tsx
 │   ├── styles.css
 │   ├── types.ts
-│   └── data/posts.json
+│   └── data/platformData.json
 └── README.md
 ```
 
@@ -174,11 +174,10 @@ npm run preview
 内容数据在：
 
 ```text
-src/data/posts.json
 src/data/platformData.json
 ```
 
-`posts.json` 保留原站生活笔记内容；`platformData.json` 是 v1 平台数据，包含学校、项目、课程和生活内容。
+`platformData.json` 是当前平台数据，包含学校、项目、课程和生活内容。
 
 新增一条内容时，复制一个对象并修改以下字段：
 

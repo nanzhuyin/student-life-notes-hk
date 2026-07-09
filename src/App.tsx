@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import postsData from './data/posts.json';
 import platformDataJson from './data/platformData.json';
 import programmeOptionsJson from './data/programmeOptions.json';
 import type {
@@ -7,7 +6,6 @@ import type {
   CategoryMeta,
   Course,
   CourseTypeKey,
-  NotePost,
   PlatformData,
   Programme,
   School,
@@ -18,7 +16,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.68';
+const APP_VERSION = 'v1.69';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -34,7 +32,6 @@ const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const platformData = platformDataJson as PlatformData;
-const legacyPosts = postsData as NotePost[];
 const recommenderProgrammes = programmeOptionsJson as Array<{
   id: string;
   programmeName: string;
@@ -120,14 +117,6 @@ type SearchIntent = {
 };
 
 const baseSearchIntents: SearchIntent[] = [
-  {
-    id: 'courses',
-    title: '课程库 / 选课入口',
-    description: '按学校、项目和课程查看课程清单，适合搜索“选课、课程、专业课程、学分”。',
-    path: '/courses',
-    label: '课程',
-    keywords: ['选课', '课程', '课程库', '专业课程', '课程清单', '学分', '开课', '必修', '选修', '授课语言', 'programme', 'course', 'credit']
-  },
   {
     id: 'course-advisor',
     title: 'AI 课程顾问',
@@ -3186,11 +3175,7 @@ function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; 
   const intentResults = getIntentResults(keyword, activeSchool);
   const courses = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, 80);
   const posts = getVisibleSharedPosts(activeSchool.id, dynamicPosts).filter((post) => postMatches(post, keyword)).slice(0, 30);
-  const legacyMatches = legacyPosts.filter((post) => {
-    const token = normalize(keyword);
-    return token && [post.title, post.summary, post.content.join(' ')].join(' ').toLowerCase().includes(token);
-  }).length;
-  const hasAnyResult = intentResults.length > 0 || courses.length > 0 || posts.length > 0 || legacyMatches > 0;
+  const hasAnyResult = intentResults.length > 0 || courses.length > 0 || posts.length > 0;
 
   return (
     <section className="page-panel">
@@ -3241,12 +3226,12 @@ function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; 
             ))}
           </div>
         ) : (
-          <div className="empty-state"><strong>暂无课程精确匹配</strong><span>如果你想找选课入口，可以点击上方“课程库 / 选课入口”。</span></div>
+          <div className="empty-state"><strong>暂无课程精确匹配</strong><span>如果你想找选课入口，可以点击上方“专业课程知识库”。</span></div>
         )}
       </section>
 
       <section className="section">
-        <div className="section-head"><h2>生活内容结果</h2><p>当前显示 {posts.length} 条，最多显示 30 条。原仓库匹配记录：{legacyMatches} 条。</p></div>
+        <div className="section-head"><h2>生活内容结果</h2><p>当前显示 {posts.length} 条，最多显示 30 条。</p></div>
         {posts.length > 0 ? (
           <PostGrid posts={posts} />
         ) : (
