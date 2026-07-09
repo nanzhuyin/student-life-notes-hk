@@ -75,21 +75,145 @@ create index if not exists otter_posts_status_idx on public.otter_posts (status)
 create index if not exists otter_posts_updated_idx on public.otter_posts (updated_at desc);
 create index if not exists otter_posts_pinned_idx on public.otter_posts (pinned, updated_at desc);
 
+create table if not exists public.platform_schools (
+  id text primary key,
+  short_name text not null default '',
+  name text not null,
+  name_en text not null default '',
+  accent text not null default '',
+  description text not null default '',
+  source_version text not null default '',
+  generated_at text not null default '',
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.course_programmes (
+  id text primary key,
+  school_id text not null,
+  school text not null default '',
+  faculty text not null default '',
+  unit_name text not null default '',
+  unit_type text not null default '',
+  unit_label text not null default '',
+  parent_unit text not null default '',
+  unit_note text not null default '',
+  title text not null,
+  title_zh text not null default '',
+  title_en text not null default '',
+  translation_note text not null default '',
+  medium text not null default '',
+  medium_detail text not null default '',
+  programme_codes text[] not null default '{}',
+  study_modes text[] not null default '{}',
+  total_credits numeric,
+  source_url text not null default '',
+  checked_at text not null default '',
+  course_count integer not null default 0,
+  data_level text not null default '',
+  status_badge text not null default '',
+  status_note text not null default '',
+  requirements jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.course_catalog_courses (
+  id text primary key,
+  base_id text not null default '',
+  programme_id text not null,
+  programme_title text not null default '',
+  school_id text not null,
+  school text not null default '',
+  faculty text not null default '',
+  unit_name text not null default '',
+  unit_type text not null default '',
+  unit_label text not null default '',
+  parent_unit text not null default '',
+  unit_note text not null default '',
+  title text not null,
+  title_zh text not null default '',
+  type text not null default '',
+  type_key text not null default '',
+  credits numeric,
+  credits_text text not null default '',
+  required boolean not null default false,
+  description text not null default '',
+  official_description_en text not null default '',
+  official_description_zh text not null default '',
+  description_source_url text not null default '',
+  description_source_type text not null default '',
+  course_guide jsonb not null default '{}'::jsonb,
+  medium text not null default '',
+  medium_detail text not null default '',
+  programme_codes text[] not null default '{}',
+  source_url text not null default '',
+  checked_at text not null default '',
+  semester text not null default '',
+  prerequisites text not null default '',
+  course_code text not null default '',
+  tags text[] not null default '{}',
+  notes text not null default '',
+  learner_fit text[] not null default '{}',
+  learning_gains text[] not null default '{}',
+  career_links text[] not null default '{}',
+  selection_advice text not null default '',
+  perspective_summary text not null default '',
+  background_perspectives jsonb not null default '[]'::jsonb,
+  strategy_focus text[] not null default '{}',
+  material_basis text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+alter table public.platform_schools add column if not exists source_version text not null default '';
+alter table public.platform_schools add column if not exists generated_at text not null default '';
+alter table public.course_programmes add column if not exists translation_note text not null default '';
+alter table public.course_catalog_courses add column if not exists official_description_en text not null default '';
+alter table public.course_catalog_courses add column if not exists official_description_zh text not null default '';
+alter table public.course_catalog_courses add column if not exists description_source_url text not null default '';
+alter table public.course_catalog_courses add column if not exists description_source_type text not null default '';
+alter table public.course_catalog_courses add column if not exists course_guide jsonb not null default '{}'::jsonb;
+alter table public.course_catalog_courses add column if not exists learner_fit text[] not null default '{}';
+alter table public.course_catalog_courses add column if not exists learning_gains text[] not null default '{}';
+alter table public.course_catalog_courses add column if not exists career_links text[] not null default '{}';
+alter table public.course_catalog_courses add column if not exists selection_advice text not null default '';
+alter table public.course_catalog_courses add column if not exists perspective_summary text not null default '';
+alter table public.course_catalog_courses add column if not exists background_perspectives jsonb not null default '[]'::jsonb;
+alter table public.course_catalog_courses add column if not exists strategy_focus text[] not null default '{}';
+alter table public.course_catalog_courses add column if not exists material_basis text[] not null default '{}';
+
+create index if not exists platform_schools_name_idx on public.platform_schools (name);
+create index if not exists course_programmes_school_idx on public.course_programmes (school_id);
+create index if not exists course_programmes_faculty_idx on public.course_programmes (faculty);
+create index if not exists course_programmes_data_level_idx on public.course_programmes (data_level);
+create index if not exists course_catalog_courses_school_idx on public.course_catalog_courses (school_id);
+create index if not exists course_catalog_courses_programme_idx on public.course_catalog_courses (programme_id);
+create index if not exists course_catalog_courses_type_idx on public.course_catalog_courses (type_key);
+create index if not exists course_catalog_courses_required_idx on public.course_catalog_courses (required);
+create index if not exists course_catalog_courses_tags_gin_idx on public.course_catalog_courses using gin (tags);
+
 alter table public.otter_users enable row level security;
 alter table public.otter_analytics_events enable row level security;
 alter table public.otter_support_tickets enable row level security;
 alter table public.otter_posts enable row level security;
+alter table public.platform_schools enable row level security;
+alter table public.course_programmes enable row level security;
+alter table public.course_catalog_courses enable row level security;
 
 drop policy if exists "No public client access to otter_users" on public.otter_users;
 drop policy if exists "No public client access to otter_analytics_events" on public.otter_analytics_events;
 drop policy if exists "No public client access to otter_support_tickets" on public.otter_support_tickets;
 drop policy if exists "No public client access to otter_posts" on public.otter_posts;
+drop policy if exists "No public client access to platform_schools" on public.platform_schools;
+drop policy if exists "No public client access to course_programmes" on public.course_programmes;
+drop policy if exists "No public client access to course_catalog_courses" on public.course_catalog_courses;
 
 grant usage on schema public to service_role;
 grant all privileges on table public.otter_users to service_role;
 grant all privileges on table public.otter_analytics_events to service_role;
 grant all privileges on table public.otter_support_tickets to service_role;
 grant all privileges on table public.otter_posts to service_role;
+grant all privileges on table public.platform_schools to service_role;
+grant all privileges on table public.course_programmes to service_role;
+grant all privileges on table public.course_catalog_courses to service_role;
 alter default privileges in schema public grant all privileges on tables to service_role;
 
 create table if not exists public.programmes (

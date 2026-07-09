@@ -14,6 +14,7 @@ const defaultDb = {
 
 const SUPABASE_PAGE_SIZE = 1000;
 const ANALYTICS_READ_LIMIT = 50000;
+const SUPABASE_RETRY_DELAYS_MS = [500, 1500, 3000];
 
 function cloneDefaultDb() {
   return structuredClone(defaultDb);
@@ -27,6 +28,15 @@ function chunk(rows, size = 500) {
   const chunks = [];
   for (let index = 0; index < rows.length; index += size) chunks.push(rows.slice(index, index + size));
   return chunks;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableSupabaseError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /fetch failed|network|timeout|terminated|econnreset|econnrefused|etimedout|socket/i.test(message);
 }
 
 function toUserRow(user) {
@@ -185,6 +195,95 @@ function fromPostRow(row) {
   };
 }
 
+function fromPlatformSchoolRow(row) {
+  return {
+    id: row.id,
+    shortName: row.short_name || '',
+    name: row.name || '',
+    nameEn: row.name_en || '',
+    accent: row.accent || '',
+    description: row.description || ''
+  };
+}
+
+function fromCourseProgrammeRow(row) {
+  return {
+    id: row.id,
+    schoolId: row.school_id,
+    school: row.school || '',
+    faculty: row.faculty || '',
+    unitName: row.unit_name || '',
+    unitType: row.unit_type || '',
+    unitLabel: row.unit_label || '',
+    parentUnit: row.parent_unit || '',
+    unitNote: row.unit_note || '',
+    title: row.title || '',
+    titleZh: row.title_zh || '',
+    titleEn: row.title_en || '',
+    translationNote: row.translation_note || '',
+    medium: row.medium || '',
+    mediumDetail: row.medium_detail || '',
+    programmeCodes: row.programme_codes || [],
+    studyModes: row.study_modes || [],
+    totalCredits: row.total_credits === null || row.total_credits === undefined ? null : Number(row.total_credits),
+    sourceUrl: row.source_url || '',
+    checkedAt: row.checked_at || '',
+    courseCount: Number(row.course_count || 0),
+    dataLevel: row.data_level || '',
+    statusBadge: row.status_badge || '',
+    statusNote: row.status_note || '',
+    requirements: row.requirements || {}
+  };
+}
+
+function fromCourseCatalogCourseRow(row) {
+  return {
+    id: row.id,
+    baseId: row.base_id || '',
+    programmeId: row.programme_id || '',
+    programmeTitle: row.programme_title || '',
+    schoolId: row.school_id || '',
+    school: row.school || '',
+    faculty: row.faculty || '',
+    unitName: row.unit_name || '',
+    unitType: row.unit_type || '',
+    unitLabel: row.unit_label || '',
+    parentUnit: row.parent_unit || '',
+    unitNote: row.unit_note || '',
+    title: row.title || '',
+    titleZh: row.title_zh || '',
+    type: row.type || '',
+    typeKey: row.type_key || '',
+    credits: row.credits === null || row.credits === undefined ? null : Number(row.credits),
+    creditsText: row.credits_text || '',
+    required: Boolean(row.required),
+    description: row.description || '',
+    officialDescriptionEn: row.official_description_en || '',
+    officialDescriptionZh: row.official_description_zh || '',
+    descriptionSourceUrl: row.description_source_url || '',
+    descriptionSourceType: row.description_source_type || '',
+    courseGuide: row.course_guide || undefined,
+    medium: row.medium || '',
+    mediumDetail: row.medium_detail || '',
+    programmeCodes: row.programme_codes || [],
+    sourceUrl: row.source_url || '',
+    checkedAt: row.checked_at || '',
+    semester: row.semester || '',
+    prerequisites: row.prerequisites || '',
+    courseCode: row.course_code || '',
+    tags: row.tags || [],
+    notes: row.notes || '',
+    learnerFit: row.learner_fit || [],
+    learningGains: row.learning_gains || [],
+    careerLinks: row.career_links || [],
+    selectionAdvice: row.selection_advice || '',
+    perspectiveSummary: row.perspective_summary || '',
+    backgroundPerspectives: row.background_perspectives || [],
+    strategyFocus: row.strategy_focus || [],
+    materialBasis: row.material_basis || []
+  };
+}
+
 function nullableTimestamp(value) {
   if (!value) return null;
   const timestamp = new Date(value);
@@ -297,22 +396,32 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
   const restBase = hasSupabase ? `${supabaseBase}/rest/v1` : '';
 
   async function supabaseResponse(path, options = {}) {
-    const response = await fetch(`${restBase}${path}`, {
-      ...options,
-      headers: {
-        apikey: supabaseServiceRoleKey,
-        Authorization: `Bearer ${supabaseServiceRoleKey}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
+    let lastError;
+    for (let attempt = 0; attempt <= SUPABASE_RETRY_DELAYS_MS.length; attempt += 1) {
+      try {
+        const response = await fetch(`${restBase}${path}`, {
+          ...options,
+          headers: {
+            apikey: supabaseServiceRoleKey,
+            Authorization: `Bearer ${supabaseServiceRoleKey}`,
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          }
+        });
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!response.ok) {
+          const message = data?.message || data?.hint || text || `Supabase request failed: ${response.status}`;
+          throw new Error(message);
+        }
+        return { data, headers: response.headers };
+      } catch (error) {
+        lastError = error;
+        if (attempt >= SUPABASE_RETRY_DELAYS_MS.length || !isRetryableSupabaseError(error)) throw error;
+        await sleep(SUPABASE_RETRY_DELAYS_MS[attempt]);
       }
-    });
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
-    if (!response.ok) {
-      const message = data?.message || data?.hint || text || `Supabase request failed: ${response.status}`;
-      throw new Error(message);
     }
-    return { data, headers: response.headers };
+    throw lastError;
   }
 
   async function supabaseRequest(path, options = {}) {
@@ -530,6 +639,24 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
       }
       const [row] = rows;
       return fromPostRow(row);
+    },
+
+    async listPlatformSchools() {
+      if (!hasSupabase) return [];
+      const rows = await selectRows('platform_schools', 'select=*&order=id.asc').catch(() => []);
+      return rows.map(fromPlatformSchoolRow);
+    },
+
+    async listCourseProgrammes() {
+      if (!hasSupabase) return [];
+      const rows = await selectRows('course_programmes', 'select=*&order=school_id.asc,faculty.asc,title.asc').catch(() => []);
+      return rows.map(fromCourseProgrammeRow);
+    },
+
+    async listCourseCatalogCourses() {
+      if (!hasSupabase) return [];
+      const rows = await selectRowsPaged('course_catalog_courses', 'select=*&order=programme_id.asc,title.asc', 10000).catch(() => []);
+      return rows.map(fromCourseCatalogCourseRow);
     },
 
     async listProgrammes() {

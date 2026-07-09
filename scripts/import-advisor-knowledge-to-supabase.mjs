@@ -22,87 +22,110 @@ function chunk(items, size) {
   return batches;
 }
 
+function text(value) {
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function nullableNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function arrayValue(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function objectValue(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function normalizeRowsForPostgrest(rows) {
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+  return rows.map((row) => Object.fromEntries(keys.map((key) => [key, row[key] === undefined ? null : row[key]])));
+}
+
 function programmeRow(item) {
   return {
-    id: item.id,
-    school_id: item.schoolId,
-    school: item.school,
-    faculty: item.faculty,
-    unit_name: item.unitName,
-    unit_label: item.unitLabel,
-    title: item.title,
-    title_en: item.titleEn,
-    medium: item.medium,
-    study_modes: item.studyModes || [],
-    course_count: item.courseCount || 0,
-    requirements: item.requirements || {},
-    source_url: item.sourceUrl,
-    checked_at: item.checkedAt,
-    source_coverage: item.sourceCoverage,
-    source_urls: item.sourceUrls || [],
-    official_summary: item.officialSummary,
-    official_career_evidence: item.officialCareerEvidence || [],
-    official_learning_evidence: item.officialLearningEvidence || [],
-    domains: item.domains || [],
-    intensity: item.intensity || {},
-    advisor_tags: item.advisorTags || [],
-    suitable_for: item.suitableFor || [],
-    suitable_student_profiles: item.suitableStudentProfiles || item.suitableFor || [],
-    less_suitable_for: item.lessSuitableFor || [],
-    not_recommended_for: item.notRecommendedFor || item.lessSuitableFor || [],
-    career_directions: item.careerDirections || [],
-    study_focus: item.studyFocus || [],
-    risk_warnings: item.riskWarnings || [],
-    advisor_summary: item.advisorSummary,
-    retrieval_keywords: item.retrievalKeywords || [],
-    confidence: item.confidence,
-    review_status: item.reviewStatus,
+    id: text(item.id),
+    school_id: text(item.schoolId),
+    school: text(item.school),
+    faculty: text(item.faculty),
+    unit_name: text(item.unitName),
+    unit_label: text(item.unitLabel),
+    title: text(item.title),
+    title_en: text(item.titleEn),
+    medium: text(item.medium),
+    study_modes: arrayValue(item.studyModes),
+    course_count: Number(item.courseCount || 0),
+    requirements: objectValue(item.requirements),
+    source_url: text(item.sourceUrl),
+    checked_at: text(item.checkedAt),
+    source_coverage: text(item.sourceCoverage),
+    source_urls: arrayValue(item.sourceUrls),
+    official_summary: text(item.officialSummary),
+    official_career_evidence: arrayValue(item.officialCareerEvidence),
+    official_learning_evidence: arrayValue(item.officialLearningEvidence),
+    domains: arrayValue(item.domains),
+    intensity: objectValue(item.intensity),
+    advisor_tags: arrayValue(item.advisorTags),
+    suitable_for: arrayValue(item.suitableFor),
+    suitable_student_profiles: arrayValue(item.suitableStudentProfiles || item.suitableFor),
+    less_suitable_for: arrayValue(item.lessSuitableFor),
+    not_recommended_for: arrayValue(item.notRecommendedFor || item.lessSuitableFor),
+    career_directions: arrayValue(item.careerDirections),
+    study_focus: arrayValue(item.studyFocus),
+    risk_warnings: arrayValue(item.riskWarnings),
+    advisor_summary: text(item.advisorSummary),
+    retrieval_keywords: arrayValue(item.retrievalKeywords),
+    confidence: text(item.confidence),
+    review_status: text(item.reviewStatus),
     updated_at: new Date().toISOString()
   };
 }
 
 function courseRow(item) {
   return {
-    id: item.id,
-    base_id: item.baseId,
-    school_id: item.schoolId,
-    programme_id: item.programmeId,
-    programme_title: item.programmeTitle,
-    programme_title_en: item.programmeTitleEn,
-    faculty: item.faculty,
-    unit_name: item.unitName,
-    title: item.title,
-    title_zh: item.titleZh,
-    type_key: item.typeKey,
-    type: item.type,
+    id: text(item.id),
+    base_id: text(item.baseId),
+    school_id: text(item.schoolId),
+    programme_id: text(item.programmeId),
+    programme_title: text(item.programmeTitle),
+    programme_title_en: text(item.programmeTitleEn),
+    faculty: text(item.faculty),
+    unit_name: text(item.unitName),
+    title: text(item.title),
+    title_zh: text(item.titleZh),
+    type_key: text(item.typeKey),
+    type: text(item.type),
     required: Boolean(item.required),
-    credits: item.credits,
-    medium: item.medium,
-    source_url: item.sourceUrl,
-    checked_at: item.checkedAt,
-    official_basis: item.officialBasis || [],
-    domains: item.domains || [],
-    intensity: item.intensity || {},
-    suitable_for: item.suitableFor || [],
-    less_suitable_for: item.lessSuitableFor || [],
-    career_directions: item.careerDirections || [],
-    study_focus: item.studyFocus || [],
-    learning_gains: item.learningGains || [],
-    risk_warnings: item.riskWarnings || [],
-    advisor_summary: item.advisorSummary,
-    retrieval_keywords: item.retrievalKeywords || [],
-    evidence_summary: item.evidenceSummary,
-    confidence: item.confidence,
-    review_status: item.reviewStatus,
+    credits: nullableNumber(item.credits),
+    medium: text(item.medium),
+    source_url: text(item.sourceUrl),
+    checked_at: text(item.checkedAt),
+    official_basis: arrayValue(item.officialBasis),
+    domains: arrayValue(item.domains),
+    intensity: objectValue(item.intensity),
+    suitable_for: arrayValue(item.suitableFor),
+    less_suitable_for: arrayValue(item.lessSuitableFor),
+    career_directions: arrayValue(item.careerDirections),
+    study_focus: arrayValue(item.studyFocus),
+    learning_gains: arrayValue(item.learningGains),
+    risk_warnings: arrayValue(item.riskWarnings),
+    advisor_summary: text(item.advisorSummary),
+    retrieval_keywords: arrayValue(item.retrievalKeywords),
+    evidence_summary: text(item.evidenceSummary),
+    confidence: text(item.confidence),
+    review_status: text(item.reviewStatus),
     updated_at: new Date().toISOString()
   };
 }
 
 function ruleRow(item) {
   return {
-    id: item.id,
-    priority: item.priority || 0,
-    rule: item.rule,
+    id: text(item.id),
+    priority: Number(item.priority || 0),
+    rule: text(item.rule),
     enabled: true,
     updated_at: new Date().toISOString()
   };
@@ -111,6 +134,7 @@ function ruleRow(item) {
 async function upsertRows({ baseUrl, serviceRoleKey, table, rows }) {
   if (!rows.length) return;
   for (const batch of chunk(rows, BATCH_SIZE)) {
+    const normalizedBatch = normalizeRowsForPostgrest(batch);
     const response = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=id`, {
       method: 'POST',
       headers: {
@@ -119,7 +143,7 @@ async function upsertRows({ baseUrl, serviceRoleKey, table, rows }) {
         'Content-Type': 'application/json',
         Prefer: 'resolution=merge-duplicates'
       },
-      body: JSON.stringify(batch)
+      body: JSON.stringify(normalizedBatch)
     });
     if (!response.ok) {
       const text = await response.text();

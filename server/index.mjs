@@ -159,6 +159,62 @@ function buildPostListResponse(posts, searchParams) {
   };
 }
 
+function paginateList(items, searchParams, defaultPageSize = 100, maxPageSize = 500) {
+  const page = parsePositiveInteger(searchParams.get('page'), 1, 100000);
+  const pageSize = parsePositiveInteger(searchParams.get('pageSize') || searchParams.get('limit'), defaultPageSize, maxPageSize);
+  const start = (page - 1) * pageSize;
+  return {
+    items: items.slice(start, start + pageSize),
+    total: items.length,
+    page,
+    pageSize
+  };
+}
+
+function catalogueText(item) {
+  return Object.values(item || {})
+    .flatMap((value) => Array.isArray(value) ? value : [value])
+    .filter((value) => ['string', 'number', 'boolean'].includes(typeof value))
+    .join(' ')
+    .toLowerCase();
+}
+
+function buildCourseProgrammeResponse(programmes, searchParams) {
+  const schoolId = String(searchParams.get('schoolId') || '').trim();
+  const faculty = String(searchParams.get('faculty') || '').trim();
+  const keyword = String(searchParams.get('keyword') || searchParams.get('q') || '').trim().toLowerCase();
+  const filtered = programmes
+    .filter((programme) => !schoolId || programme.schoolId === schoolId)
+    .filter((programme) => !faculty || programme.faculty === faculty || programme.unitName === faculty)
+    .filter((programme) => !keyword || catalogueText(programme).includes(keyword));
+  const { items, total, page, pageSize } = paginateList(filtered, searchParams, 200, 500);
+  return { programmes: items, total, page, pageSize };
+}
+
+function buildCourseCatalogResponse(courses, searchParams) {
+  const schoolId = String(searchParams.get('schoolId') || '').trim();
+  const programmeId = String(searchParams.get('programmeId') || '').trim();
+  const typeKey = String(searchParams.get('typeKey') || '').trim();
+  const required = String(searchParams.get('required') || '').trim();
+  const keyword = String(searchParams.get('keyword') || searchParams.get('q') || '').trim().toLowerCase();
+  const filtered = courses
+    .filter((course) => !schoolId || course.schoolId === schoolId)
+    .filter((course) => !programmeId || course.programmeId === programmeId)
+    .filter((course) => !typeKey || course.typeKey === typeKey)
+    .filter((course) => matchesBooleanParam(required, course.required))
+    .filter((course) => !keyword || catalogueText(course).includes(keyword))
+    .slice()
+    .sort((a, b) => {
+      const requiredDiff = Number(Boolean(b.required)) - Number(Boolean(a.required));
+      if (requiredDiff) return requiredDiff;
+      const typeDiff = String(a.typeKey || '').localeCompare(String(b.typeKey || ''));
+      if (typeDiff) return typeDiff;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+  const { items, total, page, pageSize } = paginateList(filtered, searchParams, 100, 500);
+  return { courses: items, total, page, pageSize };
+}
+
 function isValidEmailShape(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && !email.includes('..');
 }
@@ -341,6 +397,36 @@ async function route(req, res) {
     } catch {
       sendJson(req, res, 200, { posts: [], total: 0, page: 1, pageSize: 500 });
     }
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/course-catalog/schools') {
+    const schools = await storage.listPlatformSchools();
+    sendJson(req, res, 200, { schools });
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/course-catalog/programmes') {
+    const programmes = await storage.listCourseProgrammes();
+    sendJson(req, res, 200, buildCourseProgrammeResponse(programmes, url.searchParams));
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/course-catalog/courses') {
+    const courses = await storage.listCourseCatalogCourses();
+    sendJson(req, res, 200, buildCourseCatalogResponse(courses, url.searchParams));
+    return;
+  }
+
+  const publicCourseMatch = url.pathname.match(/^\/api\/course-catalog\/courses\/([^/]+)$/);
+  if (req.method === 'GET' && publicCourseMatch) {
+    const courseId = decodeURIComponent(publicCourseMatch[1]);
+    const course = (await storage.listCourseCatalogCourses()).find((item) => item.id === courseId);
+    if (!course) {
+      sendJson(req, res, 404, { error: 'Course not found' });
+      return;
+    }
+    sendJson(req, res, 200, { course });
     return;
   }
 
