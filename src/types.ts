@@ -139,6 +139,7 @@ export interface SharedPost {
   status: 'published' | 'draft' | 'deleted' | string;
   shared?: boolean;
   recommended?: boolean;
+  pinned?: boolean;
   ownerId?: string;
   schoolId?: SchoolId | 'shared';
   imageUrls?: string[];

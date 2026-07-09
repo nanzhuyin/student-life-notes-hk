@@ -16,7 +16,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.71';
+const APP_VERSION = 'v1.72';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -827,7 +827,7 @@ function getSectionSearchKeywords(category: CategoryMeta) {
   const extra: Record<CategoryKey, string[]> = {
     course_catalog: ['选课', '课程', '课程库', '专业课程', '课程清单', '学分', '必修', '选修'],
     hk_rent: ['租房', '房源', '小区', '住宿', '合租', '整租', '看房', '预算', '香港租房', '深圳租房'],
-    sz_commute: ['通勤', '港深通勤', '口岸', '深圳湾', '福田口岸', '落马洲', '跨境', '巴士', '地铁'],
+    sz_commute: ['通勤', '港深通勤', '口岸', '深圳湾', '福田口岸', '落马洲', '跨境', '巴士', '地铁', '深圳到岭南', '口岸到岭南', '西九龙到岭南', '高铁到岭南'],
     hk_life: ['新生', '入学', '到港', '电话卡', '银行卡', '八达通', '签证', '开学', '新生指南'],
     nearby_food: ['美食', '吃饭', '餐厅', '食堂', '茶餐厅', '附近美食', '聚餐', '便宜', '好吃'],
     transport_spots: ['出行', '景点', '周末', '路线', '交通', '旅游', '附近去哪', '半日游', '一日游']
@@ -2872,7 +2872,8 @@ function PostGrid({ posts, canEdit = false, onEdit }: { posts: SharedPost[]; can
                 <span>{post.createdAt}</span>
               </div>
               <div className="tag-row">
-                {post.tags.slice(0, 4).map((tag) => <span key={tag}>{tag}</span>)}
+                {post.pinned && <span>置顶</span>}
+                {post.tags.filter((tag) => tag !== '置顶').slice(0, post.pinned ? 3 : 4).map((tag) => <span key={tag}>{tag}</span>)}
               </div>
             </button>
             {canEdit && onEdit && <button className="secondary-action post-edit-action" onClick={() => onEdit(post)}>编辑</button>}
@@ -2942,6 +2943,8 @@ function SectionPage({
       .filter((post) => postMatches(post, keyword))
       .slice()
       .sort((a, b) => {
+        const pinnedDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+        if (pinnedDiff) return pinnedDiff;
         if (sortKey === 'recommended') {
           const recommendedDiff = Number(Boolean(b.recommended)) - Number(Boolean(a.recommended));
           if (recommendedDiff) return recommendedDiff;
