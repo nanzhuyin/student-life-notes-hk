@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.75';
+const APP_VERSION = 'v1.76';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -47,6 +47,10 @@ const defaultSchools: School[] = [
     description: '查看岭南大学相关课程、项目方向和校园生活信息，按当前学校切换浏览。'
   }
 ];
+const fallbackSchoolStats: Record<SchoolId, { programmes: number; courses: number }> = {
+  eduhk: { programmes: 54, courses: 668 },
+  lingnan: { programmes: 75, courses: 2590 }
+};
 let platformData: PlatformData = {
   version: APP_VERSION,
   generatedAt: '',
@@ -487,10 +491,9 @@ async function fetchPagedApi<T>(path: string, key: string, pageSize = 500) {
 
 async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
   if (!API_BASE_URL) return platformData;
-  const [schoolsData, programmes, courses, posts] = await Promise.all([
+  const [schoolsData, programmes, posts] = await Promise.all([
     apiRequest<{ schools: School[] }>('/api/course-catalog/schools'),
     fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes'),
-    fetchPagedApi<Course>('/api/course-catalog/courses', 'courses'),
     fetchPagedApi<SharedPost>('/api/posts', 'posts')
   ]);
   const schools = schoolsData.schools.length ? schoolsData.schools : defaultSchools;
@@ -499,9 +502,14 @@ async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
     generatedAt: new Date().toISOString(),
     schools,
     programmes,
-    courses,
+    courses: [],
     sharedPosts: posts
   };
+}
+
+async function fetchCourseCatalogCoursesFromBackend() {
+  if (!API_BASE_URL) return [];
+  return fetchPagedApi<Course>('/api/course-catalog/courses', 'courses', 500);
 }
 
 function applyPlatformData(next: PlatformData) {
@@ -858,8 +866,21 @@ function getProgrammes(schoolId: SchoolId) {
   return platformData.programmes.filter((programme) => programme.schoolId === schoolId);
 }
 
+function getProgrammeCountForSchool(schoolId: SchoolId) {
+  const programmes = getProgrammes(schoolId);
+  return programmes.length || fallbackSchoolStats[schoolId].programmes;
+}
+
 function getCourses(schoolId: SchoolId) {
   return platformData.courses.filter((course) => course.schoolId === schoolId);
+}
+
+function getCourseCountForSchool(schoolId: SchoolId) {
+  const courses = getCourses(schoolId);
+  if (courses.length) return courses.length;
+  const programmes = getProgrammes(schoolId);
+  const programmeCourseTotal = programmes.reduce((sum, programme) => sum + Number(programme.courseCount || 0), 0);
+  return programmeCourseTotal || fallbackSchoolStats[schoolId].courses;
 }
 
 function getCourse(id: string) {
@@ -2079,7 +2100,7 @@ function SchoolPanel({
             <span className="school-card-code">{schoolAbbreviation(school)}</span>
             <strong>{school.name}</strong>
             <span>{school.nameEn}</span>
-            <small>{getProgrammes(school.id).length} 个项目 · {getCourses(school.id).length} 门课程</small>
+            <small>{getProgrammeCountForSchool(school.id)} 个项目 · {getCourseCountForSchool(school.id)} 门课程</small>
           </button>
         ))}
       </div>
@@ -2088,17 +2109,8 @@ function SchoolPanel({
 }
 
 function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool: School; onChooseSchool: (schoolId: SchoolId) => void; dynamicPosts: SharedPost[] }) {
-  const programmes = getProgrammes(activeSchool.id);
-  const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
-  const categoryStats = sectionCategories.map((category) => {
-    const sectionId = sectionIdByCategory[category.key];
-    const count = category.key === 'course_catalog'
-      ? courses.length
-      : visibleSharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published').length;
-    return { category, count };
-  });
   const quickSearches = ['选课', '课程分析', '专业推荐', '租房', '岭南美食', '通勤路线'];
 
   return (
@@ -2114,12 +2126,6 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
               <button key={item} onClick={() => go(`/search?q=${encodeURIComponent(item)}`)}>{item}</button>
             ))}
           </div>
-          <div className="hero-stats">
-            <span><strong>{platformData.schools.length}</strong> 学校</span>
-            <span><strong>{programmes.length}</strong> 当前学校项目</span>
-            <span><strong>{courses.length}</strong> 当前学校课程</span>
-            <span><strong>{visibleSharedPosts.length}</strong> 生活条目</span>
-          </div>
         </div>
       </section>
 
@@ -2129,13 +2135,12 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
           <p>每个分类都是一个可筛选的数据表，跟随当前学校切换。</p>
         </div>
         <div className="category-grid database-category-grid">
-          {categoryStats.map(({ category, count }) => (
+          {sectionCategories.map((category) => (
             <button
               key={category.key}
               className={`category-card ${category.accent}`}
               onClick={() => (category.key === 'course_catalog' ? go('/courses') : go(`/section/${sectionIdByCategory[category.key]}`))}
             >
-              <strong>{count}</strong>
               <span>{category.name}</span>
               <small>{category.description}</small>
             </button>
@@ -2262,7 +2267,7 @@ function CoursesPage({
       .filter((course) => typeKey === 'all' || course.typeKey === typeKey)
       .filter((course) => courseMatches(course, keyword));
   }, [activeSchool.id, activeProgramme, keyword, typeKey]);
-  const allSchoolCoursesCount = getCourses(activeSchool.id).length;
+  const allSchoolCoursesCount = getCourseCountForSchool(activeSchool.id);
 
   return (
     <section className="page-panel database-browser course-browser">
@@ -2271,7 +2276,7 @@ function CoursesPage({
         <h1>专业课程知识库</h1>
         <p>先按学历和学院缩小范围，再选择项目查看课程。课程详情页会显示官网文本、学生视角指南和 AI 课程顾问入口。</p>
         <div className="database-stat-strip">
-          <span><strong>{programmes.length}</strong> 项目</span>
+          <span><strong>{getProgrammeCountForSchool(activeSchool.id)}</strong> 项目</span>
           <span><strong>{allSchoolCoursesCount}</strong> 课程</span>
           <span><strong>{programmeOptions.length}</strong> 当前候选项目</span>
           <span><strong>{activeProgramme ? courses.length : 0}</strong> 当前课程结果</span>
@@ -3410,8 +3415,8 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   const [adminNotice, setAdminNotice] = useState('');
   const schoolCounts = platformData.schools.map((school) => ({
     school,
-    programmes: getProgrammes(school.id).length,
-    courses: getCourses(school.id).length
+    programmes: getProgrammeCountForSchool(school.id),
+    courses: getCourseCountForSchool(school.id)
   }));
   const analytics = useMemo(() => buildAnalyticsSummary(analyticsEvents), [analyticsEvents]);
   const ticketStatusCounts = useMemo(() => ({
@@ -3604,8 +3609,8 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
         <>
           <div className="stats-grid admin-overview-grid">
             <div><strong>{platformData.schools.length}</strong><span>学校平台</span></div>
-            <div><strong>{platformData.programmes.length}</strong><span>项目</span></div>
-            <div><strong>{platformData.courses.length}</strong><span>课程</span></div>
+            <div><strong>{platformData.programmes.length || 129}</strong><span>项目</span></div>
+            <div><strong>{platformData.courses.length || 3258}</strong><span>课程</span></div>
             <div><strong>{platformData.sharedPosts.length}</strong><span>生活内容</span></div>
           </div>
           <section className="analytics-panel admin-section admin-analytics-section" id="admin-support-tickets">
@@ -3761,7 +3766,7 @@ function AboutPage() {
       <div className="about-card">
         <p>{DISCLAIMER}</p>
         <p>{APP_VERSION} 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
-        <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length} 个项目、{platformData.courses.length} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
+        <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length || 129} 个项目、{platformData.courses.length || 3258} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
         <button className="secondary-action" onClick={() => go('/policy')}>查看隐私与学术诚信说明</button>
       </div>
     </section>
@@ -4604,6 +4609,20 @@ export default function App() {
         setCatalogueData(data);
         setDynamicPosts(data.sharedPosts || []);
         setCatalogueError('');
+        if (API_BASE_URL) {
+          void fetchCourseCatalogCoursesFromBackend()
+            .then((courses) => {
+              if (cancelled) return;
+              setCatalogueData((current) => {
+                const next = { ...current, courses };
+                applyPlatformData(next);
+                return next;
+              });
+            })
+            .catch((error) => {
+              if (!cancelled) setCatalogueError(error instanceof Error ? error.message : '课程明细加载失败');
+            });
+        }
       })
       .catch((error) => {
         if (cancelled) return;
