@@ -6327,3 +6327,1058 @@ body.theme-eduhk {
     font-size: 1.08rem;
   }
 }
+
+/* Consolidated product UI layer: one student-tool system with platform accent colors. */
+:root {
+  --otter-radius-sm: 0.65rem;
+  --otter-radius-md: 0.9rem;
+  --otter-radius-lg: 1.2rem;
+  --otter-radius-xl: 1.55rem;
+  --otter-shadow-sm: 0 8px 22px rgba(32, 28, 25, 0.06);
+  --otter-shadow-md: 0 16px 40px rgba(32, 28, 25, 0.08);
+  --otter-border: rgba(38, 44, 50, 0.1);
+  --otter-card: rgba(255, 255, 255, 0.94);
+  --otter-card-soft: rgba(255, 255, 255, 0.76);
+  --otter-text: #24272b;
+  --otter-muted: #667078;
+  --otter-soft: #f6f3ef;
+  --otter-accent: #8f3f48;
+  --otter-accent-strong: #7e2331;
+  --otter-accent-soft: #f6e9e6;
+  --otter-shell-start: #33283e;
+  --otter-shell-end: #292033;
+}
+
+body.theme-eduhk {
+  --otter-soft: #f3f7f9;
+  --otter-accent: #4f7287;
+  --otter-accent-strong: #2f5368;
+  --otter-accent-soft: #e6f0f4;
+  --otter-shell-start: #26333e;
+  --otter-shell-end: #202a34;
+  --otter-border: rgba(45, 67, 82, 0.12);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.32), transparent 24rem),
+    radial-gradient(circle at 88% 88%, rgba(164, 191, 207, 0.3), transparent 28rem),
+    #dfe8ec;
+}
+
+body.theme-lingnan {
+  --otter-soft: #faf5ef;
+  --otter-accent: #9a3442;
+  --otter-accent-strong: #7f2532;
+  --otter-accent-soft: #f7e8e2;
+  --otter-shell-start: #392b35;
+  --otter-shell-end: #2a202c;
+  --otter-border: rgba(120, 54, 60, 0.13);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 247, 231, 0.32), transparent 24rem),
+    radial-gradient(circle at 88% 88%, rgba(205, 170, 132, 0.28), transparent 28rem),
+    #d8c7d8;
+}
+
+body.theme-eduhk .app-shell.school-theme-eduhk:not(.landing-mode),
+body.theme-lingnan .app-shell.school-theme-lingnan:not(.landing-mode) {
+  background:
+    radial-gradient(circle at 78% 10%, color-mix(in srgb, var(--otter-accent-soft) 34%, transparent), transparent 22rem),
+    linear-gradient(135deg, var(--otter-shell-start), var(--otter-shell-end) 74%);
+}
+
+.app-shell:not(.landing-mode) {
+  border-radius: clamp(1.2rem, 3vw, 2.2rem);
+}
+
+.beta-banner {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--otter-radius-lg);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.top-nav button,
+.school-switcher button {
+  border-radius: var(--otter-radius-md);
+}
+
+.school-switcher button.active,
+.top-nav button:hover,
+.school-switcher button:hover {
+  color: var(--otter-shell-end);
+  background: #fff;
+}
+
+.page-panel,
+.school-panel,
+.programme-summary,
+.detail-head,
+.detail-body,
+.source-card,
+.about-card,
+.policy-card,
+.recommender-form-panel,
+.recommender-result-panel,
+.recommendation-card,
+.analytics-panel,
+.admin-post-editor,
+.post-card,
+.course-card,
+.empty-state,
+.login-panel,
+.registration-panel,
+.mailbox-panel,
+.ticket-card,
+.programme-module {
+  border: 1px solid var(--otter-border);
+  border-radius: var(--otter-radius-xl);
+  color: var(--otter-text);
+  background: var(--otter-card);
+  box-shadow: var(--otter-shadow-sm);
+}
+
+.page-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.82)),
+    var(--otter-soft);
+}
+
+.page-title-block.centered,
+.detail-head.course-detail-head {
+  border: 1px solid var(--otter-border);
+  border-radius: var(--otter-radius-xl);
+  color: var(--otter-text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82)),
+    var(--otter-accent-soft);
+  box-shadow: var(--otter-shadow-sm);
+}
+
+.page-title-block.centered h1,
+.page-title-block.centered p,
+.page-panel .section-head h2,
+.analytics-panel .section-head h2,
+.detail-body .section-head h2 {
+  color: var(--otter-text) !important;
+}
+
+.page-title-block.centered p,
+.page-panel .section-head p,
+.analytics-panel .section-head p,
+.detail-body .section-head p {
+  color: var(--otter-muted) !important;
+  opacity: 1;
+}
+
+.eyebrow,
+.tag,
+.tag-pill,
+.course-tag,
+.post-card .eyebrow,
+.pill,
+.tag-row span {
+  border-radius: 999px;
+  color: var(--otter-accent-strong);
+  background: var(--otter-accent-soft);
+}
+
+.primary-action,
+.login-panel button,
+.search-box button {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--otter-accent-strong);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--otter-accent-strong) 18%, transparent);
+}
+
+.primary-action:hover,
+.login-panel button:hover,
+.search-box button:hover {
+  filter: brightness(0.98);
+  transform: translateY(-1px);
+}
+
+.secondary-action,
+.back-button,
+.inline-actions button,
+.ticket-filter-row button,
+.ticket-stats button {
+  min-height: 2.55rem;
+  border: 1px solid var(--otter-border);
+  border-radius: 999px;
+  color: var(--otter-text);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+}
+
+.secondary-action:hover,
+.back-button:hover,
+.inline-actions button:hover,
+.ticket-filter-row button:hover,
+.ticket-stats button:hover {
+  border-color: color-mix(in srgb, var(--otter-accent) 34%, transparent);
+  color: var(--otter-accent-strong);
+  background: var(--otter-accent-soft);
+}
+
+.secondary-action.danger {
+  border-color: rgba(165, 31, 47, 0.18);
+  color: #a51f2f;
+  background: #fff7f5;
+}
+
+.secondary-action.danger:hover {
+  color: #fff;
+  background: #a51f2f;
+}
+
+.category-card,
+.programme-card,
+.course-card,
+.post-card,
+.school-card,
+.stats-grid div,
+.stats-grid button,
+.page-panel .course-card,
+.page-panel .post-card,
+.category-card:nth-child(3n + 1),
+.category-card:nth-child(3n + 2),
+.post-card:nth-child(3n + 1),
+.post-card:nth-child(3n + 2),
+.course-card:nth-child(3n + 1),
+.course-card:nth-child(3n + 2) {
+  border: 1px solid var(--otter-border);
+  border-radius: var(--otter-radius-lg);
+  color: var(--otter-text);
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: var(--otter-shadow-sm);
+}
+
+.category-card:hover,
+.programme-card:hover,
+.course-card:hover,
+.post-card:hover,
+.school-card:hover {
+  border-color: color-mix(in srgb, var(--otter-accent) 28%, transparent);
+  transform: translateY(-2px);
+  box-shadow: var(--otter-shadow-md);
+}
+
+.filter-panel,
+.filter-row,
+.info-list div,
+.mailbox-card,
+.ticket-detail-body article,
+.ticket-detail-meta span {
+  border-color: var(--otter-border);
+  border-radius: var(--otter-radius-lg);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.filter-chips button.active,
+.school-card.active,
+.programme-card.active,
+.inline-actions button.active,
+.secondary-action.saved {
+  border-color: var(--otter-accent);
+  color: #fff;
+  background: var(--otter-accent-strong);
+}
+
+input,
+select,
+textarea,
+.filter-panel input,
+.filter-panel select,
+.page-panel .search-box {
+  border-color: var(--otter-border);
+  border-radius: var(--otter-radius-sm);
+}
+
+.page-panel .search-box {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.page-panel .search-box input,
+.page-panel .search-box input::placeholder {
+  color: var(--otter-muted);
+}
+
+/* Admin dashboard refinement. */
+.admin-dashboard {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+}
+
+.admin-dashboard-hero {
+  display: grid;
+  justify-items: start;
+  text-align: left;
+}
+
+.admin-dashboard-hero h1 {
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+}
+
+.admin-dashboard .page-toolbar-actions {
+  justify-content: flex-end;
+  margin: -0.2rem 0 0;
+}
+
+.admin-login-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(9rem, auto);
+  gap: 0.85rem;
+  align-items: end;
+  max-width: 58rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.4vw, 1.35rem);
+}
+
+.admin-overview-grid,
+.analytics-stats,
+.ticket-stats {
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.admin-overview-grid div,
+.analytics-stats div,
+.ticket-stats button {
+  min-height: 6.2rem;
+  padding: 0.9rem 1rem;
+  border-color: var(--otter-border);
+  background: rgba(255, 255, 255, 0.86) !important;
+}
+
+.admin-overview-grid strong,
+.analytics-stats strong,
+.ticket-stats strong {
+  color: var(--otter-accent-strong);
+  font-size: clamp(1.45rem, 2vw, 1.95rem);
+}
+
+.admin-overview-grid span,
+.analytics-stats span,
+.ticket-stats span {
+  color: var(--otter-muted);
+  font-size: 0.9rem;
+}
+
+.admin-section {
+  gap: 1rem;
+  margin: 0;
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.analytics-head {
+  align-items: center;
+  border-bottom: 1px solid var(--otter-border);
+  padding-bottom: 0.95rem;
+}
+
+.analytics-head h2 {
+  color: var(--otter-text);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+}
+
+.analytics-head p {
+  max-width: 62rem;
+  color: var(--otter-muted);
+}
+
+.analytics-actions {
+  align-items: center;
+}
+
+.analytics-card {
+  border-color: var(--otter-border);
+  border-radius: var(--otter-radius-lg);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: none;
+}
+
+.analytics-card h3 {
+  color: var(--otter-text);
+  font-size: 1rem;
+}
+
+.school-analytics-row {
+  border-bottom-color: var(--otter-border);
+}
+
+.feature-bar-row i {
+  background: linear-gradient(90deg, var(--otter-accent-strong), var(--otter-accent));
+}
+
+.event-table {
+  border: 1px solid var(--otter-border);
+  border-radius: var(--otter-radius-md);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.event-table > div {
+  padding: 0.72rem 0.85rem;
+  border-bottom-color: var(--otter-border);
+}
+
+.event-table > div:first-child {
+  background: rgba(248, 249, 250, 0.9);
+}
+
+.ticket-stats button.active,
+.ticket-filter-row button.active {
+  border-color: color-mix(in srgb, var(--otter-accent) 36%, transparent);
+  background: var(--otter-accent-soft) !important;
+  box-shadow: none;
+}
+
+.ticket-filter-row {
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--otter-border);
+}
+
+.ticket-list {
+  gap: 0.65rem;
+}
+
+.ticket-card {
+  gap: 0.75rem;
+  padding: 1rem;
+  border-color: var(--otter-border);
+  border-radius: var(--otter-radius-lg);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: none;
+}
+
+.ticket-card.clickable:hover {
+  border-color: color-mix(in srgb, var(--otter-accent) 34%, transparent);
+  box-shadow: var(--otter-shadow-sm);
+}
+
+.ticket-card > div:first-child {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  justify-content: stretch;
+}
+
+.ticket-card > div:first-child > span:last-child {
+  justify-self: end;
+  text-align: right;
+}
+
+.ticket-card p {
+  color: #3f464d;
+  line-height: 1.65;
+}
+
+.ticket-card textarea {
+  min-height: 4.2rem;
+  border-color: var(--otter-border);
+  border-radius: var(--otter-radius-sm);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.ticket-card .inline-actions {
+  gap: 0.45rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  width: max-content;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  color: #4f5a62;
+  font-size: 0.82rem;
+  font-weight: 900;
+  background: #eef1f2;
+}
+
+.status-pending {
+  color: #8a4a12;
+  background: #fff0d8;
+}
+
+.status-reviewing {
+  color: #255b74;
+  background: #e4f2f7;
+}
+
+.status-resolved {
+  color: #286147;
+  background: #e3f3ea;
+}
+
+.status-closed {
+  color: #5d646b;
+  background: #eef0f2;
+}
+
+.admin-dashboard .school-panel,
+.admin-dashboard .programme-grid {
+  margin-top: 0;
+}
+
+@media (max-width: 980px) {
+  .app-shell:not(.landing-mode) {
+    grid-template-columns: 1fr;
+    width: min(100% - 1rem, 1640px);
+    margin: 0.5rem auto;
+    padding: 0.8rem;
+  }
+
+  .admin-login-panel,
+  .analytics-head,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-actions {
+    justify-content: flex-start;
+  }
+
+  .ticket-card > div:first-child {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ticket-card > div:first-child > span:last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell:not(.landing-mode) {
+    border-radius: 1rem;
+  }
+
+  .admin-dashboard {
+    padding: 0.85rem;
+  }
+
+  .admin-dashboard-hero {
+    border-radius: var(--otter-radius-lg);
+  }
+
+  .admin-dashboard-hero h1 {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+  }
+
+  .admin-overview-grid,
+  .analytics-stats,
+  .ticket-stats,
+  .programme-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-overview-grid div,
+  .analytics-stats div,
+  .ticket-stats button {
+    min-height: 5.2rem;
+    padding: 0.8rem;
+  }
+
+  .analytics-actions,
+  .ticket-card .inline-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .analytics-actions button,
+  .ticket-card .inline-actions button,
+  .ticket-filter-row button {
+    width: 100%;
+  }
+
+  .event-table {
+    overflow: visible;
+  }
+
+  .event-table > div:first-child {
+    display: none;
+  }
+
+  .event-table > div {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 0.35rem;
+    padding: 0.85rem;
+  }
+
+  .event-table span {
+    display: grid;
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .event-table span::before {
+    color: var(--otter-muted);
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  .event-table span:nth-child(1)::before { content: "时间"; }
+  .event-table span:nth-child(2)::before { content: "类型"; }
+  .event-table span:nth-child(3)::before { content: "身份"; }
+  .event-table span:nth-child(4)::before { content: "用户"; }
+  .event-table span:nth-child(5)::before { content: "学校"; }
+  .event-table span:nth-child(6)::before { content: "功能"; }
+  .event-table span:nth-child(7)::before { content: "停留"; }
+
+  .ticket-filter-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-overview-grid,
+  .analytics-stats,
+  .ticket-stats,
+  .programme-grid,
+  .analytics-actions,
+  .ticket-card .inline-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-card > div:first-child {
+    grid-template-columns: 1fr;
+  }
+
+  .status-pill {
+    justify-self: start;
+  }
+}
+
+/* Stronger platform color pass: make school switching visibly different without official branding. */
+body.theme-lingnan {
+  --otter-text: #30252a;
+  --otter-muted: #725f61;
+  --otter-soft: #fff6ef;
+  --otter-card: rgba(255, 252, 248, 0.94);
+  --otter-accent: #a53c4a;
+  --otter-accent-strong: #842534;
+  --otter-accent-soft: #f7e4dc;
+  --otter-shell-start: #fff7ef;
+  --otter-shell-end: #f0d7ce;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.72), transparent 20rem),
+    radial-gradient(circle at 88% 88%, rgba(165, 60, 74, 0.16), transparent 26rem),
+    #ead5cc;
+}
+
+body.theme-eduhk {
+  --otter-text: #202a32;
+  --otter-muted: #5b6b76;
+  --otter-soft: #f3f8fb;
+  --otter-card: rgba(250, 253, 255, 0.94);
+  --otter-accent: #527990;
+  --otter-accent-strong: #315a70;
+  --otter-accent-soft: #e2eef4;
+  --otter-shell-start: #f6fbfd;
+  --otter-shell-end: #dceaf1;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.72), transparent 20rem),
+    radial-gradient(circle at 88% 88%, rgba(82, 121, 144, 0.18), transparent 26rem),
+    #dce8ee;
+}
+
+body.theme-lingnan .app-shell.school-theme-lingnan:not(.landing-mode),
+body.theme-eduhk .app-shell.school-theme-eduhk:not(.landing-mode) {
+  border-color: color-mix(in srgb, var(--otter-accent) 24%, white);
+  color: var(--otter-text);
+  background:
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.68), transparent 22rem),
+    linear-gradient(135deg, var(--otter-shell-start), var(--otter-shell-end) 76%);
+  box-shadow: 0 26px 70px color-mix(in srgb, var(--otter-accent-strong) 15%, transparent);
+}
+
+.app-shell.school-theme-lingnan .brand-button,
+.app-shell.school-theme-eduhk .brand-button,
+.app-shell.school-theme-lingnan .top-nav button,
+.app-shell.school-theme-eduhk .top-nav button,
+.app-shell.school-theme-lingnan .school-switcher button,
+.app-shell.school-theme-eduhk .school-switcher button {
+  color: var(--otter-text);
+}
+
+.app-shell.school-theme-lingnan .top-nav button,
+.app-shell.school-theme-eduhk .top-nav button,
+.app-shell.school-theme-lingnan .school-switcher button,
+.app-shell.school-theme-eduhk .school-switcher button {
+  border: 1px solid color-mix(in srgb, var(--otter-accent) 14%, transparent);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.app-shell.school-theme-lingnan .school-switcher button.active,
+.app-shell.school-theme-eduhk .school-switcher button.active,
+.app-shell.school-theme-lingnan .top-nav button:hover,
+.app-shell.school-theme-eduhk .top-nav button:hover,
+.app-shell.school-theme-lingnan .school-switcher button:hover,
+.app-shell.school-theme-eduhk .school-switcher button:hover {
+  color: #fff;
+  background: var(--otter-accent-strong);
+}
+
+.app-shell.school-theme-lingnan .beta-banner,
+.app-shell.school-theme-eduhk .beta-banner,
+.app-shell.school-theme-lingnan footer,
+.app-shell.school-theme-eduhk footer {
+  color: var(--otter-muted);
+}
+
+.app-shell.school-theme-lingnan .beta-banner,
+.app-shell.school-theme-eduhk .beta-banner {
+  border-color: color-mix(in srgb, var(--otter-accent) 14%, transparent);
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.hero.school-hero.lingnan,
+.hero.school-hero.eduhk {
+  border-radius: var(--otter-radius-xl);
+  color: var(--otter-text);
+  box-shadow: 0 24px 56px color-mix(in srgb, var(--otter-accent-strong) 13%, transparent);
+}
+
+.hero.school-hero.lingnan {
+  border-color: rgba(132, 37, 52, 0.18);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.72), transparent 18rem),
+    radial-gradient(circle at 18% 88%, rgba(132, 37, 52, 0.12), transparent 20rem),
+    linear-gradient(135deg, #fff8ef 0%, #f6dfd4 54%, #e4b6ab 100%) !important;
+}
+
+.hero.school-hero.eduhk {
+  border-color: rgba(49, 90, 112, 0.16);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.76), transparent 18rem),
+    radial-gradient(circle at 18% 88%, rgba(49, 90, 112, 0.12), transparent 20rem),
+    linear-gradient(135deg, #f8fcfd 0%, #e6f1f6 54%, #cbdde7 100%) !important;
+}
+
+.hero.school-hero.lingnan::before,
+.hero.school-hero.eduhk::before {
+  opacity: 0.13;
+}
+
+.hero.school-hero.lingnan::after {
+  height: 0.28rem;
+  background: linear-gradient(90deg, #842534, #c98068, #e9c9b4);
+}
+
+.hero.school-hero.eduhk::after {
+  height: 0.28rem;
+  background: linear-gradient(90deg, #315a70, #7fa4b8, #d8e8ef);
+}
+
+.hero.school-hero.lingnan h1,
+.hero.school-hero.eduhk h1 {
+  max-width: 11.6em;
+  color: var(--otter-accent-strong) !important;
+  text-shadow: none;
+}
+
+.hero.school-hero.lingnan .hero-copy > p,
+.hero.school-hero.eduhk .hero-copy > p,
+.hero.school-hero.lingnan p,
+.hero.school-hero.eduhk p {
+  color: var(--otter-muted) !important;
+}
+
+.hero.school-hero.lingnan .eyebrow,
+.hero.school-hero.eduhk .eyebrow {
+  color: var(--otter-accent-strong);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.hero.school-hero.lingnan .search-box,
+.hero.school-hero.eduhk .search-box {
+  border: 1px solid color-mix(in srgb, var(--otter-accent) 20%, transparent);
+  background: rgba(255, 255, 255, 0.86) !important;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--otter-accent-strong) 12%, transparent);
+}
+
+.hero.school-hero.lingnan .search-box button,
+.hero.school-hero.eduhk .search-box button {
+  color: #fff;
+  background: var(--otter-accent-strong);
+}
+
+.hero.school-hero.lingnan .hero-stats span,
+.hero.school-hero.eduhk .hero-stats span {
+  border: 1px solid color-mix(in srgb, var(--otter-accent) 14%, transparent);
+  color: var(--otter-muted) !important;
+  background: rgba(255, 255, 255, 0.68) !important;
+  box-shadow: none;
+}
+
+.hero.school-hero.lingnan .hero-stats strong,
+.hero.school-hero.eduhk .hero-stats strong,
+.app-shell.school-theme-lingnan .live-visit-count strong,
+.app-shell.school-theme-eduhk .live-visit-count strong {
+  color: var(--otter-accent-strong) !important;
+}
+
+.app-shell.school-theme-lingnan .hero-live-panel.guide-panel,
+.app-shell.school-theme-eduhk .hero-live-panel.guide-panel {
+  border: 1px solid color-mix(in srgb, var(--otter-accent) 13%, transparent);
+  border-radius: var(--otter-radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.66)),
+    var(--otter-accent-soft) !important;
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--otter-accent-strong) 10%, transparent);
+}
+
+.app-shell.school-theme-lingnan .guide-step-card,
+.app-shell.school-theme-eduhk .guide-step-card,
+.app-shell.school-theme-lingnan .guide-update-card,
+.app-shell.school-theme-eduhk .guide-update-card {
+  border-color: color-mix(in srgb, var(--otter-accent) 14%, transparent);
+  color: var(--otter-text);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.app-shell.school-theme-lingnan .guide-panel .live-panel-head strong,
+.app-shell.school-theme-eduhk .guide-panel .live-panel-head strong,
+.app-shell.school-theme-lingnan .guide-step-card strong,
+.app-shell.school-theme-eduhk .guide-step-card strong,
+.app-shell.school-theme-lingnan .guide-update-card strong,
+.app-shell.school-theme-eduhk .guide-update-card strong {
+  color: var(--otter-text) !important;
+}
+
+.app-shell.school-theme-lingnan .school-switch-picture span:first-child,
+.app-shell.school-theme-lingnan .content-grid-picture span:nth-child(1),
+.app-shell.school-theme-lingnan .saved-picture span {
+  background: #842534;
+}
+
+.app-shell.school-theme-eduhk .school-switch-picture span:first-child,
+.app-shell.school-theme-eduhk .content-grid-picture span:nth-child(1),
+.app-shell.school-theme-eduhk .saved-picture span {
+  background: #315a70;
+}
+
+.app-shell.school-theme-lingnan .section-head h2,
+.app-shell.school-theme-eduhk .section-head h2 {
+  color: var(--otter-text);
+}
+
+.app-shell.school-theme-lingnan .section-head p,
+.app-shell.school-theme-eduhk .section-head p {
+  color: var(--otter-muted);
+}
+
+.app-shell.school-theme-lingnan .category-card,
+.app-shell.school-theme-eduhk .category-card {
+  border-color: color-mix(in srgb, var(--otter-accent) 12%, transparent);
+  color: var(--otter-text) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card.red {
+  background: linear-gradient(135deg, #fff6ef 0%, #f1cbbd 100%) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card.warm {
+  background: linear-gradient(135deg, #fffaf4 0%, #ead8c7 100%) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card.green,
+.app-shell.school-theme-lingnan .category-card.mint {
+  background: linear-gradient(135deg, #f6f2e8 0%, #d7e4d7 100%) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card.orange {
+  background: linear-gradient(135deg, #fff3e4 0%, #efc09d 100%) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card.blue {
+  background: linear-gradient(135deg, #f8eee9 0%, #d8c7d8 100%) !important;
+}
+
+.app-shell.school-theme-eduhk .category-card.red,
+.app-shell.school-theme-eduhk .category-card.warm {
+  background: linear-gradient(135deg, #f8fcfd 0%, #d8e8ef 100%) !important;
+}
+
+.app-shell.school-theme-eduhk .category-card.green,
+.app-shell.school-theme-eduhk .category-card.mint {
+  background: linear-gradient(135deg, #f6fbf8 0%, #cfe4dc 100%) !important;
+}
+
+.app-shell.school-theme-eduhk .category-card.orange {
+  background: linear-gradient(135deg, #f8fbfd 0%, #dce4eb 100%) !important;
+}
+
+.app-shell.school-theme-eduhk .category-card.blue {
+  background: linear-gradient(135deg, #eef7fb 0%, #bfd6e3 100%) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card span,
+.app-shell.school-theme-eduhk .category-card span {
+  color: var(--otter-text) !important;
+}
+
+.app-shell.school-theme-lingnan .category-card small,
+.app-shell.school-theme-eduhk .category-card small {
+  color: var(--otter-muted) !important;
+}
+
+.admin-dashboard .school-panel {
+  color: var(--otter-text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.82)),
+    var(--otter-accent-soft);
+}
+
+.admin-dashboard .school-panel h2,
+.admin-dashboard .school-panel p {
+  color: var(--otter-text) !important;
+}
+
+.admin-dashboard .school-panel .eyebrow {
+  color: var(--otter-accent-strong);
+  background: var(--otter-accent-soft);
+}
+
+.admin-dashboard .school-panel .school-card {
+  color: var(--otter-text);
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.admin-dashboard .school-panel .school-card small,
+.admin-dashboard .school-panel .school-card span {
+  color: var(--otter-muted) !important;
+}
+
+/* Compact school switcher: one trigger, options on demand. */
+.school-switcher {
+  position: relative;
+  overflow: visible;
+}
+
+.school-switcher .school-switch-trigger {
+  display: grid;
+  gap: 0.18rem;
+  width: 6.2rem;
+  min-height: 3.75rem;
+  padding: 0.58rem 0.68rem;
+  line-height: 1.15;
+}
+
+.school-switcher .school-switch-trigger strong,
+.school-switcher .school-switch-trigger span {
+  display: block;
+}
+
+.school-switcher .school-switch-trigger strong {
+  font-size: 0.84rem;
+}
+
+.school-switcher .school-switch-trigger span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  opacity: 0.76;
+}
+
+.school-switch-options {
+  position: absolute;
+  z-index: 80;
+  top: 0;
+  left: calc(100% + 0.65rem);
+  display: none;
+  width: min(14rem, calc(100vw - 2rem));
+  padding: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--otter-accent) 18%, transparent);
+  border-radius: var(--otter-radius-lg);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--otter-accent-strong) 14%, transparent);
+}
+
+.school-switcher.open .school-switch-options {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.school-switch-options button {
+  display: grid !important;
+  justify-items: start;
+  gap: 0.12rem;
+  width: 100% !important;
+  min-height: 3rem !important;
+  padding: 0.65rem 0.75rem !important;
+  border-radius: var(--otter-radius-md) !important;
+  text-align: left !important;
+}
+
+.school-switch-options button strong,
+.school-switch-options button span {
+  display: block;
+}
+
+.school-switch-options button strong {
+  font-size: 0.92rem;
+}
+
+.school-switch-options button span {
+  color: var(--otter-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.school-switch-options button.active span {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.app-shell.school-theme-lingnan .school-switcher .school-switch-trigger,
+.app-shell.school-theme-eduhk .school-switcher .school-switch-trigger {
+  color: #fff;
+  background: var(--otter-accent-strong);
+}
+
+@media (max-width: 980px) {
+  .site-header {
+    overflow: visible;
+  }
+
+  .school-switcher {
+    flex: 0 0 auto;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .school-switcher .school-switch-trigger {
+    width: auto;
+    min-width: 7.4rem;
+    min-height: 2.75rem;
+    border-radius: 999px;
+  }
+
+  .school-switch-options {
+    top: calc(100% + 0.45rem);
+    right: 0;
+    left: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .school-switcher .school-switch-trigger {
+    min-width: 6.8rem;
+    padding-inline: 0.72rem;
+  }
+
+  .school-switcher .school-switch-trigger strong {
+    font-size: 0.78rem;
+  }
+
+  .school-switcher .school-switch-trigger span {
+    font-size: 0.68rem;
+  }
+}

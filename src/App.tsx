@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.65';
+const APP_VERSION = 'v1.66';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1547,6 +1547,8 @@ function Header({
   isLoggedIn: boolean;
   onLogout: () => void;
 }) {
+  const [schoolMenuOpen, setSchoolMenuOpen] = useState(false);
+
   return (
     <header className="site-header">
       <button className="brand-button" onClick={() => go('/')}>
@@ -1565,16 +1567,33 @@ function Header({
         {isAdmin && <button onClick={() => go('/admin')}>管理视角</button>}
         {isLoggedIn && <button onClick={onLogout}>退出</button>}
       </nav>
-      <div className="school-switcher">
-        {platformData.schools.map((school) => (
-          <button
-            key={school.id}
-            className={activeSchool.id === school.id ? 'active' : ''}
-            onClick={() => onChooseSchool(school.id)}
-          >
-            {school.shortName}
-          </button>
-        ))}
+      <div className={`school-switcher ${schoolMenuOpen ? 'open' : ''}`}>
+        <button
+          className="school-switch-trigger"
+          type="button"
+          aria-expanded={schoolMenuOpen}
+          aria-controls="school-switch-options"
+          onClick={() => setSchoolMenuOpen((open) => !open)}
+        >
+          <strong>切换学校</strong>
+          <span>当前：{activeSchool.shortName}</span>
+        </button>
+        <div className="school-switch-options" id="school-switch-options">
+          {platformData.schools.map((school) => (
+            <button
+              key={school.id}
+              type="button"
+              className={activeSchool.id === school.id ? 'active' : ''}
+              onClick={() => {
+                onChooseSchool(school.id);
+                setSchoolMenuOpen(false);
+              }}
+            >
+              <strong>{school.shortName}</strong>
+              <span>{school.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </header>
   );
@@ -3399,8 +3418,8 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
   };
 
   return (
-    <section className="page-panel">
-      <div className="page-title-block centered">
+    <section className="page-panel admin-dashboard">
+      <div className="page-title-block centered admin-dashboard-hero">
         <span className="eyebrow">管理视角</span>
         <h1>{APP_VERSION} 内容与统计工作台</h1>
         <p>{API_BASE_URL ? '已接入后端，管理端显示服务端注册、浏览统计和支持处理数据。' : '未配置后端地址，当前显示本机备用数据。'}</p>
@@ -3439,13 +3458,13 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
 
       {adminReady && (
         <>
-          <div className="stats-grid">
+          <div className="stats-grid admin-overview-grid">
             <div><strong>{platformData.schools.length}</strong><span>学校平台</span></div>
             <div><strong>{platformData.programmes.length}</strong><span>项目</span></div>
             <div><strong>{platformData.courses.length}</strong><span>课程</span></div>
             <div><strong>{platformData.sharedPosts.length}</strong><span>生活内容</span></div>
           </div>
-          <section className="analytics-panel" id="admin-support-tickets">
+          <section className="analytics-panel admin-section admin-analytics-section" id="admin-support-tickets">
             <div className="analytics-head">
               <div>
                 <span className="eyebrow">浏览统计</span>
@@ -3507,7 +3526,7 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               </div>
             </div>
           </section>
-          <section className="analytics-panel">
+          <section className="analytics-panel admin-section admin-ticket-section">
             <div className="analytics-head">
               <div>
                 <span className="eyebrow">支持处理</span>
@@ -3530,10 +3549,12 @@ function AdminPage({ activeSchool, onChooseSchool }: { activeSchool: School; onC
               {filteredSupportTickets.length === 0 && <div className="empty-state"><strong>暂无{ticketStatusFilter === 'all' ? '' : statusLabel(ticketStatusFilter)}工单</strong><span>用户提交后会显示在这里。</span></div>}
               {filteredSupportTickets.map((ticket) => {
                 const parsed = splitSupportMessage(ticket.message);
+                const ticketStatusKey = ticket.status === 'new' ? 'pending' : ticket.status;
                 return (
                   <article className="ticket-card clickable" key={ticket.id} onClick={() => setSelectedTicket(ticket)}>
                     <div>
-                      <strong>{ticket.type} · {statusLabel(ticket.status)}</strong>
+                      <strong>{ticket.type}</strong>
+                      <span className={`status-pill status-${ticketStatusKey}`}>{statusLabel(ticket.status)}</span>
                       <span>{ticket.username || '匿名用户'} · {ticket.schoolId || '未选择学校'} · {new Date(ticket.createdAt).toLocaleString()}</span>
                     </div>
                     <p>{parsed.text}</p>
