@@ -16,7 +16,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.69';
+const APP_VERSION = 'v1.70';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -989,26 +989,6 @@ function getVisibleSharedPosts(schoolId: SchoolId, dynamicPosts: SharedPost[] = 
   });
 }
 
-function getGuideCards(posts: SharedPost[]) {
-  return posts
-    .slice()
-    .sort((a, b) => {
-      const recommendedScore = Number(Boolean(b.recommended)) - Number(Boolean(a.recommended));
-      if (recommendedScore) return recommendedScore;
-      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
-    })
-    .slice(0, 8);
-}
-
-function getGuideCardLabel(post: SharedPost) {
-  if (post.sectionId === 'transport-spots') return '玩乐攻略';
-  if (post.sectionId === 'new-student') return '新生攻略';
-  if (post.sectionId === 'housing') return '租房参考';
-  if (post.sectionId === 'commute') return '通勤路线';
-  if (post.sectionId === 'food') return '附近美食';
-  return '最新更新';
-}
-
 function uniqueCompact(values: Array<string | undefined | null>) {
   return Array.from(new Set(values.map((value) => (value || '').trim()).filter(Boolean)));
 }
@@ -1658,6 +1638,10 @@ function Header({
       </button>
       <nav className="top-nav">
         <button onClick={() => go('/')}>首页</button>
+        <button onClick={() => go('/courses')}>课程库</button>
+        <button onClick={() => go('/section/housing')}>租房</button>
+        <button onClick={() => go('/section/food')}>美食</button>
+        <button onClick={() => go('/section/travel')}>出行</button>
         <button onClick={() => go('/favorites')}>我的收藏</button>
         <button className="ai-nav-button" onClick={() => go('/programme-recommender')}>AI 专业推荐</button>
         {!isLoggedIn && <button onClick={() => go('/login')}>登录</button>}
@@ -2023,98 +2007,50 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
   const courses = getCourses(activeSchool.id);
   const visibleSharedPosts = getVisibleSharedPosts(activeSchool.id, dynamicPosts);
   const recommended = visibleSharedPosts.filter((post) => post.recommended).slice(0, 4);
-  const guideCards = getGuideCards(visibleSharedPosts);
+  const categoryStats = sectionCategories.map((category) => {
+    const sectionId = sectionIdByCategory[category.key];
+    const count = category.key === 'course_catalog'
+      ? courses.length
+      : visibleSharedPosts.filter((post) => post.sectionId === sectionId && post.status === 'published').length;
+    return { category, count };
+  });
+  const quickSearches = ['选课', '课程分析', '专业推荐', '租房', '岭南美食', '通勤路线'];
 
   return (
     <>
-      <section className={`hero school-hero ${activeSchool.id}`}>
+      <section className={`hero school-hero database-hero ${activeSchool.id}`}>
         <div className="hero-copy">
-          <span className="eyebrow">{APP_VERSION} · {schoolAbbreviation(activeSchool)} · {activeSchool.name}</span>
+          <span className="eyebrow">{APP_VERSION} · {schoolAbbreviation(activeSchool)} Database</span>
           <h1>{activeSchool.id === 'eduhk' ? '香港教育大学课程与生活指南' : '岭南大学课程与生活指南'}</h1>
-          <p>{activeSchool.description}</p>
+          <p>像查数据库一样查课程、专业、租房、美食、通勤和攻略。先搜索，再筛选，最后进入详情核对来源。</p>
           <SearchBox />
+          <div className="quick-query-row" aria-label="常用搜索">
+            {quickSearches.map((item) => (
+              <button key={item} onClick={() => go(`/search?q=${encodeURIComponent(item)}`)}>{item}</button>
+            ))}
+          </div>
           <div className="hero-stats">
             <span><strong>{platformData.schools.length}</strong> 学校</span>
             <span><strong>{programmes.length}</strong> 当前学校项目</span>
             <span><strong>{courses.length}</strong> 当前学校课程</span>
-          </div>
-        </div>
-        <div className="hero-live-panel guide-panel" aria-label="站内使用路线">
-          <div className="live-panel-head">
-            <span className="eyebrow">Guide</span>
-            <strong>三步开始</strong>
-          </div>
-          <div className="guide-visual" aria-hidden="true">
-            <div className="guide-step-card choose-school">
-              <div className="guide-illustration school-switch-picture">
-                <span></span>
-                <span></span>
-              </div>
-              <strong>选学校</strong>
-            </div>
-            <div className="guide-path-line"></div>
-            <div className="guide-step-card browse-content">
-              <div className="guide-illustration content-grid-picture">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <strong>看课程</strong>
-            </div>
-            <div className="guide-path-line"></div>
-            <div className="guide-step-card save-notes">
-              <div className="guide-illustration saved-picture">
-                <span></span>
-              </div>
-              <strong>收藏</strong>
-            </div>
-          </div>
-          <div className="guide-scroll-section">
-            <div className="guide-scroll-head">
-              <strong>最新更新</strong>
-              <span>自动轮播</span>
-            </div>
-            <div className="guide-scroll-row" aria-label="最新更新与攻略">
-              <div className="guide-scroll-track">
-                {guideCards.map((post) => (
-                  <button key={post.id} className="guide-update-card" onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}>
-                    <span>{getGuideCardLabel(post)}</span>
-                    <strong>{post.title}</strong>
-                    <small>{post.summary || post.content.slice(0, 52)}</small>
-                  </button>
-                ))}
-                {guideCards.map((post) => (
-                  <button
-                    key={`${post.id}-loop`}
-                    className="guide-update-card"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    onClick={() => go(`/post/${encodeURIComponent(post.id)}`)}
-                  >
-                    <span>{getGuideCardLabel(post)}</span>
-                    <strong>{post.title}</strong>
-                    <small>{post.summary || post.content.slice(0, 52)}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <span><strong>{visibleSharedPosts.length}</strong> 生活条目</span>
           </div>
         </div>
       </section>
 
       <section className="section">
         <div className="section-head">
-          <h2>功能分类</h2>
-          <p>课程清单和生活分区都会跟随当前学校切换；暂无内容的分区会显示空状态。</p>
+          <h2>信息分类</h2>
+          <p>每个分类都是一个可筛选的数据表，跟随当前学校切换。</p>
         </div>
-        <div className="category-grid">
-          {sectionCategories.map((category) => (
+        <div className="category-grid database-category-grid">
+          {categoryStats.map(({ category, count }) => (
             <button
               key={category.key}
               className={`category-card ${category.accent}`}
               onClick={() => (category.key === 'course_catalog' ? go('/courses') : go(`/section/${sectionIdByCategory[category.key]}`))}
             >
+              <strong>{count}</strong>
               <span>{category.name}</span>
               <small>{category.description}</small>
             </button>
@@ -2122,10 +2058,10 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
         </div>
       </section>
 
-      <section className="section">
+      <section className="section database-updates-section">
         <div className="section-head">
           <h2>当前推荐</h2>
-          <p>只显示当前学校相关内容。</p>
+          <p>只显示当前学校相关内容，点进详情页查看来源和补充信息。</p>
         </div>
         <PostGrid posts={recommended} />
       </section>
@@ -2187,8 +2123,13 @@ function CoursesPage({
   };
 
   const clearActiveProgramme = () => {
+    const listKey = routeKeyForPath('/courses');
     updateCourseFilters({ programmeId: '' });
-    goBack('/courses');
+    pendingScrollMode = 'restore';
+    window.location.hash = '/courses';
+    window.setTimeout(() => {
+      window.scrollTo({ top: getSavedScrollPosition(listKey), left: 0, behavior: 'auto' });
+    }, 0);
   };
 
   const openCourseDetail = (course: Course) => {
@@ -2236,21 +2177,30 @@ function CoursesPage({
       .filter((course) => typeKey === 'all' || course.typeKey === typeKey)
       .filter((course) => courseMatches(course, keyword));
   }, [activeSchool.id, activeProgramme, keyword, typeKey]);
+  const allSchoolCoursesCount = getCourses(activeSchool.id).length;
 
   return (
-    <section className="page-panel">
+    <section className="page-panel database-browser course-browser">
       <div className="page-title-block centered">
-        <span className="eyebrow">专业课程知识库</span>
-        <h1>{activeSchool.name}</h1>
-        <p>{activeSchool.description}</p>
-      </div>
-      {!activeProgramme && (
-        <div className="page-toolbar-actions">
-          <button className="secondary-action" onClick={() => goBack('/')}>返回首页</button>
+        <span className="eyebrow">{schoolAbbreviation(activeSchool)} Course Database</span>
+        <h1>专业课程知识库</h1>
+        <p>先按学历和学院缩小范围，再选择项目查看课程。课程详情页会显示官网文本、学生视角指南和 AI 课程顾问入口。</p>
+        <div className="database-stat-strip">
+          <span><strong>{programmes.length}</strong> 项目</span>
+          <span><strong>{allSchoolCoursesCount}</strong> 课程</span>
+          <span><strong>{programmeOptions.length}</strong> 当前候选项目</span>
+          <span><strong>{activeProgramme ? courses.length : 0}</strong> 当前课程结果</span>
         </div>
-      )}
+      </div>
+      <div className="page-toolbar-actions page-back-row">
+        {activeProgramme ? (
+          <button className="secondary-action" onClick={clearActiveProgramme}>← 返回上一页</button>
+        ) : (
+          <button className="secondary-action" onClick={() => goBack('/')}>← 返回首页</button>
+        )}
+      </div>
 
-      <div className="filter-panel">
+      <div className="filter-panel database-filter-panel">
         <div className="filter-row">
           <span className="filter-label">学历</span>
           <div className="filter-chips">
@@ -2301,10 +2251,15 @@ function CoursesPage({
             <input value={keyword} onChange={(event) => updateCourseFilters({ keyword: event.target.value })} placeholder="搜索课程名、代码、标签" />
           </label>
         </div>
+        <div className="filter-count">
+          {activeProgramme
+            ? `当前项目显示 ${courses.length} 门课程`
+            : `当前筛选显示 ${programmeOptions.length} 个专业 / 项目`}
+        </div>
       </div>
 
       {!activeProgramme && (
-        <section className="programme-module-board">
+        <section className="programme-module-board database-result-section">
           {!programmeGroups.length && (
             <div className="empty-state">
               <strong>当前筛选下暂无专业</strong>
@@ -2336,12 +2291,6 @@ function CoursesPage({
             </div>
           ))}
         </section>
-      )}
-
-      {activeProgramme && (
-        <div className="detail-topbar">
-          <button className="back-button detail-back-button" onClick={clearActiveProgramme}>← 返回上一页</button>
-        </div>
       )}
 
       {activeProgramme && (
@@ -2378,7 +2327,7 @@ function CoursesPage({
         </div>
       )}
 
-      <div className="course-list">
+      <div className="course-list database-course-grid">
         {courses.map((course) => (
           <article key={course.id} className="course-card">
             <button className="course-main" onClick={() => openCourseDetail(course)}>
@@ -2426,7 +2375,7 @@ function CourseDetailPage({
   const courseProgrammePath = course.programmeId ? `/courses?programme=${encodeURIComponent(course.programmeId)}` : '/courses';
 
   return (
-    <article className="detail-page course-detail-page">
+    <article className="detail-page course-detail-page database-detail-page">
       <div className="detail-topbar">
         <button className="back-button detail-back-button" onClick={() => goBack(courseProgrammePath)}>← 返回上一页</button>
         <button className={`detail-save-button ${favoriteCourseIds.includes(course.id) ? 'saved' : ''}`} onClick={() => onToggleFavoriteCourse(course.id)}>
@@ -2434,7 +2383,7 @@ function CourseDetailPage({
         </button>
       </div>
 
-      <section className="detail-head course-detail-head course-detail-hero">
+      <section className="detail-head course-detail-head course-detail-hero database-detail-hero">
         <div className="course-detail-title-block">
           <span className="pill">{course.school} · {course.type}</span>
           <h1>{getCourseTitle(course)}</h1>
@@ -2462,7 +2411,7 @@ function CourseDetailPage({
         </aside>
       </section>
 
-      <section className="detail-body course-detail-body">
+      <section className="detail-body course-detail-body database-detail-body">
         <div className="course-detail-content">
           <section className="course-detail-card course-description-card">
             <span className="section-kicker">Course Brief</span>
@@ -3002,12 +2951,18 @@ function SectionPage({
   }, [keyword, posts, regionFilter, sortKey, tagFilter]);
 
   return (
-    <section className="page-panel">
+    <section className="page-panel database-browser section-browser">
       <button className="back-button" onClick={() => goBack('/')}>返回首页</button>
       <div className="page-title-block centered">
-        <span className="eyebrow">{activeSchool.shortName}生活内容</span>
+        <span className="eyebrow">{activeSchool.shortName} Life Database</span>
         <h1>{meta?.name || '生活分区'}</h1>
         <p>{posts.length ? meta?.description || '当前学校相关生活信息。' : '这个分区当前学校暂时还没有上传内容。'}</p>
+        <div className="database-stat-strip">
+          <span><strong>{posts.length}</strong> 收录条目</span>
+          <span><strong>{regionOptions.length}</strong> 地区</span>
+          <span><strong>{tagOptions.length}</strong> 标签</span>
+          <span><strong>{filteredPosts.length}</strong> 当前结果</span>
+        </div>
       </div>
       <div className="page-toolbar-actions">
         {canEdit ? (
@@ -3043,7 +2998,7 @@ function SectionPage({
         />
       )}
 
-      <div className="filter-panel">
+      <div className="filter-panel database-filter-panel">
         <div className="filter-row">
           <span className="filter-label">地区</span>
           <div className="filter-chips">
@@ -3118,13 +3073,11 @@ function PostDetailPage({
   const postImages = getPostImages(post);
 
   return (
-    <article className="detail-page">
-      <button className="back-button" onClick={() => goBack(`/section/${post.sectionId}`)}>返回分区</button>
-      {canEdit && (
-        <div className="page-toolbar-actions">
-          <button className="primary-action" onClick={() => setEditorOpen(true)}>编辑这篇</button>
-        </div>
-      )}
+    <article className="detail-page database-detail-page post-detail-page">
+      <div className="detail-topbar">
+        <button className="back-button detail-back-button" onClick={() => goBack(`/section/${post.sectionId}`)}>← 返回分区</button>
+        {canEdit && <button className="detail-save-button" onClick={() => setEditorOpen(true)}>编辑这篇</button>}
+      </div>
       {editorOpen && (
         <AdminPostEditor
           activeSchool={activeSchool}
@@ -3141,11 +3094,16 @@ function PostDetailPage({
           }}
         />
       )}
-      <section className="detail-head">
+      <section className="detail-head database-detail-hero">
         <span className="pill">{post.authorRole}</span>
         <h1>{post.title}</h1>
         <p>{post.summary || post.region}</p>
         <div className="tag-row">{post.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+        <div className="database-stat-strip">
+          <span><strong>{post.region || '香港'}</strong> 地区</span>
+          <span><strong>{post.createdAt}</strong> 更新</span>
+          <span><strong>{post.tags.length}</strong> 标签</span>
+        </div>
       </section>
       {post.metadata && Object.keys(post.metadata).length > 0 && (
         <section className="source-card">
@@ -3160,7 +3118,7 @@ function PostDetailPage({
           {postImages.map((url) => <img key={url} src={url} alt={post.title} loading="lazy" />)}
         </section>
       )}
-      <section className="detail-body">
+      <section className="detail-body database-article-body">
         {paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
       </section>
       <section className="source-card">
@@ -3862,12 +3820,17 @@ function ProgrammeRecommenderPage({
   };
 
   return (
-    <section className="recommender-page">
+    <section className="recommender-page database-browser ai-database-page">
       <button className="back-button" onClick={() => goBack('/')}>返回</button>
       <div className="page-title-block centered">
-        <span className="eyebrow">Programme Recommendation Assistant</span>
+        <span className="eyebrow">{schoolAbbreviation(activeSchool)} AI Assistant</span>
         <h1>专业推荐助手</h1>
-        <p>输入你的本科背景、主修课程和目标方向，系统会基于公开专业资料生成参考建议。</p>
+        <p>先限定当前学校，再基于已收录专业知识库推荐候选专业。DeepSeek 只分析后端检索出的候选资料，不直接搜索网页。</p>
+        <div className="database-stat-strip">
+          <span><strong>{programmeOptions.length}</strong> 已收录专业</span>
+          <span><strong>{canUseAi ? '可用' : '需登录'}</strong> AI 状态</span>
+          <span><strong>{API_BASE_URL ? '后端' : '未配置'}</strong> 接口</span>
+        </div>
       </div>
 
       <div className="recommender-layout">
