@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.66';
+const APP_VERSION = 'v1.67';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1633,8 +1633,6 @@ function LandingPage({
   onGuestEnter: () => void;
   onAccountEnter: () => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
   return (
     <main className="landing-shell">
       <section className="landing-page">
@@ -1671,48 +1669,42 @@ function LandingPage({
         <div className="landing-copy">
           <div className="landing-overlay intro-panel">
             <span className="landing-kicker">{APP_NAME} {APP_VERSION}</span>
-            <h1>选课、租房、通勤和新生事项，一个入口先看清楚</h1>
+            <h1>课程与生活信息，一个入口查看</h1>
             <p>
-              当前支持香港教育大学和岭南大学。可以按学校查看课程清单；
-              租房、通勤、美食、出行等生活内容会按当前学校分别显示。所有课程字段都保留来源和核对日期。
+              按学校查看课程、生活指南、收藏和 AI 辅助建议。内容仅供参考，重要决定请回到官方资料核对。
             </p>
             <div className="landing-feature-grid">
-              <span>专业课程知识库</span>
-              <span>课程收藏</span>
+              <span>课程库</span>
               <span>生活指南</span>
-              <span>学校平台切换</span>
+              <span>收藏</span>
+              <span>AI 辅助</span>
             </div>
             <div className="landing-policy-note">
               <strong>内测说明</strong>
-              <span>{BETA_NOTICE}</span>
+              <span>游客可浏览；注册用户可提交建议、联系作者和使用需要账号的功能。</span>
             </div>
           </div>
         </div>
 
         <div className="landing-overlay agreement-panel">
           <span className="landing-kicker">进入前确认</span>
-          <h1>隐私政策与学术诚信</h1>
+          <h1>进入前确认</h1>
           <p>
-            游客可以先浏览课程和生活内容；注册用户才可以发送内容纠错、补充资料和联系作者信息。
-            请确认你理解：本工具是非官方学生信息整理工具，不代表任何学校，不替代官网、handbook、programme office 或课程系统的最新说明。
+            Otter 是非官方学生信息整理工具，内容仅供参考。课程、申请和学校政策请以官方最新资料为准。
           </p>
 
           <div className="agreement-list">
             <div>
-              <strong>隐私政策</strong>
-              <p>{APP_VERSION} 已开放邮箱注册、登录和联系作者信箱；游客可浏览，注册用户才可发送建议或联系作者。用户反馈不会直接公开，仍由管理员整理后更新。</p>
+              <strong>非官方</strong>
+              <p>不代表任何学校或机构官方意见。</p>
             </div>
             <div>
-              <strong>避免学术不端</strong>
-              <p>本工具只整理公开信息，不能用于代写作业、规避学校规则、伪造成绩、复制课程作业或任何违反学术诚信的行为。</p>
+              <strong>无授权背书</strong>
+              <p>不使用学校官方 logo，也不声称获得授权。</p>
             </div>
             <div>
-              <strong>信息核对</strong>
-              <p>课程学分、开课学期、先修要求、毕业要求等必须以学校官方最新资料为准。</p>
-            </div>
-            <div>
-              <strong>学校关系</strong>
-              <p>本网站不使用学校官方 logo，不声称获得香港教育大学或岭南大学授权、认可或背书。</p>
+              <strong>学术诚信</strong>
+              <p>请勿用于代写、作弊或规避学校规则。</p>
             </div>
           </div>
 
@@ -1722,43 +1714,18 @@ function LandingPage({
               checked={accepted}
               onChange={(event) => onAcceptedChange(event.target.checked)}
             />
-            <span><strong>我已阅读并同意</strong> 隐私政策与学术诚信说明，明白本工具仅供参考。</span>
+            <span><strong>我已了解以上说明</strong>，并同意继续使用。</span>
           </label>
 
-          <button className="enter-app-button" disabled={!accepted} onClick={() => setConfirmOpen(true)}>
-            确认并继续
-          </button>
-
-        </div>
-
-        {confirmOpen && (
-          <div className="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-            <div className="confirm-dialog">
-              <span className="landing-kicker">确认操作</span>
-              <h2 id="confirm-title">{accepted ? '是否确认继续？' : '请先勾选协议'}</h2>
-              <p>
-                {accepted
-                  ? '请确认你已经阅读并同意隐私与学术诚信协议。你可以先以游客身份浏览；需要发送建议或联系作者时再注册登录。'
-                  : '进入前需要先勾选“我已阅读并同意以上隐私与学术诚信协议”。'}
-              </p>
-              <div className="confirm-actions">
-                <button className="secondary-action" onClick={() => setConfirmOpen(false)}>
-                  {accepted ? '再看看' : '我知道了'}
-                </button>
-                {accepted && (
-                  <button className="secondary-action" onClick={onGuestEnter}>
-                    游客访问
-                  </button>
-                )}
-                {accepted && (
-                  <button className="primary-action" onClick={onAccountEnter}>
-                    登录 / 注册
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="agreement-actions">
+            <button className="secondary-action" disabled={!accepted} onClick={onGuestEnter}>
+              游客进入
+            </button>
+            <button className="enter-app-button" disabled={!accepted} onClick={onAccountEnter}>
+              登录 / 注册
+            </button>
           </div>
-        )}
+        </div>
       </section>
     </main>
   );
