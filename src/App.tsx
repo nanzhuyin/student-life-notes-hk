@@ -18,7 +18,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.67';
+const APP_VERSION = 'v1.68';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -108,6 +108,66 @@ const courseTypeOptions: Array<{ key: CourseTypeKey | 'all'; label: string }> = 
   { key: 'elective', label: '选修课' },
   { key: 'project', label: '项目 / 研究' },
   { key: 'general', label: '普通课程' }
+];
+
+type SearchIntent = {
+  id: string;
+  title: string;
+  description: string;
+  path: string;
+  keywords: string[];
+  label?: string;
+};
+
+const baseSearchIntents: SearchIntent[] = [
+  {
+    id: 'courses',
+    title: '课程库 / 选课入口',
+    description: '按学校、项目和课程查看课程清单，适合搜索“选课、课程、专业课程、学分”。',
+    path: '/courses',
+    label: '课程',
+    keywords: ['选课', '课程', '课程库', '专业课程', '课程清单', '学分', '开课', '必修', '选修', '授课语言', 'programme', 'course', 'credit']
+  },
+  {
+    id: 'course-advisor',
+    title: 'AI 课程顾问',
+    description: '先选择一门课程，再分析这门课对你的背景、简历和职业目标有什么用。',
+    path: '/courses',
+    label: 'AI',
+    keywords: ['课程ai', '课程 ai', 'ai课程', 'ai 课程', '课程分析', '分析课程', '课程顾问', '这门课有什么用', '适不适合我', '简历', '作品集', '就业', 'career', 'advisor']
+  },
+  {
+    id: 'programme-recommender',
+    title: 'AI 专业推荐',
+    description: '输入本科背景、课程、兴趣和目标，系统基于知识库给出专业参考建议。',
+    path: '/programme-recommender',
+    label: 'AI',
+    keywords: ['专业推荐', '专业ai', '专业 ai', 'ai专业', '申请专业', '选专业', '硕士', '博士', 'master', 'doctor', 'programme recommender']
+  },
+  {
+    id: 'favorites',
+    title: '我的收藏',
+    description: '查看当前浏览器保存的收藏课程。',
+    path: '/favorites',
+    label: '收藏',
+    keywords: ['收藏', '我的收藏', '保存', '已收藏', 'favorite', 'saved']
+  },
+  {
+    id: 'support',
+    title: '投稿 / 反馈 / 联系作者',
+    description: '登录后可以提交内容补充、纠错、建议或联系作者。',
+    path: '/login',
+    label: '反馈',
+    keywords: ['投稿', '反馈', '建议', '联系作者', '纠错', '补充资料', '工单', 'support', 'contact']
+  },
+  {
+    id: 'login',
+    title: '登录 / 注册',
+    description: '登录后可以使用投稿反馈、联系作者和需要账号的 AI 功能。',
+    path: '/login',
+    label: '账号',
+    keywords: ['登录', '注册', '账号', '邮箱', '密码', 'login', 'register']
+  }
 ];
 
 type Route =
@@ -771,6 +831,55 @@ function postMatches(post: SharedPost, keyword: string) {
     .join(' ')
     .toLowerCase()
     .includes(token);
+}
+
+function getSectionSearchKeywords(category: CategoryMeta) {
+  const shared = [category.name, category.description, sectionIdByCategory[category.key]];
+  const extra: Record<CategoryKey, string[]> = {
+    course_catalog: ['选课', '课程', '课程库', '专业课程', '课程清单', '学分', '必修', '选修'],
+    hk_rent: ['租房', '房源', '小区', '住宿', '合租', '整租', '看房', '预算', '香港租房', '深圳租房'],
+    sz_commute: ['通勤', '港深通勤', '口岸', '深圳湾', '福田口岸', '落马洲', '跨境', '巴士', '地铁'],
+    hk_life: ['新生', '入学', '到港', '电话卡', '银行卡', '八达通', '签证', '开学', '新生指南'],
+    nearby_food: ['美食', '吃饭', '餐厅', '食堂', '茶餐厅', '附近美食', '聚餐', '便宜', '好吃'],
+    transport_spots: ['出行', '景点', '周末', '路线', '交通', '旅游', '附近去哪', '半日游', '一日游']
+  };
+  return shared.concat(extra[category.key] || []);
+}
+
+function getSearchIntents(activeSchool: School): SearchIntent[] {
+  const sectionIntents = sectionCategories.map((category) => ({
+    id: `section-${category.key}`,
+    title: category.name,
+    description: category.description,
+    path: category.key === 'course_catalog' ? '/courses' : `/section/${sectionIdByCategory[category.key]}`,
+    label: activeSchool.shortName,
+    keywords: getSectionSearchKeywords(category)
+  }));
+  return baseSearchIntents.concat(sectionIntents);
+}
+
+function searchIntentMatches(intent: SearchIntent, keyword: string) {
+  const query = normalize(keyword);
+  if (!query) return true;
+  const haystack = normalize([
+    intent.title,
+    intent.description,
+    intent.label || '',
+    intent.path,
+    intent.keywords.join(' ')
+  ].join(' '));
+  if (haystack.includes(query)) return true;
+  return intent.keywords.some((keywordItem) => {
+    const token = normalize(keywordItem);
+    return token && (query.includes(token) || token.includes(query));
+  });
+}
+
+function getIntentResults(keyword: string, activeSchool: School) {
+  return getSearchIntents(activeSchool)
+    .filter((intent) => searchIntentMatches(intent, keyword))
+    .filter((intent, index, list) => list.findIndex((item) => item.id === intent.id) === index)
+    .slice(0, keyword.trim() ? 8 : 6);
 }
 
 function propertyImage(fileName: string) {
@@ -3074,12 +3183,14 @@ function PostDetailPage({
 }
 
 function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; activeSchool: School; dynamicPosts: SharedPost[] }) {
+  const intentResults = getIntentResults(keyword, activeSchool);
   const courses = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, 80);
   const posts = getVisibleSharedPosts(activeSchool.id, dynamicPosts).filter((post) => postMatches(post, keyword)).slice(0, 30);
   const legacyMatches = legacyPosts.filter((post) => {
     const token = normalize(keyword);
     return token && [post.title, post.summary, post.content.join(' ')].join(' ').toLowerCase().includes(token);
   }).length;
+  const hasAnyResult = intentResults.length > 0 || courses.length > 0 || posts.length > 0 || legacyMatches > 0;
 
   return (
     <section className="page-panel">
@@ -3087,25 +3198,60 @@ function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; 
       <div className="page-title-block centered">
         <span className="eyebrow">搜索</span>
         <h1>{keyword ? `“${keyword}” 的结果` : '搜索内容'}</h1>
-        <p>当前课程平台：{activeSchool.name}；生活内容按当前学校显示。原仓库匹配记录：{legacyMatches} 条。</p>
+        <p>当前平台：{activeSchool.name}。系统会先推荐相关入口，再显示课程和生活内容结果。</p>
       </div>
       <SearchBox initialValue={keyword} />
 
-      <section className="section">
-        <div className="section-head"><h2>课程结果</h2><p>最多显示 80 条。</p></div>
-        <div className="course-list compact">
-          {courses.map((course) => (
-            <button key={course.id} className="course-result" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
-              <strong>{getCourseTitle(course)}</strong>
-              <span>{course.programmeTitle} · {course.type}</span>
-            </button>
-          ))}
+      <section className="section search-intent-section">
+        <div className="section-head">
+          <h2>推荐入口</h2>
+          <p>{intentResults.length ? '根据你的搜索词，优先给出可以直接进入的功能或板块。' : '没有匹配到明确入口，可以换个说法试试，例如“选课”“租房”“课程分析”。'}</p>
         </div>
+        {intentResults.length > 0 ? (
+          <div className="search-intent-grid">
+            {intentResults.map((intent) => (
+              <button key={intent.id} className="search-intent-card" onClick={() => go(intent.path)}>
+                <span>{intent.label || '入口'}</span>
+                <strong>{intent.title}</strong>
+                <small>{intent.description}</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state"><strong>暂无推荐入口</strong><span>试试搜索：选课、课程分析、专业推荐、租房、美食、通勤、投稿。</span></div>
+        )}
+      </section>
+
+      {!hasAnyResult && (
+        <div className="empty-state search-empty">
+          <strong>没有找到直接匹配</strong>
+          <span>可以换成更短的关键词，例如“选课”“课程 AI”“租房”“美食”“通勤”。</span>
+        </div>
+      )}
+
+      <section className="section">
+        <div className="section-head"><h2>课程结果</h2><p>当前显示 {courses.length} 条，最多显示 80 条。</p></div>
+        {courses.length > 0 ? (
+          <div className="course-list compact">
+            {courses.map((course) => (
+              <button key={course.id} className="course-result" onClick={() => go(`/course/${encodeURIComponent(course.id)}`)}>
+                <strong>{getCourseTitle(course)}</strong>
+                <span>{course.programmeTitle} · {course.type}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state"><strong>暂无课程精确匹配</strong><span>如果你想找选课入口，可以点击上方“课程库 / 选课入口”。</span></div>
+        )}
       </section>
 
       <section className="section">
-        <div className="section-head"><h2>生活内容结果</h2><p>最多显示 30 条。</p></div>
-        <PostGrid posts={posts} />
+        <div className="section-head"><h2>生活内容结果</h2><p>当前显示 {posts.length} 条，最多显示 30 条。原仓库匹配记录：{legacyMatches} 条。</p></div>
+        {posts.length > 0 ? (
+          <PostGrid posts={posts} />
+        ) : (
+          <div className="empty-state"><strong>暂无生活内容精确匹配</strong><span>可以搜索租房、美食、通勤、景点、新生等关键词。</span></div>
+        )}
       </section>
     </section>
   );
