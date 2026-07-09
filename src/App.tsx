@@ -16,7 +16,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.70';
+const APP_VERSION = 'v1.71';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1380,7 +1380,7 @@ function buildLocalCourseAdvisor(course: Course, profile: CourseAdvisorProfile):
       '这门课和同项目其他课程应该怎么搭配？'
     ],
     source: 'local-rules',
-    disclaimer: '本建议来自当前内测固定规则库和课程资料，不代表学校官方意见；后续接入 DeepSeek 后可升级为更细的对话式分析。'
+    disclaimer: '本建议来自当前内测固定规则库和课程资料，不代表学校官方意见；后续接入在线 AI 后可升级为更细的对话式分析。'
   };
 }
 
@@ -2591,7 +2591,7 @@ function CourseAdvisorPanel({ course, authToken }: { course: Course; authToken: 
     }
   ];
 
-  const sourceLabel = result?.source === 'deepseek' ? 'DeepSeek 已接入' : '固定规则库';
+  const sourceLabel = result?.source === 'deepseek' ? '在线 AI 已接入' : '固定规则库';
   const fitLabel = result?.fitLevel === 'required'
     ? '必修'
     : result?.fitLevel === 'high'
@@ -3825,7 +3825,7 @@ function ProgrammeRecommenderPage({
       <div className="page-title-block centered">
         <span className="eyebrow">{schoolAbbreviation(activeSchool)} AI Assistant</span>
         <h1>专业推荐助手</h1>
-        <p>先限定当前学校，再基于已收录专业知识库推荐候选专业。DeepSeek 只分析后端检索出的候选资料，不直接搜索网页。</p>
+        <p>先限定当前学校，再基于已收录专业知识库推荐候选专业。AI 只分析后端检索出的候选资料，不直接搜索网页。</p>
         <div className="database-stat-strip">
           <span><strong>{programmeOptions.length}</strong> 已收录专业</span>
           <span><strong>{canUseAi ? '可用' : '需登录'}</strong> AI 状态</span>
