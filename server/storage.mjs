@@ -653,10 +653,23 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
       return rows.map(fromCourseProgrammeRow);
     },
 
-    async listCourseCatalogCourses() {
+    async listCourseCatalogCourses(filters = {}) {
       if (!hasSupabase) return [];
-      const rows = await selectRowsPaged('course_catalog_courses', 'select=*&order=programme_id.asc,title.asc', 10000).catch(() => []);
+      const queryParts = ['select=*'];
+      if (filters.schoolId) queryParts.push(`school_id=eq.${encodeURIComponent(filters.schoolId)}`);
+      if (filters.programmeId) queryParts.push(`programme_id=eq.${encodeURIComponent(filters.programmeId)}`);
+      if (filters.typeKey && filters.typeKey !== 'all') queryParts.push(`type_key=eq.${encodeURIComponent(filters.typeKey)}`);
+      if (typeof filters.required === 'boolean') queryParts.push(`required=eq.${filters.required ? 'true' : 'false'}`);
+      queryParts.push('order=programme_id.asc,title.asc');
+      const rows = await selectRowsPaged('course_catalog_courses', queryParts.join('&'), filters.maxRows || 10000).catch(() => []);
       return rows.map(fromCourseCatalogCourseRow);
+    },
+
+    async getCourseCatalogCourse(id) {
+      if (!hasSupabase) return null;
+      const rows = await selectRows('course_catalog_courses', `select=*&id=eq.${encodeURIComponent(id)}&limit=1`).catch(() => []);
+      const [row] = rows;
+      return row ? fromCourseCatalogCourseRow(row) : null;
     },
 
     async listProgrammes() {

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type {
   CategoryKey,
   CategoryMeta,
@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.76';
+const APP_VERSION = 'v1.77';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -29,6 +29,10 @@ const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const BACKEND_CACHE_PREFIX = 'student-life-notes:backend-cache:v2:';
+const BACKEND_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const COURSE_PAGE_SIZE = 500;
+const SEARCH_COURSE_LIMIT = 80;
 const defaultSchools: School[] = [
   {
     id: 'eduhk',
@@ -455,6 +459,119 @@ async function apiRequest<T>(path: string, options: RequestInit = {}) {
   return data as T;
 }
 
+type BackendCacheRecord<T> = {
+  cachedAt: number;
+  data: T;
+};
+
+type CourseCatalogQuery = {
+  schoolId?: SchoolId;
+  programmeId?: string;
+  typeKey?: CourseTypeKey | 'all';
+  keyword?: string;
+};
+
+const browserStorageCache = new Map<string, string | null>();
+
+function readBrowserStorage(key: string) {
+  if (typeof localStorage === 'undefined') return null;
+  if (!browserStorageCache.has(key)) {
+    try {
+      browserStorageCache.set(key, localStorage.getItem(key));
+    } catch {
+      browserStorageCache.set(key, null);
+    }
+  }
+  return browserStorageCache.get(key) || null;
+}
+
+function writeBrowserStorage(key: string, value: string) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+    browserStorageCache.set(key, value);
+  } catch {
+    browserStorageCache.delete(key);
+  }
+}
+
+function backendCacheKey(key: string) {
+  return `${BACKEND_CACHE_PREFIX}${key}`;
+}
+
+function readBackendCache<T>(key: string, ttlMs = BACKEND_CACHE_TTL_MS) {
+  try {
+    const raw = readBrowserStorage(backendCacheKey(key));
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as BackendCacheRecord<T>;
+    if (!cached || typeof cached.cachedAt !== 'number') return null;
+    if (ttlMs > 0 && Date.now() - cached.cachedAt > ttlMs) return null;
+    return cached.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeBackendCache<T>(key: string, data: T) {
+  writeBrowserStorage(backendCacheKey(key), JSON.stringify({ cachedAt: Date.now(), data }));
+}
+
+function readCachedPlatformData() {
+  const cached = readBackendCache<PlatformData>('platform-shell');
+  if (!cached) return null;
+  return { ...cached, courses: [] };
+}
+
+function programmeCoursesCacheKey(programmeId: string) {
+  return `programme-courses:${programmeId}`;
+}
+
+function courseCacheKey(courseId: string) {
+  return `course:${courseId}`;
+}
+
+function courseSearchCacheKey(schoolId: SchoolId, keyword: string) {
+  return `course-search:${schoolId}:${normalize(keyword).slice(0, 80)}`;
+}
+
+function readCachedProgrammeCourses(programmeId: string) {
+  return programmeId ? readBackendCache<Course[]>(programmeCoursesCacheKey(programmeId)) || [] : [];
+}
+
+function writeCachedProgrammeCourses(programmeId: string, courses: Course[]) {
+  if (!programmeId) return;
+  writeBackendCache(programmeCoursesCacheKey(programmeId), courses);
+}
+
+function readCachedCourse(courseId: string) {
+  return courseId ? readBackendCache<Course>(courseCacheKey(courseId)) : null;
+}
+
+function writeCachedCourse(course: Course) {
+  if (!course?.id) return;
+  writeBackendCache(courseCacheKey(course.id), course);
+}
+
+function writeCachedCourses(courses: Course[]) {
+  courses.slice(0, 120).forEach(writeCachedCourse);
+}
+
+function mergeUniqueCourses(existing: Course[], incoming: Course[]) {
+  const byId = new Map(existing.map((course) => [course.id, course]));
+  for (const course of incoming) byId.set(course.id, course);
+  return Array.from(byId.values());
+}
+
+function buildCourseCatalogPath(query: CourseCatalogQuery = {}) {
+  const params = new URLSearchParams();
+  if (query.schoolId) params.set('schoolId', query.schoolId);
+  if (query.programmeId) params.set('programmeId', query.programmeId);
+  if (query.typeKey && query.typeKey !== 'all') params.set('typeKey', query.typeKey);
+  if (query.keyword?.trim()) params.set('keyword', query.keyword.trim());
+  const search = params.toString();
+  return `/api/course-catalog/courses${search ? `?${search}` : ''}`;
+}
+
 function inferDegreeLevel(programme: Programme) {
   const text = `${programme.title} ${programme.titleEn || ''} ${programme.studyModes.join(' ')}`.toLowerCase();
   if (text.includes('doctor') || text.includes('博士')) return 'Doctor';
@@ -476,9 +593,9 @@ function programmeToRecommendationOption(programme: Programme) {
   };
 }
 
-async function fetchPagedApi<T>(path: string, key: string, pageSize = 500) {
+async function fetchPagedApi<T>(path: string, key: string, pageSize = 500, maxPages = 100) {
   const items: T[] = [];
-  for (let page = 1; page < 100; page += 1) {
+  for (let page = 1; page <= maxPages; page += 1) {
     const separator = path.includes('?') ? '&' : '?';
     const data = await apiRequest<Record<string, unknown>>(`${path}${separator}page=${page}&pageSize=${pageSize}`);
     const pageItems = Array.isArray(data[key]) ? data[key] as T[] : [];
@@ -493,11 +610,11 @@ async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
   if (!API_BASE_URL) return platformData;
   const [schoolsData, programmes, posts] = await Promise.all([
     apiRequest<{ schools: School[] }>('/api/course-catalog/schools'),
-    fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes'),
+    fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes', COURSE_PAGE_SIZE),
     fetchPagedApi<SharedPost>('/api/posts', 'posts')
   ]);
   const schools = schoolsData.schools.length ? schoolsData.schools : defaultSchools;
-  return {
+  const data = {
     version: APP_VERSION,
     generatedAt: new Date().toISOString(),
     schools,
@@ -505,11 +622,19 @@ async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
     courses: [],
     sharedPosts: posts
   };
+  writeBackendCache('platform-shell', data);
+  return data;
 }
 
-async function fetchCourseCatalogCoursesFromBackend() {
+async function fetchCourseCatalogCoursesFromBackend(query: CourseCatalogQuery = {}, pageSize = COURSE_PAGE_SIZE, maxPages = 100) {
   if (!API_BASE_URL) return [];
-  return fetchPagedApi<Course>('/api/course-catalog/courses', 'courses', 500);
+  return fetchPagedApi<Course>(buildCourseCatalogPath(query), 'courses', pageSize, maxPages);
+}
+
+async function fetchCourseCatalogCourseFromBackend(id: string) {
+  if (!API_BASE_URL) return null;
+  const data = await apiRequest<{ course: Course }>(`/api/course-catalog/courses/${encodeURIComponent(id)}`);
+  return data.course || null;
 }
 
 function applyPlatformData(next: PlatformData) {
@@ -2162,14 +2287,19 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
 function CoursesPage({
   activeSchool,
   favoriteCourseIds,
-  onToggleFavoriteCourse
+  onToggleFavoriteCourse,
+  onCourseDataLoaded,
+  isCatalogueLoading
 }: {
   activeSchool: School;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
+  onCourseDataLoaded: (courses: Course[]) => void;
+  isCatalogueLoading: boolean;
 }) {
   const routeProgramme = new URLSearchParams(window.location.hash.split('?')[1] || '').get('programme') || '';
-  const programmes = useMemo(() => getProgrammes(activeSchool.id), [activeSchool.id]);
+  const programmes = getProgrammes(activeSchool.id);
+  const programmeSignature = programmes.map((programme) => programme.id).join('|');
   const normalizeProgrammeId = (id: string) => {
     const programme = programmes.find((item) => item.id === id);
     if (!programme) return id;
@@ -2185,9 +2315,12 @@ function CoursesPage({
       typeKey: 'all',
       keyword: ''
     }),
-    [routeProgramme]
+    [programmeSignature, routeProgramme]
   );
   const [filters, setFilters] = useState<CourseFilterState>(() => defaultCourseFilters);
+  const [programmeCourses, setProgrammeCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState('');
 
   useEffect(() => {
     const next = getStoredObject(courseFilterKey, defaultCourseFilters);
@@ -2236,10 +2369,10 @@ function CoursesPage({
 
   const levelOptions = useMemo(
     () => uniqueCompact(programmes.flatMap((programme) => (programme.studyModes.length ? programme.studyModes : ['以项目说明为准']))),
-    [programmes]
+    [programmeSignature]
   );
 
-  const facultyOptions = useMemo(() => uniqueCompact(programmes.map((programme) => programme.faculty)), [programmes]);
+  const facultyOptions = useMemo(() => uniqueCompact(programmes.map((programme) => programme.faculty)), [programmeSignature]);
 
   const programmeOptions = useMemo(
     () =>
@@ -2251,23 +2384,66 @@ function CoursesPage({
         const matchesFaculty = facultyFilter === 'all' || programme.faculty === facultyFilter;
         return matchesLevel && matchesFaculty;
       })),
-    [facultyFilter, levelFilter, programmes]
+    [facultyFilter, levelFilter, programmeSignature]
   );
 
   useEffect(() => {
-    if (programmeId && !programmeOptions.some((programme) => programme.id === programmeId)) updateCourseFilters({ programmeId: '' });
-  }, [programmeId, programmeOptions]);
+    if (!programmeId || programmes.length === 0) return;
+    if (!programmeOptions.some((programme) => programme.id === programmeId)) updateCourseFilters({ programmeId: '' });
+  }, [programmeId, programmeOptions, programmes.length]);
 
   const activeProgramme = programmeOptions.find((programme) => programme.id === programmeId);
   const programmeGroups = useMemo(() => groupProgrammesByFaculty(programmeOptions), [programmeOptions]);
+  const activeProgrammeId = activeProgramme?.id || '';
+
+  useEffect(() => {
+    if (!activeProgrammeId) {
+      setProgrammeCourses([]);
+      setCoursesLoading(false);
+      setCoursesError('');
+      return;
+    }
+
+    let cancelled = false;
+    const cachedCourses = mergeUniqueCourses(
+      getCourses(activeSchool.id).filter((course) => course.programmeId === activeProgrammeId),
+      readCachedProgrammeCourses(activeProgrammeId)
+    );
+    setProgrammeCourses(cachedCourses);
+    if (cachedCourses.length) onCourseDataLoaded(cachedCourses);
+
+    if (!API_BASE_URL) return;
+    setCoursesLoading(!cachedCourses.length);
+    setCoursesError('');
+    void fetchCourseCatalogCoursesFromBackend({ schoolId: activeSchool.id, programmeId: activeProgrammeId }, COURSE_PAGE_SIZE, 3)
+      .then((loadedCourses) => {
+        if (cancelled) return;
+        writeCachedProgrammeCourses(activeProgrammeId, loadedCourses);
+        writeCachedCourses(loadedCourses);
+        onCourseDataLoaded(loadedCourses);
+        setProgrammeCourses(loadedCourses);
+      })
+      .catch((error) => {
+        if (!cancelled) setCoursesError(error instanceof Error ? error.message : '课程数据加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setCoursesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProgrammeId, activeSchool.id, onCourseDataLoaded]);
+
   const courses = useMemo(() => {
     if (!activeProgramme) return [];
-    return getCourses(activeSchool.id)
-      .filter((course) => course.programmeId === activeProgramme.id)
+    return programmeCourses
       .filter((course) => typeKey === 'all' || course.typeKey === typeKey)
       .filter((course) => courseMatches(course, keyword));
-  }, [activeSchool.id, activeProgramme, keyword, typeKey]);
+  }, [activeProgramme, keyword, programmeCourses, typeKey]);
   const allSchoolCoursesCount = getCourseCountForSchool(activeSchool.id);
+  const programmeListLoading = isCatalogueLoading && programmes.length === 0;
+  const activeProgrammeLoading = Boolean(activeProgramme && coursesLoading && !programmeCourses.length);
 
   return (
     <section className="page-panel database-browser course-browser">
@@ -2342,7 +2518,11 @@ function CoursesPage({
           </label>
         </div>
         <div className="filter-count">
-          {activeProgramme
+          {programmeListLoading
+            ? '正在加载专业列表'
+            : activeProgrammeLoading
+              ? '正在加载当前项目课程'
+              : activeProgramme
             ? `当前项目显示 ${courses.length} 门课程`
             : `当前筛选显示 ${programmeOptions.length} 个专业 / 项目`}
         </div>
@@ -2350,13 +2530,19 @@ function CoursesPage({
 
       {!activeProgramme && (
         <section className="programme-module-board database-result-section">
-          {!programmeGroups.length && (
+          {programmeListLoading && (
+            <div className="empty-state">
+              <strong>正在加载专业列表</strong>
+              <span>页面会先显示结构，数据从后端和本机缓存补齐。</span>
+            </div>
+          )}
+          {!programmeListLoading && !programmeGroups.length && (
             <div className="empty-state">
               <strong>当前筛选下暂无专业</strong>
               <span>请清除学历或学院筛选后再看。</span>
             </div>
           )}
-          {programmeGroups.map((group) => (
+          {!programmeListLoading && programmeGroups.map((group) => (
             <div className="programme-module" key={group.faculty}>
               <div className="programme-module-head">
                 <strong>{formatFacultyName(group.faculty)}</strong>
@@ -2410,7 +2596,21 @@ function CoursesPage({
         </div>
       )}
 
-      {!courses.length && (
+      {activeProgrammeLoading && (
+        <div className="empty-state">
+          <strong>正在加载课程</strong>
+          <span>首次进入该专业会向后端读取课程；下次会优先显示浏览器缓存。</span>
+        </div>
+      )}
+
+      {coursesError && !activeProgrammeLoading && (
+        <div className="empty-state">
+          <strong>课程加载失败</strong>
+          <span>{coursesError}</span>
+        </div>
+      )}
+
+      {!activeProgrammeLoading && !courses.length && (
         <div className="empty-state">
           <strong>{activeProgramme ? '暂无匹配课程' : '尚未选择项目'}</strong>
           <span>{activeProgramme ? '请调整筛选条件，或返回项目列表查看其他专业。' : '选择一个专业后即可查看对应课程。'}</span>
@@ -2452,16 +2652,75 @@ function CourseDetailPage({
   id,
   authToken,
   favoriteCourseIds,
-  onToggleFavoriteCourse
+  onToggleFavoriteCourse,
+  onCourseDataLoaded
 }: {
   id: string;
   authToken: string;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
+  onCourseDataLoaded: (courses: Course[]) => void;
 }) {
-  const course = getCourse(id);
+  const [course, setCourse] = useState<Course | null>(() => getCourse(id) || readCachedCourse(id));
+  const [courseLoading, setCourseLoading] = useState(Boolean(API_BASE_URL && !course));
+  const [courseError, setCourseError] = useState('');
 
-  if (!course) return <EmptyPage title="没有找到这门课程" />;
+  useEffect(() => {
+    let cancelled = false;
+    const cachedCourse = getCourse(id) || readCachedCourse(id);
+    setCourse(cachedCourse);
+    setCourseError('');
+    if (cachedCourse) onCourseDataLoaded([cachedCourse]);
+
+    if (!API_BASE_URL) {
+      setCourseLoading(false);
+      return;
+    }
+
+    setCourseLoading(!cachedCourse);
+    void fetchCourseCatalogCourseFromBackend(id)
+      .then((loadedCourse) => {
+        if (cancelled || !loadedCourse) return;
+        writeCachedCourse(loadedCourse);
+        if (loadedCourse.programmeId) writeCachedProgrammeCourses(loadedCourse.programmeId, mergeUniqueCourses(readCachedProgrammeCourses(loadedCourse.programmeId), [loadedCourse]));
+        onCourseDataLoaded([loadedCourse]);
+        setCourse(loadedCourse);
+      })
+      .catch((error) => {
+        if (!cancelled) setCourseError(error instanceof Error ? error.message : '课程资料加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setCourseLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, onCourseDataLoaded]);
+
+  if (!course && courseLoading) {
+    return (
+      <section className="page-panel">
+        <button className="back-button" onClick={() => goBack('/courses')}>返回上一页</button>
+        <div className="empty-state">
+          <strong>正在加载课程资料</strong>
+          <span>首次打开会从后端读取单门课程；下次会优先使用本机缓存。</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (!course) {
+    return (
+      <section className="page-panel">
+        <button className="back-button" onClick={() => goBack('/courses')}>返回上一页</button>
+        <div className="empty-state">
+          <strong>没有找到这门课程</strong>
+          <span>{courseError || '可能是链接已经变化。'}</span>
+        </div>
+      </section>
+    );
+  }
   const courseProgrammePath = course.programmeId ? `/courses?programme=${encodeURIComponent(course.programmeId)}` : '/courses';
 
   return (
@@ -3222,11 +3481,62 @@ function PostDetailPage({
   );
 }
 
-function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; activeSchool: School; dynamicPosts: SharedPost[] }) {
+function SearchPage({
+  keyword,
+  activeSchool,
+  dynamicPosts,
+  onCourseDataLoaded
+}: {
+  keyword: string;
+  activeSchool: School;
+  dynamicPosts: SharedPost[];
+  onCourseDataLoaded: (courses: Course[]) => void;
+}) {
   const intentResults = getIntentResults(keyword, activeSchool);
-  const courses = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, 80);
+  const [courses, setCourses] = useState<Course[]>(() => {
+    const cached = readBackendCache<Course[]>(courseSearchCacheKey(activeSchool.id, keyword));
+    return cached || getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, SEARCH_COURSE_LIMIT);
+  });
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState('');
   const posts = getVisibleSharedPosts(activeSchool.id, dynamicPosts).filter((post) => postMatches(post, keyword)).slice(0, 30);
   const hasAnyResult = intentResults.length > 0 || courses.length > 0 || posts.length > 0;
+
+  useEffect(() => {
+    const cached = readBackendCache<Course[]>(courseSearchCacheKey(activeSchool.id, keyword));
+    const localMatches = getCourses(activeSchool.id).filter((course) => courseMatches(course, keyword)).slice(0, SEARCH_COURSE_LIMIT);
+    const initialCourses = cached || localMatches;
+    setCourses(initialCourses);
+    if (initialCourses.length) onCourseDataLoaded(initialCourses);
+
+    if (!API_BASE_URL || !keyword.trim()) {
+      setCoursesLoading(false);
+      setCoursesError('');
+      return;
+    }
+
+    let cancelled = false;
+    setCoursesLoading(!initialCourses.length);
+    setCoursesError('');
+    void fetchCourseCatalogCoursesFromBackend({ schoolId: activeSchool.id, keyword }, SEARCH_COURSE_LIMIT, 1)
+      .then((loadedCourses) => {
+        if (cancelled) return;
+        writeBackendCache(courseSearchCacheKey(activeSchool.id, keyword), loadedCourses);
+        writeCachedCourses(loadedCourses);
+        onCourseDataLoaded(loadedCourses);
+        setCourses(loadedCourses);
+      })
+      .catch((error) => {
+        if (!cancelled) setCoursesError(error instanceof Error ? error.message : '课程搜索失败');
+      })
+      .finally(() => {
+        if (!cancelled) setCoursesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSchool.id, keyword, onCourseDataLoaded]);
 
   return (
     <section className="page-panel">
@@ -3266,7 +3576,8 @@ function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; 
       )}
 
       <section className="section">
-        <div className="section-head"><h2>课程结果</h2><p>当前显示 {courses.length} 条，最多显示 80 条。</p></div>
+        <div className="section-head"><h2>课程结果</h2><p>{coursesLoading ? '正在从后端搜索课程。' : `当前显示 ${courses.length} 条，最多显示 80 条。`}</p></div>
+        {coursesError && <div className="empty-state"><strong>课程搜索失败</strong><span>{coursesError}</span></div>}
         {courses.length > 0 ? (
           <div className="course-list compact">
             {courses.map((course) => (
@@ -3296,14 +3607,47 @@ function SearchPage({ keyword, activeSchool, dynamicPosts }: { keyword: string; 
 function FavoritesPage({
   activeSchool,
   favoriteCourseIds,
-  onToggleFavoriteCourse
+  onToggleFavoriteCourse,
+  onCourseDataLoaded
 }: {
   activeSchool: School;
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
+  onCourseDataLoaded: (courses: Course[]) => void;
 }) {
   const schoolCourses = getCourses(activeSchool.id);
-  const favoriteCourses = schoolCourses.filter((course) => favoriteCourseIds.includes(course.id));
+  const [loadedFavoriteCourses, setLoadedFavoriteCourses] = useState<Course[]>(() =>
+    favoriteCourseIds
+      .map((id) => getCourse(id) || readCachedCourse(id))
+      .filter((course): course is Course => Boolean(course))
+  );
+  const favoriteCourses = mergeUniqueCourses(schoolCourses, loadedFavoriteCourses)
+    .filter((course) => favoriteCourseIds.includes(course.id) && course.schoolId === activeSchool.id);
+
+  useEffect(() => {
+    const localCourses = favoriteCourseIds
+      .map((id) => getCourse(id) || readCachedCourse(id))
+      .filter((course): course is Course => Boolean(course));
+    setLoadedFavoriteCourses(localCourses);
+    if (localCourses.length) onCourseDataLoaded(localCourses);
+
+    const missingIds = favoriteCourseIds.filter((id) => !localCourses.some((course) => course.id === id));
+    if (!API_BASE_URL || !missingIds.length) return;
+
+    let cancelled = false;
+    void Promise.all(missingIds.slice(0, 80).map((id) => fetchCourseCatalogCourseFromBackend(id).catch(() => null)))
+      .then((loadedCourses) => {
+        if (cancelled) return;
+        const nextCourses = loadedCourses.filter((course): course is Course => Boolean(course));
+        nextCourses.forEach(writeCachedCourse);
+        onCourseDataLoaded(nextCourses);
+        setLoadedFavoriteCourses((current) => mergeUniqueCourses(current, nextCourses));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSchool.id, favoriteCourseIds, onCourseDataLoaded]);
 
   return (
     <section className="page-panel">
@@ -4565,8 +4909,8 @@ export default function App() {
   const [userToken, setUserToken] = useStoredState(USER_TOKEN_STORAGE_KEY, '');
   const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
   const [adminSession, setAdminSession] = useStoredState('student-life-notes:admin-session', false);
-  const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
-  const [catalogueData, setCatalogueData] = useState<PlatformData>(() => platformData);
+  const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readCachedPlatformData()?.sharedPosts || readLocalDynamicPosts());
+  const [catalogueData, setCatalogueData] = useState<PlatformData>(() => readCachedPlatformData() || platformData);
   const [catalogueLoading, setCatalogueLoading] = useState(Boolean(API_BASE_URL));
   const [catalogueError, setCatalogueError] = useState('');
   applyPlatformData(catalogueData);
@@ -4599,6 +4943,15 @@ export default function App() {
     writeLocalDynamicPosts(posts);
   };
 
+  const rememberLoadedCourses = useCallback((courses: Course[]) => {
+    if (!courses.length) return;
+    setCatalogueData((current) => {
+      const next = { ...current, courses: mergeUniqueCourses(current.courses, courses) };
+      applyPlatformData(next);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setCatalogueLoading(Boolean(API_BASE_URL));
@@ -4609,20 +4962,6 @@ export default function App() {
         setCatalogueData(data);
         setDynamicPosts(data.sharedPosts || []);
         setCatalogueError('');
-        if (API_BASE_URL) {
-          void fetchCourseCatalogCoursesFromBackend()
-            .then((courses) => {
-              if (cancelled) return;
-              setCatalogueData((current) => {
-                const next = { ...current, courses };
-                applyPlatformData(next);
-                return next;
-              });
-            })
-            .catch((error) => {
-              if (!cancelled) setCatalogueError(error instanceof Error ? error.message : '课程明细加载失败');
-            });
-        }
       })
       .catch((error) => {
         if (cancelled) return;
@@ -4807,6 +5146,8 @@ export default function App() {
             activeSchool={activeSchool}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
+            onCourseDataLoaded={rememberLoadedCourses}
+            isCatalogueLoading={catalogueLoading}
           />
         )}
         {!shouldBlockForAuth && route.name === 'course' && (
@@ -4815,6 +5156,7 @@ export default function App() {
             favoriteCourseIds={favoriteCourseIds}
             authToken={recommenderAuthToken}
             onToggleFavoriteCourse={toggleFavoriteCourse}
+            onCourseDataLoaded={rememberLoadedCourses}
           />
         )}
         {!shouldBlockForAuth && route.name === 'section' && (
@@ -4833,7 +5175,14 @@ export default function App() {
             onDynamicPostsChange={updateDynamicPosts}
           />
         )}
-        {!shouldBlockForAuth && route.name === 'search' && <SearchPage keyword={route.keyword} activeSchool={activeSchool} dynamicPosts={dynamicPosts} />}
+        {!shouldBlockForAuth && route.name === 'search' && (
+          <SearchPage
+            keyword={route.keyword}
+            activeSchool={activeSchool}
+            dynamicPosts={dynamicPosts}
+            onCourseDataLoaded={rememberLoadedCourses}
+          />
+        )}
         {route.name === 'register' && (
           <RegistrationPage
             activeSchoolId={activeSchoolId}
@@ -4860,6 +5209,7 @@ export default function App() {
             activeSchool={activeSchool}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
+            onCourseDataLoaded={rememberLoadedCourses}
           />
         )}
         {!shouldBlockForAuth && route.name === 'programmeRecommender' && (

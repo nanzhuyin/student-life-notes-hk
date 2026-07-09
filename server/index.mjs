@@ -211,6 +211,17 @@ function buildCourseCatalogResponse(courses, searchParams) {
   return { courses: items, total, page, pageSize };
 }
 
+function courseCatalogStorageFilters(searchParams) {
+  const required = String(searchParams.get('required') || '').trim().toLowerCase();
+  return {
+    schoolId: String(searchParams.get('schoolId') || '').trim(),
+    programmeId: String(searchParams.get('programmeId') || '').trim(),
+    typeKey: String(searchParams.get('typeKey') || '').trim(),
+    required: required ? ['1', 'true', 'yes'].includes(required) : undefined,
+    maxRows: String(searchParams.get('keyword') || searchParams.get('q') || '').trim() ? 5000 : 10000
+  };
+}
+
 function isValidEmailShape(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && !email.includes('..');
 }
@@ -391,7 +402,7 @@ async function route(req, res) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/course-catalog/courses') {
-    const courses = await storage.listCourseCatalogCourses();
+    const courses = await storage.listCourseCatalogCourses(courseCatalogStorageFilters(url.searchParams));
     sendJson(req, res, 200, buildCourseCatalogResponse(courses, url.searchParams));
     return;
   }
@@ -399,7 +410,7 @@ async function route(req, res) {
   const publicCourseMatch = url.pathname.match(/^\/api\/course-catalog\/courses\/([^/]+)$/);
   if (req.method === 'GET' && publicCourseMatch) {
     const courseId = decodeURIComponent(publicCourseMatch[1]);
-    const course = (await storage.listCourseCatalogCourses()).find((item) => item.id === courseId);
+    const course = await storage.getCourseCatalogCourse(courseId);
     if (!course) {
       sendJson(req, res, 404, { error: 'Course not found' });
       return;
@@ -562,13 +573,12 @@ async function route(req, res) {
         return;
       }
       const profile = validateCourseAdvisorInput(await readJson(req));
-      const courseCatalog = await storage.listCourseCatalogCourses();
-      const course = courseCatalog.find((item) => item.id === profile.courseId);
+      const course = await storage.getCourseCatalogCourse(profile.courseId);
       if (!course) {
         sendJson(req, res, 404, { ok: false, message: '没有找到这门课程', code: 'COURSE_NOT_FOUND' });
         return;
       }
-      const programmeCourses = courseCatalog.filter((item) => item.programmeId === course.programmeId);
+      const programmeCourses = await storage.listCourseCatalogCourses({ programmeId: course.programmeId, maxRows: 1000 });
       const courseKnowledge = course;
       const programmeCourseKnowledge = programmeCourses;
       const localResult = buildLocalCourseAdvisorResult({
