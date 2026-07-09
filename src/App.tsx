@@ -1,6 +1,4 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import platformDataJson from './data/platformData.json';
-import programmeOptionsJson from './data/programmeOptions.json';
 import type {
   CategoryKey,
   CategoryMeta,
@@ -16,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.74';
+const APP_VERSION = 'v1.75';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -31,15 +29,40 @@ const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
-const platformData = platformDataJson as PlatformData;
-const recommenderProgrammes = programmeOptionsJson as Array<{
+const defaultSchools: School[] = [
+  {
+    id: 'eduhk',
+    shortName: '教育大学',
+    name: '香港教育大学',
+    nameEn: 'The Education University of Hong Kong',
+    accent: '#006b4a',
+    description: '查看香港教育大学相关课程、项目方向和新生生活信息，按当前学校切换浏览。'
+  },
+  {
+    id: 'lingnan',
+    shortName: '岭南大学',
+    name: '岭南大学',
+    nameEn: 'Lingnan University',
+    accent: '#9b1b30',
+    description: '查看岭南大学相关课程、项目方向和校园生活信息，按当前学校切换浏览。'
+  }
+];
+let platformData: PlatformData = {
+  version: APP_VERSION,
+  generatedAt: '',
+  schools: defaultSchools,
+  programmes: [],
+  courses: [],
+  sharedPosts: []
+};
+let recommenderProgrammes: Array<{
   id: string;
   programmeName: string;
   programmeNameZh?: string;
   degreeLevel: string;
   school: string;
   schoolId?: string;
-}>;
+}> = [];
 
 if (typeof document !== 'undefined') {
   document.title = `${APP_NAME} ${APP_VERSION} 内测版`;
@@ -426,6 +449,64 @@ async function apiRequest<T>(path: string, options: RequestInit = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || data.error || '请求失败');
   return data as T;
+}
+
+function inferDegreeLevel(programme: Programme) {
+  const text = `${programme.title} ${programme.titleEn || ''} ${programme.studyModes.join(' ')}`.toLowerCase();
+  if (text.includes('doctor') || text.includes('博士')) return 'Doctor';
+  if (text.includes('bachelor') || text.includes('本科') || text.includes('学士')) return 'Bachelor';
+  if (text.includes('postgraduate diploma')) return 'Postgraduate Diploma';
+  if (text.includes('certificate')) return 'Certificate';
+  if (text.includes('master') || text.includes('硕士')) return 'Master';
+  return 'Other';
+}
+
+function programmeToRecommendationOption(programme: Programme) {
+  return {
+    id: programme.id,
+    programmeName: programme.titleEn || programme.title,
+    programmeNameZh: programme.titleZh || programme.title,
+    degreeLevel: inferDegreeLevel(programme),
+    school: programme.school,
+    schoolId: programme.schoolId
+  };
+}
+
+async function fetchPagedApi<T>(path: string, key: string, pageSize = 500) {
+  const items: T[] = [];
+  for (let page = 1; page < 100; page += 1) {
+    const separator = path.includes('?') ? '&' : '?';
+    const data = await apiRequest<Record<string, unknown>>(`${path}${separator}page=${page}&pageSize=${pageSize}`);
+    const pageItems = Array.isArray(data[key]) ? data[key] as T[] : [];
+    items.push(...pageItems);
+    const total = typeof data.total === 'number' ? data.total : items.length;
+    if (!pageItems.length || items.length >= total) break;
+  }
+  return items;
+}
+
+async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
+  if (!API_BASE_URL) return platformData;
+  const [schoolsData, programmes, courses, posts] = await Promise.all([
+    apiRequest<{ schools: School[] }>('/api/course-catalog/schools'),
+    fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes'),
+    fetchPagedApi<Course>('/api/course-catalog/courses', 'courses'),
+    fetchPagedApi<SharedPost>('/api/posts', 'posts')
+  ]);
+  const schools = schoolsData.schools.length ? schoolsData.schools : defaultSchools;
+  return {
+    version: APP_VERSION,
+    generatedAt: new Date().toISOString(),
+    schools,
+    programmes,
+    courses,
+    sharedPosts: posts
+  };
+}
+
+function applyPlatformData(next: PlatformData) {
+  platformData = next;
+  recommenderProgrammes = next.programmes.map(programmeToRecommendationOption);
 }
 
 function isValidEmailShape(email: string) {
@@ -4480,6 +4561,10 @@ export default function App() {
   const [adminToken, setAdminToken] = useStoredState(ADMIN_TOKEN_STORAGE_KEY, '');
   const [adminSession, setAdminSession] = useStoredState('student-life-notes:admin-session', false);
   const [dynamicPosts, setDynamicPosts] = useState<SharedPost[]>(() => readLocalDynamicPosts());
+  const [catalogueData, setCatalogueData] = useState<PlatformData>(() => platformData);
+  const [catalogueLoading, setCatalogueLoading] = useState(Boolean(API_BASE_URL));
+  const [catalogueError, setCatalogueError] = useState('');
+  applyPlatformData(catalogueData);
   const activeSchool = getSchool(activeSchoolId);
   const hasValidUserToken = !API_BASE_URL || isSignedUserToken(userToken);
   const hasValidAdminToken = !API_BASE_URL || isSignedAdminToken(adminToken);
@@ -4508,6 +4593,29 @@ export default function App() {
     setDynamicPosts(posts);
     writeLocalDynamicPosts(posts);
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    setCatalogueLoading(Boolean(API_BASE_URL));
+    void fetchPlatformDataFromBackend()
+      .then((data) => {
+        if (cancelled) return;
+        applyPlatformData(data);
+        setCatalogueData(data);
+        setDynamicPosts(data.sharedPosts || []);
+        setCatalogueError('');
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setCatalogueError(error instanceof Error ? error.message : '后端课程数据加载失败');
+      })
+      .finally(() => {
+        if (!cancelled) setCatalogueLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!API_BASE_URL) return;

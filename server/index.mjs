@@ -1,6 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { resolveMx } from 'node:dns/promises';
-import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,9 +19,6 @@ import { createStorage } from './storage.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
-const PROGRAMMES_JSON_FILE = process.env.PROGRAMMES_JSON_FILE || join(__dirname, '..', 'src', 'data', 'programmes.json');
-const PLATFORM_DATA_JSON_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, '..', 'src', 'data', 'platformData.json');
-const ADVISOR_KNOWLEDGE_JSON_FILE = process.env.ADVISOR_KNOWLEDGE_JSON_FILE || join(__dirname, '..', 'src', 'data', 'advisorKnowledge.json');
 const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash';
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({
@@ -311,26 +307,8 @@ function requireRecommendationUser(req) {
   return adminTokens.has(token) || isValidAdminToken(token) || isValidUserToken(token);
 }
 
-async function loadBundledProgrammes() {
-  return JSON.parse(await readFile(PROGRAMMES_JSON_FILE, 'utf8'));
-}
-
-async function loadPlatformData() {
-  return JSON.parse(await readFile(PLATFORM_DATA_JSON_FILE, 'utf8'));
-}
-
-async function loadAdvisorKnowledge() {
-  try {
-    return JSON.parse(await readFile(ADVISOR_KNOWLEDGE_JSON_FILE, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
 async function listProgrammeKnowledgeBase() {
-  const rows = await storage.listProgrammes();
-  if (rows.length) return rows;
-  return loadBundledProgrammes();
+  return storage.listProgrammes();
 }
 
 function buildAnalyticsSummary(events) {
@@ -584,23 +562,22 @@ async function route(req, res) {
         return;
       }
       const profile = validateCourseAdvisorInput(await readJson(req));
-      const platformData = await loadPlatformData();
-      const course = (platformData.courses || []).find((item) => item.id === profile.courseId);
+      const courseCatalog = await storage.listCourseCatalogCourses();
+      const course = courseCatalog.find((item) => item.id === profile.courseId);
       if (!course) {
         sendJson(req, res, 404, { ok: false, message: '没有找到这门课程', code: 'COURSE_NOT_FOUND' });
         return;
       }
-      const programmeCourses = (platformData.courses || []).filter((item) => item.programmeId === course.programmeId);
-      const advisorKnowledge = await loadAdvisorKnowledge();
-      const courseKnowledge = (advisorKnowledge?.courseKnowledge || []).find((item) => item.id === course.id);
-      const programmeCourseKnowledge = (advisorKnowledge?.courseKnowledge || []).filter((item) => item.programmeId === course.programmeId);
+      const programmeCourses = courseCatalog.filter((item) => item.programmeId === course.programmeId);
+      const courseKnowledge = course;
+      const programmeCourseKnowledge = programmeCourses;
       const localResult = buildLocalCourseAdvisorResult({
         course,
         programmeCourses,
         profile,
         courseKnowledge,
         programmeCourseKnowledge,
-        retrievalRules: advisorKnowledge?.retrievalRules || []
+        retrievalRules: []
       });
       const data = await callDeepSeekCourseAdvisor({
         apiKey: process.env.DEEPSEEK_API_KEY || '',
@@ -611,7 +588,7 @@ async function route(req, res) {
         programmeCourses,
         courseKnowledge,
         programmeCourseKnowledge,
-        retrievalRules: advisorKnowledge?.retrievalRules || [],
+        retrievalRules: [],
         localResult
       });
       sendJson(req, res, 200, { ok: true, data });
@@ -651,22 +628,6 @@ async function route(req, res) {
       analytics: buildAnalyticsSummary(db.analyticsEvents),
       supportTickets: db.supportTickets.slice().reverse(),
       posts: (db.posts || []).slice().sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)))
-    });
-    return;
-  }
-
-  if (req.method === 'POST' && url.pathname === '/api/admin/programmes/import-bundled') {
-    if (!requireAdmin(req)) {
-      sendJson(req, res, 401, { error: '需要管理员登录' });
-      return;
-    }
-    const programmes = await loadBundledProgrammes();
-    const saved = await storage.upsertProgrammes(programmes);
-    sendJson(req, res, 200, {
-      ok: true,
-      count: saved.length,
-      withCourseInformation: saved.filter((programme) => (programme.courseDescriptions || []).length > 0).length,
-      withoutCourseInformation: saved.filter((programme) => !(programme.courseDescriptions || []).length).length
     });
     return;
   }
