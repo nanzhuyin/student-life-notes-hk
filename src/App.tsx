@@ -16,7 +16,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.72';
+const APP_VERSION = 'v1.73';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -547,8 +547,9 @@ async function submitSupportTicket(input: Omit<SupportTicket, 'id' | 'status' | 
 
 async function fetchDynamicPosts(adminToken = '') {
   if (!API_BASE_URL) return readLocalDynamicPosts();
-  const query = adminToken ? '?includeDrafts=1' : '';
-  const data = await apiRequest<{ posts: SharedPost[] }>(`/api/posts${query}`, adminToken ? {
+  const params = new URLSearchParams({ pageSize: '500' });
+  if (adminToken) params.set('includeDrafts', '1');
+  const data = await apiRequest<{ posts: SharedPost[] }>(`/api/posts?${params.toString()}`, adminToken ? {
     headers: { Authorization: `Bearer ${adminToken}` }
   } : {});
   return data.posts || [];
@@ -976,7 +977,10 @@ function isEduhkSharedPost(post: SharedPost) {
 
 function mergeSharedPosts(dynamicPosts: SharedPost[]) {
   const byId = new Map<string, SharedPost>();
-  for (const post of platformData.sharedPosts) byId.set(post.id, post);
+  const shouldUseBundledFallback = !API_BASE_URL || dynamicPosts.length === 0;
+  if (shouldUseBundledFallback) {
+    for (const post of platformData.sharedPosts) byId.set(post.id, post);
+  }
   for (const post of dynamicPosts) byId.set(post.id, post);
   return Array.from(byId.values()).filter((post) => post.status !== 'deleted' && post.status !== 'archived');
 }

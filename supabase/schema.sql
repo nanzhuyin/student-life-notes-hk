@@ -52,6 +52,7 @@ create table if not exists public.otter_posts (
   status text not null default 'published' check (status in ('published', 'draft', 'deleted', 'archived')),
   shared boolean not null default false,
   recommended boolean not null default false,
+  pinned boolean not null default false,
   owner_id text not null default '',
   school_id text not null default 'shared',
   image_urls jsonb not null default '[]'::jsonb,
@@ -67,10 +68,12 @@ create index if not exists otter_analytics_events_school_idx on public.otter_ana
 create index if not exists otter_support_tickets_user_idx on public.otter_support_tickets (user_id);
 create index if not exists otter_support_tickets_contact_idx on public.otter_support_tickets (contact);
 create index if not exists otter_support_tickets_status_idx on public.otter_support_tickets (status);
+alter table public.otter_posts add column if not exists pinned boolean not null default false;
 create index if not exists otter_posts_section_idx on public.otter_posts (section_id);
 create index if not exists otter_posts_school_idx on public.otter_posts (school_id);
 create index if not exists otter_posts_status_idx on public.otter_posts (status);
 create index if not exists otter_posts_updated_idx on public.otter_posts (updated_at desc);
+create index if not exists otter_posts_pinned_idx on public.otter_posts (pinned, updated_at desc);
 
 alter table public.otter_users enable row level security;
 alter table public.otter_analytics_events enable row level security;

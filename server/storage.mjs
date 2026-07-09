@@ -151,6 +151,7 @@ function toPostRow(post) {
     status: post.status || 'published',
     shared: Boolean(post.shared),
     recommended: Boolean(post.recommended),
+    pinned: Boolean(post.pinned),
     owner_id: post.ownerId || '',
     school_id: post.schoolId || 'shared',
     image_urls: post.imageUrls || [],
@@ -174,6 +175,7 @@ function fromPostRow(row) {
     status: row.status,
     shared: row.shared,
     recommended: row.recommended,
+    pinned: Boolean(row.pinned),
     ownerId: row.owner_id,
     schoolId: row.school_id,
     imageUrls: row.image_urls || [],
@@ -280,6 +282,12 @@ function withoutNewRecommendationColumns(row) {
   const { master_major, other_context, ...rest } = row;
   void master_major;
   void other_context;
+  return rest;
+}
+
+function withoutNewPostColumns(row) {
+  const { pinned, ...rest } = row;
+  void pinned;
   return rest;
 }
 
@@ -512,7 +520,15 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         await writeLocalDb(db);
         return post;
       }
-      const [row] = await upsertRows('otter_posts', [toPostRow(post)]);
+      const postRow = toPostRow(post);
+      let rows;
+      try {
+        rows = await upsertRows('otter_posts', [postRow]);
+      } catch (error) {
+        if (!/pinned/i.test(error instanceof Error ? error.message : String(error))) throw error;
+        rows = await upsertRows('otter_posts', [withoutNewPostColumns(postRow)]);
+      }
+      const [row] = rows;
       return fromPostRow(row);
     },
 

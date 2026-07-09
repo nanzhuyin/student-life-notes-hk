@@ -88,12 +88,74 @@ function normalizePost(body, existing = null) {
     status,
     shared: Boolean(body.shared ?? existing?.shared ?? schoolId === 'shared'),
     recommended: Boolean(body.recommended ?? existing?.recommended ?? false),
+    pinned: Boolean(body.pinned ?? existing?.pinned ?? false),
     ownerId: String(body.ownerId ?? existing?.ownerId ?? '').trim(),
     schoolId,
     imageUrls: imageUrls.map((item) => String(item).trim()).filter(Boolean).slice(0, 12),
     metadata: typeof body.metadata === 'object' && body.metadata ? body.metadata : existing?.metadata || {},
     createdAt: existing?.createdAt || body.createdAt || now,
     updatedAt: now
+  };
+}
+
+function parsePositiveInteger(value, fallback, max = 500) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return fallback;
+  return Math.min(Math.floor(number), max);
+}
+
+function postSearchText(post) {
+  return [
+    post.id,
+    post.sectionId,
+    post.title,
+    post.summary,
+    post.content,
+    post.region,
+    post.source,
+    post.authorRole,
+    post.schoolId,
+    ...(post.tags || []),
+    ...Object.values(post.metadata || {})
+  ].join(' ').toLowerCase();
+}
+
+function matchesBooleanParam(value, actual) {
+  if (!value) return true;
+  if (['1', 'true', 'yes'].includes(value.toLowerCase())) return Boolean(actual);
+  if (['0', 'false', 'no'].includes(value.toLowerCase())) return !actual;
+  return true;
+}
+
+function buildPostListResponse(posts, searchParams) {
+  const schoolId = String(searchParams.get('schoolId') || '').trim();
+  const sectionId = String(searchParams.get('sectionId') || '').trim();
+  const keyword = String(searchParams.get('keyword') || searchParams.get('q') || '').trim().toLowerCase();
+  const recommended = String(searchParams.get('recommended') || '').trim();
+  const pinned = String(searchParams.get('pinned') || '').trim();
+  const page = parsePositiveInteger(searchParams.get('page'), 1, 100000);
+  const pageSize = parsePositiveInteger(searchParams.get('pageSize') || searchParams.get('limit'), 500, 500);
+  const filtered = posts
+    .filter((post) => !sectionId || post.sectionId === sectionId)
+    .filter((post) => !schoolId || post.schoolId === 'shared' || post.schoolId === schoolId)
+    .filter((post) => matchesBooleanParam(recommended, post.recommended))
+    .filter((post) => matchesBooleanParam(pinned, post.pinned))
+    .filter((post) => !keyword || postSearchText(post).includes(keyword))
+    .slice()
+    .sort((a, b) => {
+      const pinnedDiff = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+      if (pinnedDiff) return pinnedDiff;
+      const recommendedDiff = Number(Boolean(b.recommended)) - Number(Boolean(a.recommended));
+      if (recommendedDiff) return recommendedDiff;
+      return String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''));
+    });
+  const total = filtered.length;
+  const start = (page - 1) * pageSize;
+  return {
+    posts: filtered.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize
   };
 }
 
@@ -273,12 +335,28 @@ async function route(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/api/posts') {
     try {
-      const includeDrafts = Boolean(requireAdmin(req) && url.searchParams.get('includeDrafts') === '1');
+      const includeDrafts = url.searchParams.get('includeDrafts') === '1' ? Boolean(requireAdmin(req)) : false;
       const posts = await storage.listPosts({ includeDrafts });
-      sendJson(req, res, 200, { posts });
+      sendJson(req, res, 200, buildPostListResponse(posts, url.searchParams));
     } catch {
-      sendJson(req, res, 200, { posts: [] });
+      sendJson(req, res, 200, { posts: [], total: 0, page: 1, pageSize: 500 });
     }
+    return;
+  }
+
+  const publicPostMatch = url.pathname.match(/^\/api\/posts\/([^/]+)$/);
+  if (req.method === 'GET' && publicPostMatch) {
+    const postId = decodeURIComponent(publicPostMatch[1]);
+    const post = (await storage.listPosts({ includeDrafts: Boolean(requireAdmin(req)) })).find((item) => item.id === postId);
+    if (!post || ['deleted', 'archived'].includes(post.status)) {
+      sendJson(req, res, 404, { error: 'Post not found' });
+      return;
+    }
+    if (post.status !== 'published' && !requireAdmin(req)) {
+      sendJson(req, res, 404, { error: 'Post not found' });
+      return;
+    }
+    sendJson(req, res, 200, { post });
     return;
   }
 
