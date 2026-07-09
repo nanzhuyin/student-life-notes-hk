@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.77';
+const APP_VERSION = 'v1.78';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -1791,17 +1791,6 @@ function getProgrammeMediumBadges(programme: Programme, programmes: Programme[])
   return uniqueCompact(programmes.filter((item) => getProgrammeDisplayKey(item) === key).map((item) => item.medium));
 }
 
-function getProgrammeCourseTotal(programme: Programme) {
-  return platformData.courses.filter((course) => course.programmeId === programme.id).length;
-}
-
-function getProgrammeMetricText(programme: Programme) {
-  if (programme.totalCredits) return `${programme.totalCredits} 学分`;
-  const actualCourses = getProgrammeCourseTotal(programme);
-  const count = actualCourses || programme.courseCount || 0;
-  return count > 0 ? `${count} 门课程` : '暂无课程条目';
-}
-
 function groupProgrammesByFaculty(programmes: Programme[]) {
   const groups = new Map<string, Programme[]>();
   getDisplayProgrammes(programmes).forEach((programme) => {
@@ -2225,7 +2214,7 @@ function SchoolPanel({
             <span className="school-card-code">{schoolAbbreviation(school)}</span>
             <strong>{school.name}</strong>
             <span>{school.nameEn}</span>
-            <small>{getProgrammeCountForSchool(school.id)} 个项目 · {getCourseCountForSchool(school.id)} 门课程</small>
+            <small>按当前学校切换课程和生活内容</small>
           </button>
         ))}
       </div>
@@ -2441,7 +2430,6 @@ function CoursesPage({
       .filter((course) => typeKey === 'all' || course.typeKey === typeKey)
       .filter((course) => courseMatches(course, keyword));
   }, [activeProgramme, keyword, programmeCourses, typeKey]);
-  const allSchoolCoursesCount = getCourseCountForSchool(activeSchool.id);
   const programmeListLoading = isCatalogueLoading && programmes.length === 0;
   const activeProgrammeLoading = Boolean(activeProgramme && coursesLoading && !programmeCourses.length);
 
@@ -2451,12 +2439,6 @@ function CoursesPage({
         <span className="eyebrow">{schoolAbbreviation(activeSchool)} Course Database</span>
         <h1>专业课程知识库</h1>
         <p>先按学历和学院缩小范围，再选择项目查看课程。课程详情页会显示官网文本、学生视角指南和 AI 课程顾问入口。</p>
-        <div className="database-stat-strip">
-          <span><strong>{getProgrammeCountForSchool(activeSchool.id)}</strong> 项目</span>
-          <span><strong>{allSchoolCoursesCount}</strong> 课程</span>
-          <span><strong>{programmeOptions.length}</strong> 当前候选项目</span>
-          <span><strong>{activeProgramme ? courses.length : 0}</strong> 当前课程结果</span>
-        </div>
       </div>
       <div className="page-toolbar-actions page-back-row">
         {activeProgramme ? (
@@ -2523,8 +2505,8 @@ function CoursesPage({
             : activeProgrammeLoading
               ? '正在加载当前项目课程'
               : activeProgramme
-            ? `当前项目显示 ${courses.length} 门课程`
-            : `当前筛选显示 ${programmeOptions.length} 个专业 / 项目`}
+            ? '当前项目课程已加载，可继续按课程类型或关键词筛选'
+            : '当前筛选结果已更新，请选择专业 / 项目查看课程'}
         </div>
       </div>
 
@@ -2546,7 +2528,7 @@ function CoursesPage({
             <div className="programme-module" key={group.faculty}>
               <div className="programme-module-head">
                 <strong>{formatFacultyName(group.faculty)}</strong>
-                <span>{group.programmes.length} 个专业</span>
+                <span>选择专业查看课程</span>
               </div>
               <div className="programme-grid">
                 {group.programmes.map((programme) => (
@@ -2558,7 +2540,6 @@ function CoursesPage({
                     </div>
                     <strong>{getProgrammeTitle(programme)}</strong>
                     {getProgrammeSubtitle(programme) && <em>{getProgrammeSubtitle(programme)}</em>}
-                    <span>{getProgrammeMetricText(programme)}</span>
                     <small>{getUnitText(programme)}</small>
                     {programme.statusBadge && programme.statusBadge !== programme.medium && <small>{programme.statusBadge}</small>}
                   </button>
@@ -2580,7 +2561,6 @@ function CoursesPage({
             ))}
             <span>{getUnitText(activeProgramme)}</span>
             <span>{activeProgramme.studyModes.join(' / ') || '以项目说明为准'}</span>
-            <span>{getProgrammeMetricText(activeProgramme)}</span>
           </div>
           {activeProgramme.unitNote && <small>{activeProgramme.unitNote}</small>}
           {activeProgramme.translationNote && <small>{activeProgramme.translationNote}</small>}
@@ -3309,12 +3289,6 @@ function SectionPage({
         <span className="eyebrow">{activeSchool.shortName} Life Database</span>
         <h1>{meta?.name || '生活分区'}</h1>
         <p>{posts.length ? meta?.description || '当前学校相关生活信息。' : '这个分区当前学校暂时还没有上传内容。'}</p>
-        <div className="database-stat-strip">
-          <span><strong>{posts.length}</strong> 收录条目</span>
-          <span><strong>{regionOptions.length}</strong> 地区</span>
-          <span><strong>{tagOptions.length}</strong> 标签</span>
-          <span><strong>{filteredPosts.length}</strong> 当前结果</span>
-        </div>
       </div>
       <div className="page-toolbar-actions">
         {canEdit ? (
@@ -3389,7 +3363,7 @@ function SectionPage({
           </label>
         </div>
 
-        <div className="filter-count">当前显示 {filteredPosts.length} / {posts.length} 条</div>
+        <div className="filter-count">筛选结果已更新</div>
       </div>
 
       <PostGrid
@@ -3451,11 +3425,6 @@ function PostDetailPage({
         <h1>{post.title}</h1>
         <p>{post.summary || post.region}</p>
         <div className="tag-row">{post.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-        <div className="database-stat-strip">
-          <span><strong>{post.region || '香港'}</strong> 地区</span>
-          <span><strong>{post.createdAt}</strong> 更新</span>
-          <span><strong>{post.tags.length}</strong> 标签</span>
-        </div>
       </section>
       {post.metadata && Object.keys(post.metadata).length > 0 && (
         <section className="source-card">
@@ -3576,7 +3545,7 @@ function SearchPage({
       )}
 
       <section className="section">
-        <div className="section-head"><h2>课程结果</h2><p>{coursesLoading ? '正在从后端搜索课程。' : `当前显示 ${courses.length} 条，最多显示 80 条。`}</p></div>
+        <div className="section-head"><h2>课程结果</h2><p>{coursesLoading ? '正在从后端搜索课程。' : '展示与关键词相关的课程结果。'}</p></div>
         {coursesError && <div className="empty-state"><strong>课程搜索失败</strong><span>{coursesError}</span></div>}
         {courses.length > 0 ? (
           <div className="course-list compact">
@@ -3593,7 +3562,7 @@ function SearchPage({
       </section>
 
       <section className="section">
-        <div className="section-head"><h2>生活内容结果</h2><p>当前显示 {posts.length} 条，最多显示 30 条。</p></div>
+        <div className="section-head"><h2>生活内容结果</h2><p>展示与关键词相关的生活内容。</p></div>
         {posts.length > 0 ? (
           <PostGrid posts={posts} />
         ) : (
@@ -4110,7 +4079,7 @@ function AboutPage() {
       <div className="about-card">
         <p>{DISCLAIMER}</p>
         <p>{APP_VERSION} 支持香港教育大学与岭南大学两个平台。课程库和收藏按学校独立；生活类内容按当前学校过滤显示。</p>
-        <p>当前数据：{platformData.schools.length} 个学校、{platformData.programmes.length || 129} 个项目、{platformData.courses.length || 3258} 条课程、{platformData.sharedPosts.length} 条生活内容。</p>
+        <p>课程库和生活内容已迁移到后端按需加载，页面会根据当前学校显示可浏览内容。</p>
         <button className="secondary-action" onClick={() => go('/policy')}>查看隐私与学术诚信说明</button>
       </div>
     </section>
@@ -4263,11 +4232,6 @@ function ProgrammeRecommenderPage({
         <span className="eyebrow">{schoolAbbreviation(activeSchool)} AI Assistant</span>
         <h1>专业推荐助手</h1>
         <p>先限定当前学校，再基于已收录专业知识库推荐候选专业。AI 只分析后端检索出的候选资料，不直接搜索网页。</p>
-        <div className="database-stat-strip">
-          <span><strong>{programmeOptions.length}</strong> 已收录专业</span>
-          <span><strong>{canUseAi ? '可用' : '需登录'}</strong> AI 状态</span>
-          <span><strong>{API_BASE_URL ? '后端' : '未配置'}</strong> 接口</span>
-        </div>
       </div>
 
       <div className="recommender-layout">
@@ -4315,7 +4279,7 @@ function ProgrammeRecommenderPage({
                 ))}
               </select>
               <small className="recommender-selected-meta">
-                当前仅显示 {activeSchool.name} 的 {programmeOptions.length} 个已收录专业{activeSchool.id === 'lingnan' ? '，本科专业暂不纳入 AI 知识库' : ''}；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
+                当前仅显示 {activeSchool.name} 已纳入知识库的专业{activeSchool.id === 'lingnan' ? '，本科专业暂不纳入 AI 知识库' : ''}；选择后系统会优先分析这个目标专业是否适合你，并自动使用该专业的学位层级。
               </small>
             </label>
           )}
