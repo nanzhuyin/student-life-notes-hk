@@ -15,16 +15,21 @@ import {
   validateStudentProfile
 } from './programme-recommender.mjs';
 import { createStorage } from './storage.mjs';
+import { contentPosts } from '../content/posts.mjs';
+import { courseSourceIndex } from '../content/course-source-index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
+const CATALOG_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, 'data', 'platformData.json');
 const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash';
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({
   dbFile: DB_FILE,
+  catalogFile: CATALOG_FILE,
   supabaseUrl: process.env.SUPABASE_URL || '',
-  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  seedPosts: contentPosts
 });
 const adminTokens = new Map();
 const adminAccounts = process.env.ADMIN_ACCOUNTS_JSON ? JSON.parse(process.env.ADMIN_ACCOUNTS_JSON) : [];
@@ -386,6 +391,16 @@ async function route(req, res) {
     } catch {
       sendJson(req, res, 200, { posts: [], total: 0, page: 1, pageSize: 500 });
     }
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/course-sources') {
+    const schoolId = String(url.searchParams.get('schoolId') || '').trim();
+    const programmeId = String(url.searchParams.get('programmeId') || '').trim();
+    const sources = courseSourceIndex
+      .filter((item) => !schoolId || item.schoolId === schoolId)
+      .filter((item) => !programmeId || item.programmeId === programmeId);
+    sendJson(req, res, 200, { sources, total: sources.length });
     return;
   }
 

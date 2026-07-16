@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.78';
+const APP_VERSION = 'v1.82';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -29,6 +29,22 @@ const SUPPORT_STORAGE_KEY = 'student-life-notes:support-tickets';
 const ADMIN_TOKEN_STORAGE_KEY = 'student-life-notes:admin-token';
 const DYNAMIC_POSTS_STORAGE_KEY = 'student-life-notes:dynamic-posts';
 const API_BASE_URL = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+interface CourseSourceRecord {
+  id: string;
+  postId: string;
+  schoolId: SchoolId;
+  programmeId: string;
+  programmeName: string;
+  abbreviation: string;
+  title: string;
+  url: string;
+  topic: string;
+  reviewStatus: string;
+  placement?: 'programme' | 'school';
+  screenshotPath?: string;
+  screenshotUrl?: string;
+}
 const BACKEND_CACHE_PREFIX = 'student-life-notes:backend-cache:v2:';
 const BACKEND_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const COURSE_PAGE_SIZE = 500;
@@ -606,24 +622,34 @@ async function fetchPagedApi<T>(path: string, key: string, pageSize = 500, maxPa
   return items;
 }
 
+async function fetchStaticPlatformData(): Promise<PlatformData> {
+  const response = await fetch(`${APP_BASE_URL}data/platform-data.json`);
+  if (!response.ok) throw new Error(`静态内容包加载失败（${response.status}）`);
+  return response.json() as Promise<PlatformData>;
+}
+
 async function fetchPlatformDataFromBackend(): Promise<PlatformData> {
-  if (!API_BASE_URL) return platformData;
-  const [schoolsData, programmes, posts] = await Promise.all([
-    apiRequest<{ schools: School[] }>('/api/course-catalog/schools'),
-    fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes', COURSE_PAGE_SIZE),
-    fetchPagedApi<SharedPost>('/api/posts', 'posts')
-  ]);
-  const schools = schoolsData.schools.length ? schoolsData.schools : defaultSchools;
-  const data = {
-    version: APP_VERSION,
-    generatedAt: new Date().toISOString(),
-    schools,
-    programmes,
-    courses: [],
-    sharedPosts: posts
-  };
-  writeBackendCache('platform-shell', data);
-  return data;
+  if (!API_BASE_URL) return fetchStaticPlatformData();
+  try {
+    const [schoolsData, programmes, posts] = await Promise.all([
+      apiRequest<{ schools: School[] }>('/api/course-catalog/schools'),
+      fetchPagedApi<Programme>('/api/course-catalog/programmes', 'programmes', COURSE_PAGE_SIZE),
+      fetchPagedApi<SharedPost>('/api/posts', 'posts')
+    ]);
+    const schools = schoolsData.schools.length ? schoolsData.schools : defaultSchools;
+    const data = {
+      version: APP_VERSION,
+      generatedAt: new Date().toISOString(),
+      schools,
+      programmes,
+      courses: [],
+      sharedPosts: posts
+    };
+    writeBackendCache('platform-shell', data);
+    return data;
+  } catch {
+    return fetchStaticPlatformData();
+  }
 }
 
 async function fetchCourseCatalogCoursesFromBackend(query: CourseCatalogQuery = {}, pageSize = COURSE_PAGE_SIZE, maxPages = 100) {
@@ -1173,7 +1199,7 @@ function makeHousingPlaceholder(post: SharedPost) {
 function getPostImage(post: SharedPost) {
   const isPropertySection = ['housing', 'commute'].includes(post.sectionId);
   const manual = post.imageUrls?.find((url) => url.trim());
-  if (!isPropertySection && manual) return manual;
+  if (manual) return resolvePostAssetUrl(manual);
   if (!isPropertySection) return '';
   const text = [post.title, post.region || '', post.content].join(' ');
   const matched = housingImageRules.find((rule) => rule.keywords.some((keyword) => text.includes(keyword)));
@@ -1185,16 +1211,106 @@ function getPostImages(post: SharedPost) {
     const generated = getPostImage(post);
     return generated ? [generated] : [];
   }
-  const manual = post.imageUrls?.filter((url) => url.trim()) || [];
+  const manual = post.imageUrls?.filter((url) => url.trim()).map(resolvePostAssetUrl) || [];
   if (manual.length) return manual;
   const generated = getPostImage(post);
   return generated ? [generated] : [];
+}
+
+let staticCourseSourcesPromise: Promise<CourseSourceRecord[]> | null = null;
+
+function fetchStaticCourseSources() {
+  if (!staticCourseSourcesPromise) {
+    staticCourseSourcesPromise = fetch(`${APP_BASE_URL}data/course-sources.json`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`课程来源索引加载失败（${response.status}）`);
+        return response.json() as Promise<CourseSourceRecord[]>;
+      });
+  }
+  return staticCourseSourcesPromise;
+}
+
+async function fetchCourseSources(schoolId: SchoolId, programmeId: string) {
+  if (!programmeId) return [];
+  if (API_BASE_URL) {
+    try {
+      const params = new URLSearchParams({ schoolId, programmeId });
+      const data = await apiRequest<{ sources: CourseSourceRecord[] }>(`/api/course-sources?${params.toString()}`);
+      return data.sources || [];
+    } catch {
+      // A static copy keeps the source library available when the free backend is asleep.
+    }
+  }
+  const sources = await fetchStaticCourseSources();
+  return sources.filter((source) => source.schoolId === schoolId && source.programmeId === programmeId);
+}
+
+function getCourseSourceScreenshot(source: CourseSourceRecord) {
+  if (source.screenshotUrl) return resolvePostAssetUrl(source.screenshotUrl);
+  if (!source.screenshotPath) return '';
+  return resolvePostAssetUrl(`/images/course-sources/${source.postId}.png`);
+}
+
+function CourseSourceSection({ sources, title, headingId }: { sources: CourseSourceRecord[]; title: string; headingId: string }) {
+  if (!sources.length) return null;
+  return (
+    <section className="programme-source-section" aria-labelledby={headingId}>
+      <div className="section-head">
+        <div>
+          <span className="eyebrow">Source Index</span>
+          <h2 id={headingId}>{title}</h2>
+        </div>
+        <span>{sources.length} 篇</span>
+      </div>
+      <div className="programme-source-list">
+        {sources.map((source) => {
+          const statusLabel = source.reviewStatus === '已归档核验'
+            ? '已核对正文'
+            : source.reviewStatus === '高价值候选'
+              ? '课程相关线索'
+              : '检索线索';
+          const screenshotUrl = getCourseSourceScreenshot(source);
+          return (
+            <article className="programme-source-item" key={source.id}>
+              {screenshotUrl && (
+                <a className="source-screenshot-link" href={screenshotUrl} target="_blank" rel="noreferrer" aria-label={`查看 ${source.title} 的归档截图`}>
+                  <img src={screenshotUrl} alt={`${source.title} 归档截图`} loading="lazy" />
+                  <span>查看归档截图</span>
+                </a>
+              )}
+              <div className="source-summary">
+                <span className={`source-review-badge ${source.reviewStatus === '已归档核验' ? 'verified' : ''}`}>{statusLabel}</span>
+                <strong>{source.title}</strong>
+                <small>{source.topic}</small>
+              </div>
+              <a className="source-original-link" href={source.url} target="_blank" rel="noreferrer">查看原帖 ↗</a>
+            </article>
+          );
+        })}
+      </div>
+      <p className="programme-resource-notice">索引用于追溯学生经验来源；只有“已核对正文”的资料参与公开课程结论，其余仅作为后续研究线索。</p>
+      <aside className="third-party-media-notice">
+        <strong>第三方图片说明</strong>
+        <p>归档截图仅用于识别原帖、核验课程经验和辅助学生理解，著作权、商标及相关权利归原作者、发布平台或相应权利人所有。Otter 不主张取得图片所有权，也不代表学校或原作者立场；请优先点击“查看原帖”阅读原始内容。权利人如希望更正署名或移除图片，可通过站内“建议”窗口联系管理员。</p>
+      </aside>
+    </section>
+  );
+}
+
+function resolvePostAssetUrl(url: string) {
+  const trimmed = url.trim();
+  if (/^(?:https?:|data:|blob:)/i.test(trimmed)) return trimmed;
+  return `${APP_BASE_URL}${trimmed.replace(/^\.?\/+/, '')}`;
 }
 
 function getSharedPostText(post: SharedPost) {
   return [post.id, post.title, post.summary || '', post.content, post.region || '', post.tags.join(' ')]
     .join(' ')
     .toLowerCase();
+}
+
+function formatPostDate(value: string) {
+  return value.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || value;
 }
 
 function isEduhkSharedPost(post: SharedPost) {
@@ -2275,12 +2391,14 @@ function HomePage({ activeSchool, onChooseSchool, dynamicPosts }: { activeSchool
 
 function CoursesPage({
   activeSchool,
+  dynamicPosts,
   favoriteCourseIds,
   onToggleFavoriteCourse,
   onCourseDataLoaded,
   isCatalogueLoading
 }: {
   activeSchool: School;
+  dynamicPosts: SharedPost[];
   favoriteCourseIds: string[];
   onToggleFavoriteCourse: (id: string) => void;
   onCourseDataLoaded: (courses: Course[]) => void;
@@ -2310,6 +2428,8 @@ function CoursesPage({
   const [programmeCourses, setProgrammeCourses] = useState<Course[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [coursesError, setCoursesError] = useState('');
+  const [programmeSources, setProgrammeSources] = useState<CourseSourceRecord[]>([]);
+  const [schoolSources, setSchoolSources] = useState<CourseSourceRecord[]>([]);
 
   useEffect(() => {
     const next = getStoredObject(courseFilterKey, defaultCourseFilters);
@@ -2384,6 +2504,12 @@ function CoursesPage({
   const activeProgramme = programmeOptions.find((programme) => programme.id === programmeId);
   const programmeGroups = useMemo(() => groupProgrammesByFaculty(programmeOptions), [programmeOptions]);
   const activeProgrammeId = activeProgramme?.id || '';
+  const relatedCoursePosts = useMemo(
+    () => getVisibleSharedPosts(activeSchool.id, dynamicPosts)
+      .filter((post) => post.sectionId === 'courses' && post.status === 'published')
+      .filter((post) => post.metadata?.programmeId === activeProgrammeId),
+    [activeProgrammeId, activeSchool.id, dynamicPosts]
+  );
 
   useEffect(() => {
     if (!activeProgrammeId) {
@@ -2423,6 +2549,40 @@ function CoursesPage({
       cancelled = true;
     };
   }, [activeProgrammeId, activeSchool.id, onCourseDataLoaded]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setProgrammeSources([]);
+    if (!activeProgrammeId) return;
+    void fetchCourseSources(activeSchool.id, activeProgrammeId)
+      .then((sources) => {
+        if (!cancelled) setProgrammeSources(sources);
+      })
+      .catch(() => {
+        if (!cancelled) setProgrammeSources([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProgrammeId, activeSchool.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSchoolSources([]);
+    const generalResourceId = activeSchool.id === 'eduhk'
+      ? 'eduhk-general-course-resources'
+      : 'lingnan-general-course-resources';
+    void fetchCourseSources(activeSchool.id, generalResourceId)
+      .then((sources) => {
+        if (!cancelled) setSchoolSources(sources);
+      })
+      .catch(() => {
+        if (!cancelled) setSchoolSources([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSchool.id]);
 
   const courses = useMemo(() => {
     if (!activeProgramme) return [];
@@ -2624,6 +2784,28 @@ function CoursesPage({
           </article>
         ))}
       </div>
+
+      {activeProgramme && relatedCoursePosts.length > 0 && (
+        <section className="programme-resource-section" aria-labelledby="programme-resource-title">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Student Experience</span>
+              <h2 id="programme-resource-title">课程经验与选课参考</h2>
+            </div>
+            <span>{relatedCoursePosts.length} 篇已核对资料</span>
+          </div>
+          <PostGrid posts={relatedCoursePosts} />
+          <p className="programme-resource-notice">学生经验仅供比较，课程与考核安排以学校当学期公布为准。</p>
+        </section>
+      )}
+
+      {!activeProgramme && (
+        <CourseSourceSection sources={schoolSources} title="全校选课与就读帖子" headingId="school-course-source-title" />
+      )}
+
+      {activeProgramme && (
+        <CourseSourceSection sources={programmeSources} title="学生课程帖子索引" headingId="programme-source-title" />
+      )}
     </section>
   );
 }
@@ -3198,7 +3380,7 @@ function PostGrid({ posts, canEdit = false, onEdit }: { posts: SharedPost[]; can
               <p>{post.summary || post.content.slice(0, 120)}</p>
               <div className="post-meta">
                 <span>{post.region || '香港'}</span>
-                <span>{post.createdAt}</span>
+                <span>{formatPostDate(post.createdAt)}</span>
               </div>
               <div className="tag-row">
                 {post.pinned && <span>置顶</span>}
@@ -3378,6 +3560,111 @@ function SectionPage({
   );
 }
 
+function renderPostInlineText(text: string) {
+  return text.split(/(\[[^\]]+\]\((?:https?:\/\/|\/)[^)]+\)|https?:\/\/[^\s]+)/g).filter(Boolean).map((part, index) => {
+    const markdownLink = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|\/)[^)]+)\)$/);
+    if (markdownLink) {
+      const [, label, url] = markdownLink;
+      const href = url.startsWith('/') ? resolvePostAssetUrl(url) : url;
+      return <a key={`${url}-${index}`} href={href} target="_blank" rel="noreferrer">{label}</a>;
+    }
+    if (/^https?:\/\//.test(part)) {
+      return <a key={`${part}-${index}`} href={part} target="_blank" rel="noreferrer">{part}</a>;
+    }
+    return part;
+  });
+}
+
+function renderPostArticle(content: string, images: string[], title: string) {
+  const lines = content.split('\n').map((line) => line.trim());
+  const blocks = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    const imageMatch = line.match(/^\[\[image:(\d+)(?:\|(.+))?\]\]$/);
+    if (imageMatch) {
+      const imageIndex = Number(imageMatch[1]);
+      const imageUrl = images[imageIndex];
+      if (imageUrl) {
+        const caption = imageMatch[2] || `${title}图解 ${imageIndex + 1}`;
+        blocks.push(
+          <figure className="post-article-figure" key={`image-${index}`}>
+            <img src={imageUrl} alt={caption} />
+            <figcaption>{caption}</figcaption>
+          </figure>
+        );
+      }
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('## ')) {
+      blocks.push(<h2 key={`h2-${index}`}>{line.slice(3)}</h2>);
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('### ')) {
+      blocks.push(<h3 key={`h3-${index}`}>{line.slice(4)}</h3>);
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('> ')) {
+      const notes = [];
+      while (index < lines.length && lines[index].startsWith('> ')) {
+        notes.push(lines[index].slice(2));
+        index += 1;
+      }
+      blocks.push(
+        <aside className="post-article-note" key={`note-${index}`}>
+          {notes.map((note, noteIndex) => <p key={`${note}-${noteIndex}`}>{renderPostInlineText(note)}</p>)}
+        </aside>
+      );
+      continue;
+    }
+
+    if (line.startsWith('- ')) {
+      const items = [];
+      while (index < lines.length && lines[index].startsWith('- ')) {
+        items.push(lines[index].slice(2));
+        index += 1;
+      }
+      blocks.push(
+        <ul key={`list-${index}`}>
+          {items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{renderPostInlineText(item)}</li>)}
+        </ul>
+      );
+      continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\d+\.\s/.test(lines[index])) {
+        items.push(lines[index].replace(/^\d+\.\s/, ''));
+        index += 1;
+      }
+      blocks.push(
+        <ol key={`steps-${index}`}>
+          {items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{renderPostInlineText(item)}</li>)}
+        </ol>
+      );
+      continue;
+    }
+
+    blocks.push(<p key={`paragraph-${index}`}>{renderPostInlineText(line)}</p>);
+    index += 1;
+  }
+
+  return blocks;
+}
+
 function PostDetailPage({
   id,
   activeSchool,
@@ -3395,13 +3682,26 @@ function PostDetailPage({
   const canEdit = Boolean(adminToken || (!API_BASE_URL && adminSession));
   const post = getVisibleSharedPosts(activeSchool.id, dynamicPosts).find((item) => item.id === id);
   if (!post) return <EmptyPage title="没有找到这篇内容" />;
-  const paragraphs = post.content.split('\n').filter(Boolean);
   const postImages = getPostImages(post);
+  const hasInlineImages = /\[\[image:\d+/.test(post.content);
+  const hasThirdPartyReferenceImages = (post.imageUrls || []).some((url) =>
+    url.includes('/guides/field-notes/') || url.includes('/guides/lu-grade-check/')
+  );
+  const postBackPath = post.sectionId === 'courses' && post.metadata?.programmeId
+    ? `/courses?programme=${encodeURIComponent(post.metadata.programmeId)}`
+    : `/section/${post.sectionId}`;
+  const hiddenMetadataKeys = new Set(['programmeId', 'evidenceType', 'reviewStatus', 'publicUse', 'thirdPartyMedia']);
+  const metadataLabels: Record<string, string> = {
+    programmeName: '对应专业',
+    evidenceCount: '交叉参考'
+  };
+  const publicMetadata = Object.entries(post.metadata || {})
+    .filter(([key, value]) => value && !hiddenMetadataKeys.has(key));
 
   return (
     <article className="detail-page database-detail-page post-detail-page">
       <div className="detail-topbar">
-        <button className="back-button detail-back-button" onClick={() => goBack(`/section/${post.sectionId}`)}>← 返回分区</button>
+        <button className="back-button detail-back-button" onClick={() => goBack(postBackPath)}>← 返回上一页</button>
         {canEdit && <button className="detail-save-button" onClick={() => setEditorOpen(true)}>编辑这篇</button>}
       </div>
       {editorOpen && (
@@ -3426,25 +3726,31 @@ function PostDetailPage({
         <p>{post.summary || post.region}</p>
         <div className="tag-row">{post.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
       </section>
-      {post.metadata && Object.keys(post.metadata).length > 0 && (
+      {publicMetadata.length > 0 && (
         <section className="source-card">
           <strong>补充信息</strong>
-          {Object.entries(post.metadata).filter(([, value]) => value).map(([key, value]) => (
-            <span key={key}>{key}：{value}</span>
+          {publicMetadata.map(([key, value]) => (
+            <span key={key}>{metadataLabels[key] || key}：{key === 'evidenceCount' ? `${value} 条资料` : value}</span>
           ))}
         </section>
       )}
-      {Boolean(postImages.length) && (
+      {Boolean(postImages.length) && !hasInlineImages && (
         <section className="post-image-grid post-detail-image-grid">
           {postImages.map((url) => <img key={url} src={url} alt={post.title} loading="lazy" />)}
         </section>
       )}
+      {hasThirdPartyReferenceImages && (
+        <aside className="third-party-media-notice post-media-notice">
+          <strong>图片与界面资料说明</strong>
+          <p>本页部分截图由用户提供或整理自公开页面，仅用于说明操作入口和核验流程。截图中的界面、标识、文字与图片权利归原作者、岭南大学、发布平台或相应权利人所有；Otter 不主张图片所有权，不构成学校授权或官方指引。界面可能更新，请以学校当期系统为准。权利人可通过站内“建议”窗口申请更正署名或移除。</p>
+        </aside>
+      )}
       <section className="detail-body database-article-body">
-        {paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+        {renderPostArticle(post.content, postImages, post.title)}
       </section>
       <section className="source-card">
         <strong>信息来源说明</strong>
-        <span>{post.source || '个人经验整理'} · {post.createdAt}</span>
+        <span>{post.source || '个人经验整理'} · {formatPostDate(post.createdAt)}</span>
       </section>
     </article>
   );
@@ -4090,6 +4396,7 @@ function PolicyPage() {
   const policyItems = [
     ['隐私政策', '本工具当前要求邮箱注册或登录后查看课程、收藏和生活内容；注册只保存邮箱、用户名、学校和加密后的密码，不要求学号、证件号码或定位信息。'],
     ['公开资料边界', '课程名称、项目要求、学分、开课学期、先修要求和来源链接来自公开网页或学生整理资料；所有重要选课决定必须回到学校官网、handbook、课程系统或项目办公室通知核对。'],
+    ['第三方图片与转载资料', '部分操作截图和课程来源截图由用户提供或取自公开页面，只用于资料核验、入口识别和学习参考。相关著作权、商标和其他权利归原作者、学校、发布平台或相应权利人所有；本工具不主张所有权。权利人可通过站内“建议”窗口要求补充署名、更正来源或移除。'],
     ['避免学术不端', '本工具只能帮助查找、对照和整理课程信息。不得用于代写作业、生成可直接提交的作业、伪造成绩、规避考核、冒充学校通知，或帮助任何违反学术诚信的行为。'],
     ['非官方说明', '本网站不使用学校官方 logo，不声称获得香港教育大学、岭南大学或任何机构授权、认可或背书。页面颜色和名称仅用于区分信息来源。']
   ];
@@ -4941,7 +5248,7 @@ export default function App() {
 
   useEffect(() => {
     if (!API_BASE_URL) return;
-    if (currentUser && !hasValidUserToken) {
+    if (currentUser && !hasValidUserToken && !shouldUseLocalDebugUser) {
       setCurrentUser(null);
       setUserToken('');
     }
@@ -4949,7 +5256,7 @@ export default function App() {
       setAdminToken('');
       setAdminSession(false);
     }
-  }, [adminSession, adminToken, currentUser, hasValidAdminToken, hasValidUserToken]);
+  }, [adminSession, adminToken, currentUser, hasValidAdminToken, hasValidUserToken, shouldUseLocalDebugUser]);
 
   useEffect(() => {
     document.body.classList.toggle('theme-eduhk', activeSchoolId === 'eduhk');
@@ -5108,6 +5415,7 @@ export default function App() {
         {!shouldBlockForAuth && route.name === 'courses' && (
           <CoursesPage
             activeSchool={activeSchool}
+            dynamicPosts={dynamicPosts}
             favoriteCourseIds={favoriteCourseIds}
             onToggleFavoriteCourse={toggleFavoriteCourse}
             onCourseDataLoaded={rememberLoadedCourses}

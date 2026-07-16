@@ -390,10 +390,25 @@ function withoutNewPostColumns(row) {
   return rest;
 }
 
-export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
+export function createStorage({ dbFile, catalogFile = '', supabaseUrl, supabaseServiceRoleKey, seedPosts = [] }) {
   const hasSupabase = Boolean(supabaseUrl && supabaseServiceRoleKey);
   const supabaseBase = supabaseUrl.replace(/\/$/, '').replace(/\/rest\/v1$/, '');
   const restBase = hasSupabase ? `${supabaseBase}/rest/v1` : '';
+  let localCatalogPromise;
+
+  function mergeSeedPosts(storedPosts = []) {
+    const postsById = new Map();
+    for (const post of seedPosts) postsById.set(post.id, post);
+    for (const post of storedPosts) postsById.set(post.id, post);
+    return Array.from(postsById.values());
+  }
+
+  function sortedPosts(storedPosts = [], includeDrafts = true) {
+    return mergeSeedPosts(storedPosts)
+      .filter((post) => includeDrafts || post.status === 'published')
+      .slice()
+      .sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)));
+  }
 
   async function supabaseResponse(path, options = {}) {
     let lastError;
@@ -442,6 +457,19 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
     await writeFile(dbFile, JSON.stringify(db, null, 2) + '\n');
   }
 
+  async function readLocalCatalog() {
+    if (!catalogFile) return { schools: [], programmes: [], courses: [] };
+    localCatalogPromise ||= readFile(catalogFile, 'utf8')
+      .then((content) => JSON.parse(content))
+      .then((catalog) => ({
+        schools: Array.isArray(catalog.schools) ? catalog.schools : [],
+        programmes: Array.isArray(catalog.programmes) ? catalog.programmes : [],
+        courses: Array.isArray(catalog.courses) ? catalog.courses : []
+      }))
+      .catch(() => ({ schools: [], programmes: [], courses: [] }));
+    return localCatalogPromise;
+  }
+
   async function selectRows(table, query) {
     return supabaseRequest(`/${table}?${query}`);
   }
@@ -488,6 +516,7 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         const db = await readLocalDb();
         return {
           ...db,
+          posts: sortedPosts(db.posts),
           analyticsEventTotal: db.analyticsEvents.length,
           analyticsEventsTruncated: false
         };
@@ -505,7 +534,7 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
         analyticsEventTotal,
         analyticsEventsTruncated: analyticsEventTotal > analyticsRowsDesc.length,
         supportTickets: supportTickets.map(fromTicketRow),
-        posts: posts.map(fromPostRow)
+        posts: sortedPosts(posts.map(fromPostRow))
       };
     },
 
@@ -610,14 +639,11 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
     async listPosts({ includeDrafts = false } = {}) {
       if (!hasSupabase) {
         const db = await readLocalDb();
-        return db.posts
-          .filter((post) => includeDrafts || post.status === 'published')
-          .slice()
-          .sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)));
+        return sortedPosts(db.posts, includeDrafts);
       }
       const statusQuery = includeDrafts ? '' : '&status=eq.published';
       const rows = await selectRows('otter_posts', `select=*&order=updated_at.desc${statusQuery}`).catch(() => []);
-      return rows.map(fromPostRow);
+      return sortedPosts(rows.map(fromPostRow), includeDrafts);
     },
 
     async upsertPost(post) {
@@ -642,19 +668,27 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
     },
 
     async listPlatformSchools() {
-      if (!hasSupabase) return [];
+      if (!hasSupabase) return (await readLocalCatalog()).schools;
       const rows = await selectRows('platform_schools', 'select=*&order=id.asc').catch(() => []);
       return rows.map(fromPlatformSchoolRow);
     },
 
     async listCourseProgrammes() {
-      if (!hasSupabase) return [];
+      if (!hasSupabase) return (await readLocalCatalog()).programmes;
       const rows = await selectRows('course_programmes', 'select=*&order=school_id.asc,faculty.asc,title.asc').catch(() => []);
       return rows.map(fromCourseProgrammeRow);
     },
 
     async listCourseCatalogCourses(filters = {}) {
-      if (!hasSupabase) return [];
+      if (!hasSupabase) {
+        return (await readLocalCatalog()).courses.filter((course) => {
+          if (filters.schoolId && course.schoolId !== filters.schoolId) return false;
+          if (filters.programmeId && course.programmeId !== filters.programmeId) return false;
+          if (filters.typeKey && filters.typeKey !== 'all' && course.typeKey !== filters.typeKey) return false;
+          if (typeof filters.required === 'boolean' && Boolean(course.required) !== filters.required) return false;
+          return true;
+        });
+      }
       const queryParts = ['select=*'];
       if (filters.schoolId) queryParts.push(`school_id=eq.${encodeURIComponent(filters.schoolId)}`);
       if (filters.programmeId) queryParts.push(`programme_id=eq.${encodeURIComponent(filters.programmeId)}`);
@@ -666,7 +700,7 @@ export function createStorage({ dbFile, supabaseUrl, supabaseServiceRoleKey }) {
     },
 
     async getCourseCatalogCourse(id) {
-      if (!hasSupabase) return null;
+      if (!hasSupabase) return (await readLocalCatalog()).courses.find((course) => course.id === id) || null;
       const rows = await selectRows('course_catalog_courses', `select=*&id=eq.${encodeURIComponent(id)}&limit=1`).catch(() => []);
       const [row] = rows;
       return row ? fromCourseCatalogCourseRow(row) : null;
