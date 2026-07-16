@@ -8,9 +8,18 @@ import { courseSourceIndex } from '../content/course-source-index.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'public', 'data');
 const platformPath = join(root, 'server', 'data', 'platformData.json');
+const staticPlatformPath = join(dataDir, 'platform-data.json');
 const version = 'v1.82';
 
-const platform = JSON.parse(await readFile(platformPath, 'utf8'));
+let platformText;
+try {
+  platformText = await readFile(platformPath, 'utf8');
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error;
+  platformText = await readFile(staticPlatformPath, 'utf8');
+}
+
+const platform = JSON.parse(platformText);
 const postsById = new Map((platform.sharedPosts || []).map((post) => [post.id, post]));
 for (const post of contentPosts) postsById.set(post.id, post);
 
