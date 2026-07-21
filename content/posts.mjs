@@ -1,7 +1,9 @@
 import { courseResourcePosts } from './course-posts.mjs';
+import { lingnanPracticalGuidePosts } from './lingnan-practical-guides.mjs';
 
 export const contentPosts = [
   ...courseResourcePosts,
+  ...lingnanPracticalGuidePosts,
   {
     id: 'housing_eduhk_tai_po_off_campus_2026',
     sectionId: 'housing',
@@ -14,7 +16,7 @@ export const contentPosts = [
 
 ## 常见区域怎样比较
 
-[[image:0|教大校外租房要点与房源比较截图]]
+[[image:0|教大校外租房核对流程图]]
 
 ### 大埔墟站与大埔墟市一带
 
@@ -37,7 +39,7 @@ export const contentPosts = [
 - 地图距离可能较短，但要核对尾班车、雨天路线、网络、水电计费和垃圾处理。
 - 必须现场确认门牌、单位、出入口及消防条件，不要只凭视频签约。
 
-[[image:1|教大常见租房区域与通勤地点截图]]
+[[image:1|教大租房区域比较流程图]]
 
 ## 看房与签约清单
 
@@ -71,8 +73,8 @@ export const contentPosts = [
     pinned: true,
     schoolId: 'eduhk',
     imageUrls: [
-      '/images/guides/field-notes/eduhk-housing-checklist.jpg',
-      '/images/guides/field-notes/eduhk-housing-areas.jpg'
+      '/images/guides/field-notes/eduhk-housing-checklist.webp',
+      '/images/guides/field-notes/eduhk-housing-areas.webp'
     ],
     metadata: {
       预算: '以实时放盘和全年总成本为准',
@@ -91,7 +93,7 @@ export const contentPosts = [
 
 大埔墟港铁站是最常用的换乘点之一。教大官方交通页列出 74K 往返大埔墟站与大埔校园，26/26A 小巴则连接马鞍山并途经大埔墟。具体站位、班次和车费以出发当天的营运商资料为准。
 
-[[image:0|教大大埔校园公共交通路线截图]]
+[[image:0|教大大埔校园公共交通流程图]]
 
 ## 其他直达或跨区选择
 
@@ -135,7 +137,7 @@ export const contentPosts = [
     recommended: true,
     pinned: false,
     schoolId: 'eduhk',
-    imageUrls: ['/images/guides/field-notes/eduhk-transport.jpg'],
+    imageUrls: ['/images/guides/field-notes/eduhk-transport.webp'],
     metadata: {
       主题类型: '校园交通',
       适用阶段: '到港后 / 开学前 / 日常上课',
@@ -152,7 +154,7 @@ export const contentPosts = [
 
 香港本地 SIM 服务计划和电话储值卡都需要实名登记后才可启用。使用自己的身份证明完成登记，不购买来源不明、声称已经实名的电话卡，也不要替陌生人实名。
 
-[[image:0|到港电话卡和银行卡办理顺序截图]]
+[[image:0|到港电话卡和银行卡办理顺序流程图]]
 
 ### 电话卡实名要点
 
@@ -194,7 +196,7 @@ export const contentPosts = [
     recommended: true,
     pinned: false,
     schoolId: 'shared',
-    imageUrls: ['/images/guides/field-notes/bank-sim-steps.jpg'],
+    imageUrls: ['/images/guides/field-notes/bank-sim-steps.webp'],
     metadata: {
       主题类型: '生活办理',
       适用阶段: '抵港首周',
@@ -227,7 +229,7 @@ export const contentPosts = [
 
 ## 网上办理顺序
 
-[[image:0|香港学生逗留延期申请经验截图]]
+[[image:0|香港学生逗留延期办理流程图]]
 
 1. 核对姓名、证件号码、当前逗留期限和联系方式。
 2. 在入境处网上系统选择学生延期类别并上传清晰文件。
@@ -263,7 +265,7 @@ export const contentPosts = [
     recommended: true,
     pinned: true,
     schoolId: 'shared',
-    imageUrls: ['/images/guides/field-notes/student-visa-extension.jpg'],
+    imageUrls: ['/images/guides/field-notes/student-visa-extension.webp'],
     metadata: {
       主题类型: '证件延期',
       适用阶段: '获准逗留期限届满前四周',
@@ -285,7 +287,7 @@ export const contentPosts = [
 
 ## 首次赴港就学的常见顺序
 
-[[image:0|取得香港 e-Visa 后办理内地 D 逗留签注截图]]
+[[image:0|取得香港 e-Visa 后办理内地 D 逗留签注流程图]]
 
 1. 收到学校和香港入境处发出的有效 e-Visa / 进入许可。
 2. 检查往来港澳通行证有效期；没有有效通行证时一并申请。
@@ -321,7 +323,7 @@ export const contentPosts = [
     recommended: false,
     pinned: false,
     schoolId: 'shared',
-    imageUrls: ['/images/guides/field-notes/mainland-d-endorsement.jpg'],
+    imageUrls: ['/images/guides/field-notes/mainland-d-endorsement.webp'],
     metadata: {
       主题类型: '证件办理',
       适用阶段: '首次赴港前 / 学生签延期后',
@@ -343,13 +345,13 @@ export const contentPosts = [
 3. 抵达桥咀后，选择短距离海岸散步；是否能经过连岛沙洲取决于潮汐和现场安全状况。
 4. 至少预留一班回程船的缓冲，不把最后一班当作唯一选择。
 
-[[image:0|桥咀洲轻徒步路线参考截图]]
+[[image:0|桥咀洲轻徒步路线流程图]]
 
 ## 路线 B：半月湾海滩线
 
 适合把重点放在海滩和休息的人。街渡可按需求前往桥咀、半月湾等地点，但服务并非固定地铁式班次。出发前应现场确认回程安排，天气转差时不要勉强上船。
 
-[[image:1|西贡省力游玩路线参考截图]]
+[[image:1|西贡省力游玩路线流程图]]
 
 ## 为什么不直接照抄网上船票和时间
 
@@ -383,8 +385,8 @@ export const contentPosts = [
     pinned: false,
     schoolId: 'shared',
     imageUrls: [
-      '/images/guides/field-notes/sai-kung-kiu-tsui.jpg',
-      '/images/guides/field-notes/sai-kung-easy-route.jpg'
+      '/images/guides/field-notes/sai-kung-kiu-tsui.webp',
+      '/images/guides/field-notes/sai-kung-easy-route.webp'
     ],
     metadata: {
       地区: '西贡',
@@ -590,8 +592,6 @@ https://coa.immigration.gov.tw/coa-frontend/overseas-foreign-china
 - 学历、职业和经历按当前真实情况填写。学生有过工作经历时也应如实申报。
 - 目前实际居住在香港者，在“现住地区”选择港澳/香港对应选项。
 
-[[image:3|原申请页面：个人资料字段填写参考]]
-
 ### 是否第一次申请与证别
 
 从未申请过才选择“是”；以前建立过或送出过申请，应按事实选择。申请单次或多次不能只看个人意愿。一年制学生若香港居留证明剩余有效期不足一年，通常只能申请单次许可，最终以系统和审核结果为准。
@@ -627,8 +627,6 @@ https://coa.immigration.gov.tw/coa-frontend/overseas-foreign-china
 
 匿名结构示例：臺北市 / 中正區 / 实际道路及门牌 / 订单上的正体中文酒店名 / 酒店官网电话。示例只说明拆分方法，不能直接照抄。
 
-[[image:4|原申请页面：在台联络地址字段参考]]
-
 ## 七、父母、配偶和子女资料怎么填
 
 申请页的“亲属状况”通常要求父、母分别填写：
@@ -645,8 +643,6 @@ https://coa.immigration.gov.tw/coa-frontend/overseas-foreign-china
 父母资料不要因为“不知道工作单位”就整行留空。系统只问职业时，填写真实职业类别即可，不要擅自编造单位。父母已故时选择“殁/已故”；如果页面仍强制要求无法取得的资料，应联系移民署或所选馆处确认，不能用假日期、假地址或他人号码通过校验。
 
 已婚者如实填写配偶资料；未婚且无子女者，按页面提供的“无/不适用”选项处理。所有红色星号必须完成。
-
-[[image:5|原申请页面：父母与亲属资料字段参考]]
 
 [[image:1|三个地址与父母资料填写图解]]
 
@@ -671,8 +667,6 @@ https://coa.immigration.gov.tw/coa-frontend/overseas-foreign-china
 7. 系统或审核人员要求的其他证明。
 
 同一证件有正反面时，按上传格分别提交，或合并为一份方向一致、顺序清楚的 PDF。文件不能加密码。上传后逐个打开预览，确认不是空白页、旧文件或裁掉号码的图片。
-
-[[image:6|原申请页面：证明材料上传位置参考]]
 
 [[image:2|在读证明、上传材料与正式送件图解]]
 
@@ -751,11 +745,7 @@ https://www.immigration.gov.tw/5382/5385/7445/7810/
     imageUrls: [
       '/images/guides/taiwan-entry-permit/taiwan-permit-01-entry.png',
       '/images/guides/taiwan-entry-permit/taiwan-permit-02-address-family.png',
-      '/images/guides/taiwan-entry-permit/taiwan-permit-03-documents-submit.png',
-      '/images/guides/field-notes/taiwan-personal-details.jpg',
-      '/images/guides/field-notes/taiwan-address.jpg',
-      '/images/guides/field-notes/taiwan-family-details.jpg',
-      '/images/guides/field-notes/taiwan-document-upload.jpg'
+      '/images/guides/taiwan-entry-permit/taiwan-permit-03-documents-submit.png'
     ],
     metadata: {
       适用对象: '持内地证件、香港高校在读学生',

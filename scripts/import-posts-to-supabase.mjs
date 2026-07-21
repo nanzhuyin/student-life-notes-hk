@@ -1,7 +1,11 @@
 import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { contentPosts } from '../content/posts.mjs';
+import { applyPostOverrides } from '../content/post-overrides.mjs';
 
-const DATA_PATH = process.env.PLATFORM_DATA_JSON_FILE || '';
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const DATA_PATH = process.env.PLATFORM_DATA_JSON_FILE || join(repoRoot, 'public', 'data', 'platform-data.json');
 const BATCH_SIZE = Number(process.env.SUPABASE_IMPORT_BATCH_SIZE || 100);
 
 function validateSupabaseProjectUrl(value) {
@@ -83,12 +87,12 @@ async function main() {
   }
   const baseUrl = validateSupabaseProjectUrl(process.env.SUPABASE_URL);
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const platformData = DATA_PATH ? JSON.parse(await readFile(DATA_PATH, 'utf8')) : null;
+  const platformData = JSON.parse(await readFile(DATA_PATH, 'utf8'));
   const legacyPosts = platformData
     ? (Array.isArray(platformData) ? platformData : platformData.sharedPosts || platformData.posts || [])
     : [];
-  const postsById = new Map(contentPosts.map((post) => [post.id, post]));
-  for (const post of legacyPosts) postsById.set(post.id, post);
+  const postsById = new Map(legacyPosts.map((post) => [post.id, applyPostOverrides(post)]));
+  for (const post of contentPosts) postsById.set(post.id, applyPostOverrides(post));
   const sourcePosts = Array.from(postsById.values());
   const rows = sourcePosts
     .map(postRow)

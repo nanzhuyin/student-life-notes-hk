@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.82';
+const APP_VERSION = 'v1.83';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -42,8 +42,6 @@ interface CourseSourceRecord {
   topic: string;
   reviewStatus: string;
   placement?: 'programme' | 'school';
-  screenshotPath?: string;
-  screenshotUrl?: string;
 }
 const BACKEND_CACHE_PREFIX = 'student-life-notes:backend-cache:v2:';
 const BACKEND_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -1245,12 +1243,6 @@ async function fetchCourseSources(schoolId: SchoolId, programmeId: string) {
   return sources.filter((source) => source.schoolId === schoolId && source.programmeId === programmeId);
 }
 
-function getCourseSourceScreenshot(source: CourseSourceRecord) {
-  if (source.screenshotUrl) return resolvePostAssetUrl(source.screenshotUrl);
-  if (!source.screenshotPath) return '';
-  return resolvePostAssetUrl(`/images/course-sources/${source.postId}.png`);
-}
-
 function CourseSourceSection({ sources, title, headingId }: { sources: CourseSourceRecord[]; title: string; headingId: string }) {
   if (!sources.length) return null;
   return (
@@ -1269,15 +1261,8 @@ function CourseSourceSection({ sources, title, headingId }: { sources: CourseSou
             : source.reviewStatus === '高价值候选'
               ? '课程相关线索'
               : '检索线索';
-          const screenshotUrl = getCourseSourceScreenshot(source);
           return (
             <article className="programme-source-item" key={source.id}>
-              {screenshotUrl && (
-                <a className="source-screenshot-link" href={screenshotUrl} target="_blank" rel="noreferrer" aria-label={`查看 ${source.title} 的归档截图`}>
-                  <img src={screenshotUrl} alt={`${source.title} 归档截图`} loading="lazy" />
-                  <span>查看归档截图</span>
-                </a>
-              )}
               <div className="source-summary">
                 <span className={`source-review-badge ${source.reviewStatus === '已归档核验' ? 'verified' : ''}`}>{statusLabel}</span>
                 <strong>{source.title}</strong>
@@ -1290,8 +1275,8 @@ function CourseSourceSection({ sources, title, headingId }: { sources: CourseSou
       </div>
       <p className="programme-resource-notice">索引用于追溯学生经验来源；只有“已核对正文”的资料参与公开课程结论，其余仅作为后续研究线索。</p>
       <aside className="third-party-media-notice">
-        <strong>第三方图片说明</strong>
-        <p>归档截图仅用于识别原帖、核验课程经验和辅助学生理解，著作权、商标及相关权利归原作者、发布平台或相应权利人所有。Otter 不主张取得图片所有权，也不代表学校或原作者立场；请优先点击“查看原帖”阅读原始内容。权利人如希望更正署名或移除图片，可通过站内“建议”窗口联系管理员。</p>
+        <strong>来源使用说明</strong>
+        <p>这里仅保留课程经验的标题、核验状态和原帖入口，不公开展示社交平台截图。社区内容只作为学生经验线索；课程事实与最终安排请以学校和项目官网为准。</p>
       </aside>
     </section>
   );
@@ -3685,7 +3670,7 @@ function PostDetailPage({
   const postImages = getPostImages(post);
   const hasInlineImages = /\[\[image:\d+/.test(post.content);
   const hasThirdPartyReferenceImages = (post.imageUrls || []).some((url) =>
-    url.includes('/guides/field-notes/') || url.includes('/guides/lu-grade-check/')
+    url.includes('/guides/lu-grade-check/')
   );
   const postBackPath = post.sectionId === 'courses' && post.metadata?.programmeId
     ? `/courses?programme=${encodeURIComponent(post.metadata.programmeId)}`
@@ -4396,7 +4381,7 @@ function PolicyPage() {
   const policyItems = [
     ['隐私政策', '本工具当前要求邮箱注册或登录后查看课程、收藏和生活内容；注册只保存邮箱、用户名、学校和加密后的密码，不要求学号、证件号码或定位信息。'],
     ['公开资料边界', '课程名称、项目要求、学分、开课学期、先修要求和来源链接来自公开网页或学生整理资料；所有重要选课决定必须回到学校官网、handbook、课程系统或项目办公室通知核对。'],
-    ['第三方图片与转载资料', '部分操作截图和课程来源截图由用户提供或取自公开页面，只用于资料核验、入口识别和学习参考。相关著作权、商标和其他权利归原作者、学校、发布平台或相应权利人所有；本工具不主张所有权。权利人可通过站内“建议”窗口要求补充署名、更正来源或移除。'],
+    ['第三方图片与转载资料', '少量校务系统操作截图由用户提供，只用于入口识别和学习参考；社区攻略配图已重新整理为原创流程图，课程来源不公开展示社交平台截图。第三方截图的相关权利归原作者、学校、发布平台或相应权利人所有；本工具不主张所有权。权利人可通过站内“建议”窗口要求补充署名、更正来源或移除。'],
     ['避免学术不端', '本工具只能帮助查找、对照和整理课程信息。不得用于代写作业、生成可直接提交的作业、伪造成绩、规避考核、冒充学校通知，或帮助任何违反学术诚信的行为。'],
     ['非官方说明', '本网站不使用学校官方 logo，不声称获得香港教育大学、岭南大学或任何机构授权、认可或背书。页面颜色和名称仅用于区分信息来源。']
   ];

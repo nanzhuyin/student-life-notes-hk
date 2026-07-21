@@ -21,9 +21,7 @@ const rows = source.posts.map((post) => ({
   reviewStatus: post.reviewStatus,
   quality: post.quality,
   publicUse: post.publicUse,
-  placement: post.placement || 'programme',
-  screenshotPath: post.screenshotPath || '',
-  recordPath: post.recordPath || ''
+  placement: post.placement || 'programme'
 }));
 
 const output = `export const courseSourceIndex = ${JSON.stringify(rows, null, 2)};\n`;

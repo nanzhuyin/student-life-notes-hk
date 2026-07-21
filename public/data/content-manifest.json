@@ -1,12 +1,12 @@
 {
-  "version": "v1.82",
-  "generatedAt": "2026-07-16T10:23:34.404Z",
+  "version": "v1.83",
+  "generatedAt": "2026-07-21T17:26:58.917Z",
   "schools": 2,
   "programmes": 129,
   "courses": 3258,
-  "allPosts": 117,
-  "updatedPosts": 26,
+  "allPosts": 174,
+  "updatedPosts": 83,
   "courseAnalysisPosts": 18,
   "courseSources": 100,
-  "archivedCourseScreenshots": 20
+  "archivedCourseScreenshots": 0
 }

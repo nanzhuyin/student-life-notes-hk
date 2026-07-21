@@ -12,9 +12,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68a73a88000000001d0184e1",
@@ -29,9 +27,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a4340f4000000000f0294c5",
@@ -46,9 +42,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-690c7d94000000000302f6d3",
@@ -63,9 +57,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69420ef1000000001b031acb",
@@ -80,9 +72,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-698575c1000000000b00b282",
@@ -97,9 +87,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68ad7101000000001c010204",
@@ -114,9 +102,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\01-MPPM选课思路-页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\01-MPPM选课思路-页面文本.txt"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6903342400000000040143f1",
@@ -131,9 +117,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\03-PPG6002体验反馈\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\03-PPG6002体验反馈\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6900bfbd0000000004011973",
@@ -148,9 +132,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\02-PPG6001必修课介绍\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\014-MPPM-公共政策与管理硕士\\小红书原始证据\\02-PPG6001必修课介绍\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6846e618000000002300d702",
@@ -165,9 +147,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-686008d10000000010012c79",
@@ -182,9 +162,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\006-MATCIL-国际汉语教学文学硕士\\小红书原始证据\\01-MATCIL选课建议\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\006-MATCIL-国际汉语教学文学硕士\\小红书原始证据\\01-MATCIL选课建议\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-67f3a5e0000000001b03e325",
@@ -199,9 +177,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66c43ab0000000001f03ad7c",
@@ -216,9 +192,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68ad3058000000001d02439b",
@@ -233,9 +207,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68bbae34000000001d02af5e",
@@ -250,9 +222,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68a4899d000000001b035826",
@@ -267,9 +237,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66629066000000000d00d970",
@@ -284,9 +252,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\054-MEd-教育硕士\\小红书原始证据\\01-MEd课程就读体验\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\054-MEd-教育硕士\\小红书原始证据\\01-MEd课程就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a3b733f000000001503c86c",
@@ -301,9 +267,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68abd8c5000000001c0328cf",
@@ -318,9 +282,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-67cecf13000000000b014274",
@@ -335,9 +297,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68a350b4000000001d0284c5",
@@ -352,9 +312,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a3b6fcf000000001101538a",
@@ -369,9 +327,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-657ff74700000000160075a5",
@@ -386,9 +342,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\033-MA(PPE)-教育正向心理学文学硕士\\小红书原始证据\\01-MAPPE课程与选课\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\033-MA(PPE)-教育正向心理学文学硕士\\小红书原始证据\\01-MAPPE课程与选课\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66d28466000000001d01ba45",
@@ -403,9 +357,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-692eef1e0000000019024257",
@@ -420,9 +372,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6889e577000000000302452d",
@@ -437,9 +387,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6940ceba000000001e0036b0",
@@ -454,9 +402,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69fb410b00000000230066b9",
@@ -471,9 +417,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\016-MSc(AIandEdTech)-人工智能与教育科技理学硕士\\小红书原始证据\\01-AIET就读体验\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\016-MSc(AIandEdTech)-人工智能与教育科技理学硕士\\小红书原始证据\\01-AIET就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69d73ae30000000022029e09",
@@ -488,9 +432,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69b04818000000002303a0d2",
@@ -505,9 +447,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6811f2bb000000002001f557",
@@ -522,9 +462,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68e72327000000000500141f",
@@ -539,9 +477,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a4711c40000000008033aca",
@@ -556,9 +492,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\008-MA(VAECP)-视觉艺术教育与创意实践文学硕士\\小红书原始证据\\01-VAECP课程与选课指南\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\008-MA(VAECP)-视觉艺术教育与创意实践文学硕士\\小红书原始证据\\01-VAECP课程与选课指南\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69683800000000001a0237b3",
@@ -573,9 +507,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66537dea000000001401975f",
@@ -590,9 +522,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6654bd5400000000050074ae",
@@ -607,9 +537,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68936cfb00000000230249b8",
@@ -624,9 +552,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68920d90000000002301ac1c",
@@ -641,9 +567,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6915eef0000000000d039324",
@@ -658,9 +582,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-697c655b000000000a03cf7d",
@@ -675,9 +597,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69f5f0200000000038021c58",
@@ -692,9 +612,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68ee83a0000000000301f2e4",
@@ -709,9 +627,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a1d3b8c000000001002d000",
@@ -726,9 +642,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68aa82f1000000001c03f706",
@@ -743,9 +657,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6930082700000000190278f7",
@@ -760,9 +672,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\049-MA(NMSM)-新媒体与社交媒体文学硕士\\小红书原始证据\\01-NMSM选课与就读体验\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\049-MA(NMSM)-新媒体与社交媒体文学硕士\\小红书原始证据\\01-NMSM选课与就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a5614e8000000002201a942",
@@ -777,9 +687,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a3e36500000000011014692",
@@ -794,9 +702,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a26e4e000000000210095e9",
@@ -811,9 +717,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68a73571000000001d02dfb3",
@@ -828,9 +732,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-695a440c000000001e03b731",
@@ -845,9 +747,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-664215e2000000001e02e914",
@@ -862,9 +762,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68648ac3000000002400fc37",
@@ -879,9 +777,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\007-MATESOL-英语教学文学硕士\\小红书原始证据\\01-TESOL选课经验\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\007-MATESOL-英语教学文学硕士\\小红书原始证据\\01-TESOL选课经验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-65c8a727000000002c03538a",
@@ -896,9 +792,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6848312e000000000c039f87",
@@ -913,9 +807,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68affe54000000001b032ee7",
@@ -930,9 +822,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69cb7b56000000002003ad12",
@@ -947,9 +837,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-684286950000000012003ff9",
@@ -964,9 +852,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "01-EdUHK-香港教育大学\\项目\\001-MACSLE-中文研究（语文教育）文学硕士\\小红书原始证据\\01-MACSLE选课体验\\页面截图.png",
-    "recordPath": "01-EdUHK-香港教育大学\\项目\\001-MACSLE-中文研究（语文教育）文学硕士\\小红书原始证据\\01-MACSLE选课体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-697b1319000000000c0357b4",
@@ -981,9 +867,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a3bd9bc000000001101f24e",
@@ -998,9 +882,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a4b3b69000000001003f3b4",
@@ -1015,9 +897,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68b5953b000000001d02bbbc",
@@ -1032,9 +912,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-68ae65cb000000001b031c44",
@@ -1049,9 +927,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6a3ce7c80000000007028f66",
@@ -1066,9 +942,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-682dd5db0000000021009074",
@@ -1083,9 +957,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68ae9745000000001d0051c1",
@@ -1100,9 +972,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68f741fd00000000040230e0",
@@ -1117,9 +987,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68abfc2d000000001d028edb",
@@ -1134,9 +1002,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68ad540f000000001c03f015",
@@ -1151,9 +1017,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6a5587330000000008009c00",
@@ -1168,9 +1032,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68ae8d37000000001d002d4f",
@@ -1185,9 +1047,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6a5354c6000000001603fd6e",
@@ -1202,9 +1062,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68b3e8f8000000001d013cac",
@@ -1219,9 +1077,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-68abda35000000001d02df72",
@@ -1236,9 +1092,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-66c80e16000000001f038633",
@@ -1253,9 +1107,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-685e15120000000012031578",
@@ -1270,9 +1122,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-66ce8ea3000000001d019f07",
@@ -1287,9 +1137,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6a21a096000000003503398d",
@@ -1304,9 +1152,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-685363c0000000001202c2f7",
@@ -1321,9 +1167,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-697b3e61000000000a032b38",
@@ -1338,9 +1182,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69ca2bd4000000002200069b",
@@ -1355,9 +1197,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6971d107000000000b0092f8",
@@ -1372,9 +1212,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "高价值课程经验",
     "publicUse": "可用于选课摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\018-MA-创意及媒体产业文学硕士\\小红书原始证据\\01-MACMI-sem1必修课程\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\018-MA-创意及媒体产业文学硕士\\小红书原始证据\\01-MACMI-sem1必修课程\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a12a329000000003502f895",
@@ -1389,9 +1227,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a17b8ba0000000036018b83",
@@ -1406,9 +1242,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a4285ae0000000006032537",
@@ -1423,9 +1257,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\022-MA-翻译研究文学硕士\\小红书原始证据\\01-翻译研究就读体验\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\022-MA-翻译研究文学硕士\\小红书原始证据\\01-翻译研究就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a4517b2000000001603f71a",
@@ -1440,9 +1272,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "高价值课程经验",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\036-MSc-国际银行与金融理学硕士\\小红书原始证据\\01-MIBF第一学期课程\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\036-MSc-国际银行与金融理学硕士\\小红书原始证据\\01-MIBF第一学期课程\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69972944000000000903b2d4",
@@ -1457,9 +1287,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a3d46dd000000002103d392",
@@ -1474,9 +1302,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69450095000000001b026163",
@@ -1491,9 +1317,7 @@ export const courseSourceIndex = [
     "reviewStatus": "待打开正文复核",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66bfa5a2000000000503961d",
@@ -1508,9 +1332,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于工作量提示",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\011-MSc-人工智能与商业分析理学硕士\\小红书原始证据\\02-AIBA选课攻略\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\011-MSc-人工智能与商业分析理学硕士\\小红书原始证据\\02-AIBA选课攻略\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69eb17220000000012012805",
@@ -1525,9 +1347,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\011-MSc-人工智能与商业分析理学硕士\\小红书原始证据\\01-AIBA课程分享\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\011-MSc-人工智能与商业分析理学硕士\\小红书原始证据\\01-AIBA课程分享\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-66bfa28e0000000005020d65",
@@ -1542,9 +1362,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "待人工复核",
     "publicUse": "内部研究，复核后改写",
-    "placement": "programme",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6a01995d000000000702d66b",
@@ -1559,9 +1377,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\012-MSc-数据科学理学硕士\\小红书原始证据\\01-数据科学课程与就业体验\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\012-MSc-数据科学理学硕士\\小红书原始证据\\01-数据科学课程与就业体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-6964e918000000000e03f4bc",
@@ -1576,9 +1392,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "待人工复核",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\002-MSc-艺术科技与商业理学硕士\\小红书原始证据\\01-艺术科技与商业就读体验\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\002-MSc-艺术科技与商业理学硕士\\小红书原始证据\\01-艺术科技与商业就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-694d0d71000000001e03a9fd",
@@ -1593,9 +1407,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "高价值毕业生经验",
     "publicUse": "可用于项目体验摘要",
-    "placement": "programme",
-    "screenshotPath": "02-LU-岭南大学\\项目\\024-MA-艺术与文化遗产管理文学硕士\\小红书原始证据\\01-ACHM英国方向就读体验\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\024-MA-艺术与文化遗产管理文学硕士\\小红书原始证据\\01-ACHM英国方向就读体验\\帖子记录.json"
+    "placement": "programme"
   },
   {
     "id": "xiaohongshu-69dca3fb000000001f005bcb",
@@ -1610,9 +1422,7 @@ export const courseSourceIndex = [
     "reviewStatus": "已归档核验",
     "quality": "高价值课程经验",
     "publicUse": "可用于项目体验摘要",
-    "placement": "school",
-    "screenshotPath": "02-LU-岭南大学\\项目\\037-MSc-国际与发展经济学理学硕士\\小红书原始证据\\02-MIDE在读课程记录\\页面截图.png",
-    "recordPath": "02-LU-岭南大学\\项目\\037-MSc-国际与发展经济学理学硕士\\小红书原始证据\\02-MIDE在读课程记录\\帖子记录.json"
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6965e7220000000021032c37",
@@ -1627,9 +1437,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-69ec6a220000000010001c00",
@@ -1644,9 +1452,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6a54c21000000000110063de",
@@ -1661,9 +1467,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-696886df0000000021028b5c",
@@ -1678,9 +1482,7 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   },
   {
     "id": "xiaohongshu-6980d0dd000000001a0237f4",
@@ -1695,8 +1497,6 @@ export const courseSourceIndex = [
     "reviewStatus": "高价值候选",
     "quality": "高价值课程线索",
     "publicUse": "内部研究，复核后改写",
-    "placement": "school",
-    "screenshotPath": "",
-    "recordPath": ""
+    "placement": "school"
   }
 ];
