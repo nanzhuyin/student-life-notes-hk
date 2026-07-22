@@ -10,7 +10,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'public', 'data');
 const platformPath = join(root, 'server', 'data', 'platformData.json');
 const staticPlatformPath = join(dataDir, 'platform-data.json');
-const version = 'v1.83';
+const version = 'v1.84';
 
 let platformText;
 try {
@@ -61,7 +61,7 @@ const sectionLabels = {
 };
 const lifePosts = contentPosts.filter((post) => post.sectionId !== 'courses');
 const lines = [
-  '# Otter v1.83 内容验收清单',
+  '# Otter v1.84 内容验收清单',
   '',
   `生成时间：${manifest.generatedAt}`,
   '',
