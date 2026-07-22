@@ -5,12 +5,13 @@ import { contentPosts } from '../content/posts.mjs';
 import { courseResourcePosts } from '../content/course-posts.mjs';
 import { courseSourceIndex } from '../content/course-source-index.mjs';
 import { applyPostOverrides } from '../content/post-overrides.mjs';
+import { filterKnownNonCourses } from '../shared/course-data-quality.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'public', 'data');
 const platformPath = join(root, 'server', 'data', 'platformData.json');
 const staticPlatformPath = join(dataDir, 'platform-data.json');
-const version = 'v1.84';
+const version = 'v1.85';
 
 let platformText;
 try {
@@ -21,6 +22,15 @@ try {
 }
 
 const platform = JSON.parse(platformText);
+const cleanedCourses = filterKnownNonCourses(platform.courses || []);
+const courseCountByProgramme = new Map();
+for (const course of cleanedCourses) {
+  courseCountByProgramme.set(course.programmeId, (courseCountByProgramme.get(course.programmeId) || 0) + 1);
+}
+const cleanedProgrammes = (platform.programmes || []).map((programme) => ({
+  ...programme,
+  courseCount: courseCountByProgramme.get(programme.id) || 0
+}));
 const postsById = new Map((platform.sharedPosts || []).map((post) => [post.id, applyPostOverrides(post)]));
 for (const post of contentPosts) postsById.set(post.id, applyPostOverrides(post));
 
@@ -28,6 +38,8 @@ const staticPlatform = {
   ...platform,
   version,
   generatedAt: new Date().toISOString(),
+  programmes: cleanedProgrammes,
+  courses: cleanedCourses,
   sharedPosts: Array.from(postsById.values())
 };
 
@@ -61,7 +73,7 @@ const sectionLabels = {
 };
 const lifePosts = contentPosts.filter((post) => post.sectionId !== 'courses');
 const lines = [
-  '# Otter v1.84 内容验收清单',
+  '# Otter v1.85 内容验收清单',
   '',
   `生成时间：${manifest.generatedAt}`,
   '',

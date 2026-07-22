@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { filterKnownNonCourses, KNOWN_NON_COURSE_IDS } from '../shared/course-data-quality.mjs';
 
-const DATA_PATH = process.env.PLATFORM_DATA_JSON_FILE || 'src/data/platformData.json';
+const DATA_PATH = process.env.PLATFORM_DATA_JSON_FILE || 'public/data/platform-data.json';
 const BATCH_SIZE = Number(process.env.SUPABASE_IMPORT_BATCH_SIZE || 200);
 
 function validateSupabaseProjectUrl(value) {
@@ -149,6 +150,21 @@ async function upsertRows({ baseUrl, serviceRoleKey, table, rows }) {
   }
 }
 
+async function deleteRowsByIds({ baseUrl, serviceRoleKey, table, ids }) {
+  if (!ids.length) return;
+  const response = await fetch(`${baseUrl}/rest/v1/${table}?id=in.(${ids.map(encodeURIComponent).join(',')})`, {
+    method: 'DELETE',
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`
+    }
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to remove invalid rows from ${table}: ${response.status} ${text}`);
+  }
+}
+
 async function main() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
@@ -159,15 +175,18 @@ async function main() {
 
   const schoolRows = (platformData.schools || []).map((item) => schoolRow(item, platformData)).filter((row) => row.id && row.name);
   const programmeRows = (platformData.programmes || []).map(programmeRow).filter((row) => row.id && row.school_id && row.title);
-  const courseRows = (platformData.courses || []).map(courseRow).filter((row) => row.id && row.programme_id && row.school_id && row.title);
+  const cleanCourses = filterKnownNonCourses(platformData.courses || []);
+  const courseRows = cleanCourses.map(courseRow).filter((row) => row.id && row.programme_id && row.school_id && row.title);
 
   await upsertRows({ baseUrl, serviceRoleKey, table: 'platform_schools', rows: schoolRows });
   await upsertRows({ baseUrl, serviceRoleKey, table: 'course_programmes', rows: programmeRows });
   await upsertRows({ baseUrl, serviceRoleKey, table: 'course_catalog_courses', rows: courseRows });
+  await deleteRowsByIds({ baseUrl, serviceRoleKey, table: 'course_catalog_courses', ids: KNOWN_NON_COURSE_IDS });
 
   console.log(`Imported platform schools: ${schoolRows.length}`);
   console.log(`Imported course programmes: ${programmeRows.length}`);
   console.log(`Imported course catalog courses: ${courseRows.length}`);
+  console.log(`Removed known non-course navigation records: ${KNOWN_NON_COURSE_IDS.length}`);
   console.log(`Courses with descriptions: ${courseRows.filter((row) => row.description).length}`);
 }
 

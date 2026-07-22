@@ -14,7 +14,7 @@ import type { ProgrammeRecommendationResult, RecommendationApiResponse, StudentP
 
 const DISCLAIMER = '本网站为个人/学生自发整理的信息工具，内容仅供参考，不代表任何学校或机构官方立场。';
 const APP_NAME = 'Otter';
-const APP_VERSION = 'v1.84';
+const APP_VERSION = 'v1.85';
 const BETA_NOTICE = '内测版本：邮箱注册、登录和联系作者信箱已开放；内容仍由管理员整理后发布。';
 const APP_BASE_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.BASE_URL || '/';
 const APP_LOGO_SRC = `${APP_BASE_URL}images/otter-avatar.png`;
@@ -656,9 +656,17 @@ async function fetchCourseCatalogCoursesFromBackend(query: CourseCatalogQuery = 
 }
 
 async function fetchCourseCatalogCourseFromBackend(id: string) {
-  if (!API_BASE_URL) return null;
-  const data = await apiRequest<{ course: Course }>(`/api/course-catalog/courses/${encodeURIComponent(id)}`);
-  return data.course || null;
+  if (!API_BASE_URL) {
+    const staticData = await fetchStaticPlatformData();
+    return staticData.courses.find((course) => course.id === id) || null;
+  }
+  try {
+    const data = await apiRequest<{ course: Course }>(`/api/course-catalog/courses/${encodeURIComponent(id)}`);
+    return data.course || null;
+  } catch {
+    const staticData = await fetchStaticPlatformData();
+    return staticData.courses.find((course) => course.id === id) || null;
+  }
 }
 
 function applyPlatformData(next: PlatformData) {
@@ -2795,6 +2803,36 @@ function CoursesPage({
   );
 }
 
+function normalizeCourseGuideForDisplay(value: Course['courseGuide']): NonNullable<Course['courseGuide']> | null {
+  if (!value || typeof value !== 'object') return null;
+  const input = value as unknown as Record<string, unknown>;
+  const stringArray = (key: string) => Array.isArray(input[key])
+    ? (input[key] as unknown[]).filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+    : [];
+  const studentPerspectives = Array.isArray(input.studentPerspectives)
+    ? input.studentPerspectives
+      .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
+      .map((item) => ({
+        profile: typeof item.profile === 'string' ? item.profile : '',
+        value: typeof item.value === 'string' ? item.value : '',
+        suggestedFocus: typeof item.suggestedFocus === 'string' ? item.suggestedFocus : ''
+      }))
+      .filter((item) => item.profile || item.value || item.suggestedFocus)
+    : [];
+  const guide = {
+    sourceBasis: typeof input.sourceBasis === 'string' ? input.sourceBasis : '',
+    suitableBackgrounds: stringArray('suitableBackgrounds'),
+    deepenFocus: stringArray('deepenFocus'),
+    skillsGained: stringArray('skillsGained'),
+    careerConnections: stringArray('careerConnections'),
+    studentPerspectives,
+    preparationAdvice: stringArray('preparationAdvice'),
+    informationLimits: stringArray('informationLimits')
+  };
+  const hasContent = guide.sourceBasis || Object.entries(guide).some(([key, item]) => key !== 'sourceBasis' && item.length > 0);
+  return hasContent ? guide : null;
+}
+
 function CourseDetailPage({
   id,
   authToken,
@@ -2869,6 +2907,7 @@ function CourseDetailPage({
     );
   }
   const courseProgrammePath = course.programmeId ? `/courses?programme=${encodeURIComponent(course.programmeId)}` : '/courses';
+  const courseGuide = normalizeCourseGuideForDisplay(course.courseGuide);
 
   return (
     <article className="detail-page course-detail-page database-detail-page">
@@ -2921,31 +2960,31 @@ function CourseDetailPage({
               <p>{course.officialDescriptionEn}</p>
             </section>
           )}
-          {course.courseGuide && (
+          {courseGuide && (
             <section className="course-detail-card course-guide-card">
               <span className="section-kicker">Student Guide</span>
               <h2>学生视角课程指南</h2>
               <div className="course-guide-grid">
                 <div>
                   <strong>适合背景</strong>
-                  <ul>{course.courseGuide.suitableBackgrounds.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul>{courseGuide.suitableBackgrounds.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
                 <div>
                   <strong>建议深化</strong>
-                  <ul>{course.courseGuide.deepenFocus.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul>{courseGuide.deepenFocus.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
                 <div>
                   <strong>能力产出</strong>
-                  <ul>{course.courseGuide.skillsGained.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul>{courseGuide.skillsGained.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
                 <div>
                   <strong>就业 / 转型衔接</strong>
-                  <ul>{course.courseGuide.careerConnections.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul>{courseGuide.careerConnections.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
               </div>
-              {course.courseGuide.studentPerspectives.length > 0 && (
+              {courseGuide.studentPerspectives.length > 0 && (
                 <div className="student-perspective-list">
-                  {course.courseGuide.studentPerspectives.map((item) => (
+                  {courseGuide.studentPerspectives.map((item) => (
                     <div key={`${item.profile}-${item.value}`}>
                       <strong>{item.profile}</strong>
                       <p>{item.value}</p>
@@ -2954,14 +2993,14 @@ function CourseDetailPage({
                   ))}
                 </div>
               )}
-              {course.courseGuide.preparationAdvice.length > 0 && (
+              {courseGuide.preparationAdvice.length > 0 && (
                 <div className="course-guide-prep">
                   <strong>课前准备建议</strong>
-                  <ul>{course.courseGuide.preparationAdvice.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul>{courseGuide.preparationAdvice.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
               )}
-              {course.courseGuide.informationLimits.length > 0 && (
-                <p className="detail-note">{course.courseGuide.informationLimits.join('；')}</p>
+              {courseGuide.informationLimits.length > 0 && (
+                <p className="detail-note">{courseGuide.informationLimits.join('；')}</p>
               )}
             </section>
           )}

@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { filterKnownNonCourses, isKnownNonCourse } from '../shared/course-data-quality.mjs';
 
 const defaultDb = {
   users: [],
@@ -262,7 +263,7 @@ function fromCourseCatalogCourseRow(row) {
     officialDescriptionZh: row.official_description_zh || '',
     descriptionSourceUrl: row.description_source_url || '',
     descriptionSourceType: row.description_source_type || '',
-    courseGuide: row.course_guide || undefined,
+    courseGuide: normalizeCourseGuide(row.course_guide),
     medium: row.medium || '',
     mediumDetail: row.medium_detail || '',
     programmeCodes: row.programme_codes || [],
@@ -282,6 +283,23 @@ function fromCourseCatalogCourseRow(row) {
     strategyFocus: row.strategy_focus || [],
     materialBasis: row.material_basis || []
   };
+}
+
+function normalizeCourseGuide(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const array = (key) => Array.isArray(value[key]) ? value[key] : [];
+  const guide = {
+    sourceBasis: typeof value.sourceBasis === 'string' ? value.sourceBasis : '',
+    suitableBackgrounds: array('suitableBackgrounds'),
+    deepenFocus: array('deepenFocus'),
+    skillsGained: array('skillsGained'),
+    careerConnections: array('careerConnections'),
+    studentPerspectives: array('studentPerspectives'),
+    preparationAdvice: array('preparationAdvice'),
+    informationLimits: array('informationLimits')
+  };
+  const hasContent = guide.sourceBasis || Object.entries(guide).some(([key, item]) => key !== 'sourceBasis' && item.length > 0);
+  return hasContent ? guide : undefined;
 }
 
 function nullableTimestamp(value) {
@@ -681,7 +699,10 @@ export function createStorage({ dbFile, catalogFile = '', supabaseUrl, supabaseS
 
     async listCourseCatalogCourses(filters = {}) {
       if (!hasSupabase) {
-        return (await readLocalCatalog()).courses.filter((course) => {
+        return filterKnownNonCourses((await readLocalCatalog()).courses).map((course) => ({
+          ...course,
+          courseGuide: normalizeCourseGuide(course.courseGuide)
+        })).filter((course) => {
           if (filters.schoolId && course.schoolId !== filters.schoolId) return false;
           if (filters.programmeId && course.programmeId !== filters.programmeId) return false;
           if (filters.typeKey && filters.typeKey !== 'all' && course.typeKey !== filters.typeKey) return false;
@@ -696,11 +717,15 @@ export function createStorage({ dbFile, catalogFile = '', supabaseUrl, supabaseS
       if (typeof filters.required === 'boolean') queryParts.push(`required=eq.${filters.required ? 'true' : 'false'}`);
       queryParts.push('order=programme_id.asc,title.asc');
       const rows = await selectRowsPaged('course_catalog_courses', queryParts.join('&'), filters.maxRows || 10000).catch(() => []);
-      return rows.map(fromCourseCatalogCourseRow);
+      return filterKnownNonCourses(rows.map(fromCourseCatalogCourseRow));
     },
 
     async getCourseCatalogCourse(id) {
-      if (!hasSupabase) return (await readLocalCatalog()).courses.find((course) => course.id === id) || null;
+      if (isKnownNonCourse(id)) return null;
+      if (!hasSupabase) {
+        const course = (await readLocalCatalog()).courses.find((item) => item.id === id);
+        return course ? { ...course, courseGuide: normalizeCourseGuide(course.courseGuide) } : null;
+      }
       const rows = await selectRows('course_catalog_courses', `select=*&id=eq.${encodeURIComponent(id)}&limit=1`).catch(() => []);
       const [row] = rows;
       return row ? fromCourseCatalogCourseRow(row) : null;

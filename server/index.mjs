@@ -21,7 +21,7 @@ import { courseSourceIndex } from '../content/course-source-index.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8787);
 const DB_FILE = process.env.APP_DB_FILE || join(__dirname, 'data', 'app-data.json');
-const CATALOG_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, 'data', 'platformData.json');
+const CATALOG_FILE = process.env.PLATFORM_DATA_JSON_FILE || join(__dirname, '..', 'public', 'data', 'platform-data.json');
 const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash';
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim()).filter(Boolean);
 const storage = createStorage({

@@ -1,9 +1,9 @@
 {
-  "version": "v1.84",
-  "generatedAt": "2026-07-22T02:55:21.552Z",
+  "version": "v1.85",
+  "generatedAt": "2026-07-22T15:10:21.089Z",
   "schools": 2,
   "programmes": 129,
-  "courses": 3258,
+  "courses": 3255,
   "allPosts": 174,
   "updatedPosts": 83,
   "courseAnalysisPosts": 18,
